@@ -1,0 +1,94 @@
+{
+  "config": {
+    "input_path": "Data.xlsx",
+    "output_dir": "artifacts_profitpulse_test",
+    "random_state": 42,
+    "par_value": 10000,
+    "winsor_q": 0.01,
+    "train_target_end_year": 2020,
+    "test_target_years": [
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "preprocess_fit_pred_year": 2019,
+    "x_cols": [
+      "X1_ROA",
+      "X2_ROE",
+      "X3_ROC",
+      "X4_EPS",
+      "X5_NPM"
+    ],
+    "pretty": {
+      "X1_ROA": "ROA",
+      "X2_ROE": "ROE",
+      "X3_ROC": "ROC",
+      "X4_EPS": "EPS",
+      "X5_NPM": "NPM"
+    },
+    "main_k": 3,
+    "default_model_name": "XGBoost",
+    "proba_threshold": 0.5,
+    "risk_high_cut": 0.4,
+    "risk_low_cut": 0.6,
+    "borderline_abs_p": 0.1,
+    "z_weak": -0.5,
+    "z_strong": 0.7,
+    "z_jump": 1.0
+  },
+  "metrics": {
+    "XGBoost": {
+      "accuracy": 0.8324564953460137,
+      "precision": 0.7771156138259833,
+      "recall": 0.7417519908987485,
+      "f1": 0.7590221187427241,
+      "auc": 0.8779316805872365,
+      "confusion": [
+        [
+          1405,
+          187
+        ],
+        [
+          227,
+          652
+        ]
+      ]
+    },
+    "SVM (RBF)": {
+      "accuracy": 0.8312424119789559,
+      "precision": 0.7613122171945701,
+      "recall": 0.7656427758816837,
+      "f1": 0.763471355643789,
+      "auc": 0.8600393177491552,
+      "confusion": [
+        [
+          1381,
+          211
+        ],
+        [
+          206,
+          673
+        ]
+      ]
+    },
+    "Random forest": {
+      "accuracy": 0.8284095507891542,
+      "precision": 0.7692307692307693,
+      "recall": 0.7394766780432309,
+      "f1": 0.7540603248259861,
+      "auc": 0.8787738464792678,
+      "confusion": [
+        [
+          1397,
+          195
+        ],
+        [
+          229,
+          650
+        ]
+      ]
+    }
+  },
+  "HAS_XGB": true
+}
