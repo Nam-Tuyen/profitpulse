@@ -1,45 +1,65 @@
-# Python Backend (không deploy trên Vercel)
+# Python Backend - Deploy elsewhere, NOT on Vercel
 *.py
-backend/
+backend/**
 app.py
 test_*.py
 *_test.py
 requirements*.txt
 .python-version
+Procfile
+runtime.txt
+render.yaml
 
-# Data files
+# Data files - Never upload data to Vercel
 *.csv
 *.xlsx
 *.xls
+*.json
 Data.xlsx
+data/
 
-# Artifacts (large ML files)
-artifacts_profitpulse/
-artifacts_profitpulse_test/
+# ML Artifacts - Heavy files
+artifacts_profitpulse/**
+artifacts_profitpulse_test/**
+*.pkl
+*.h5
+*.model
+*.parquet
 
 # Python cache
-__pycache__/
+__pycache__/**
 *.pyc
 *.pyo
 *.pyd
 .Python
-venv/
-.venv/
-env/
+venv/**
+.venv/**
+env/**
+*.egg-info/**
 
 # Documentation
 *.md
 !README.md
 demo.sh
 start.sh
+DOCUMENTATION.md
+DATA_FLOW.md
+DEMO_SUMMARY.md
+QUICK_START.md
+RUNNING_DEMO.md
+DEPLOYMENT.md
+VERCEL_DEPLOY.md
 
 # IDE
-.vscode/
-.idea/
+.vscode/**
+.idea/**
 *.swp
 *.swo
+.vs/**
 
 # OS
 .DS_Store
 Thumbs.db
+.gitignore
+.gitattributes
 
