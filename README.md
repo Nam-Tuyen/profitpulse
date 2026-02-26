@@ -2,6 +2,18 @@
 
 Hệ thống phân tích và dự báo lợi nhuận doanh nghiệp sử dụng Machine Learning (SVM, Random Forest, XGBoost).
 
+> **🚀 DEPLOYMENT GUIDE**  
+> - **Frontend**: Deploy on Vercel (see [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md))  
+> - **Backend**: Deploy on Render/Railway (see [DEPLOYMENT.md](DEPLOYMENT.md))  
+> - **Why split?**: Vercel has 500MB limit, our ML dependencies are ~800MB  
+> 
+> **Quick Deploy:**  
+> 1. Push to GitHub ✅  
+> 2. Frontend → Vercel (auto-deploy, ~2-5MB)  
+> 3. Backend → Render.com (click "Deploy to Render" button below)  
+> 
+> [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+
 > **✅ Backend Fixed & Production Ready** (Feb 27, 2026)  
 > - All type hints corrected (16 errors fixed)  
 > - Unified CLI interface (`backend/main.py`)  

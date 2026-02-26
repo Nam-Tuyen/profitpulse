@@ -1,34 +1,37 @@
-# Dependencies
-node_modules/
-.venv/
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# Frontend build files
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+# Python Backend (không deploy trên Vercel)
+*.py
+backend/
+app.py
+test_*.py
+*_test.py
+requirements*.txt
+.python-version
 
 # Data files
 *.csv
 *.xlsx
 *.xls
+Data.xlsx
 
 # Artifacts (large ML files)
 artifacts_profitpulse/
 artifacts_profitpulse_test/
 
-# Test files
-test_*.py
-*_test.py
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
 
 # Documentation
 *.md
 !README.md
+demo.sh
+start.sh
 
 # IDE
 .vscode/
@@ -40,6 +43,3 @@ test_*.py
 .DS_Store
 Thumbs.db
 
-# Scripts
-demo.sh
-start.sh
