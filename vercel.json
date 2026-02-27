@@ -1,14 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm ci --omit=dev --prefer-offline && npm run build",
-  "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "installCommand": "npm ci --omit=dev --prefer-offline",
-  "framework": "vite",
-  "rootDirectory": "frontend",
+  "buildCommand": "cd frontend && npm ci --omit=dev && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm ci --omit=dev",
+  "framework": null,
   "cleanUrls": true,
   "trailingSlash": false,
-  "ignoreCommand": "echo 'Building frontend only'",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./frontend/",
   "github": {
     "silent": true
   },

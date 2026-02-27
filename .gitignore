@@ -23,6 +23,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Vercel (keep project.json, ignore settings.json)
+.vercel/*.json
+!.vercel/project.json
+
 # Flask
 instance/
 .webassets-cache

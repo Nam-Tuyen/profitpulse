@@ -1,65 +1,120 @@
-# Python Backend - Deploy elsewhere, NOT on Vercel
-*.py
+# ============================================
+# CRITICAL: Vercel must ONLY build frontend/
+# Exclude EVERYTHING except frontend/
+# ============================================
+
+# Exclude backend directory completely
+backend
+backend/
 backend/**
-app.py
-test_*.py
-*_test.py
+
+# Exclude ALL Python files everywhere
+*.py
+**/*.py
+*.pyc
+**/*.pyc
+
+# Exclude Python project files
+requirements.txt
 requirements*.txt
+**/requirements*.txt
+Pipfile
+Pipfile.lock
+poetry.lock
+pyproject.toml
+setup.py
+setup.cfg
+
+# Exclude Python runtime configs
 .python-version
+**/.python-version
 Procfile
+**/Procfile
 runtime.txt
+**/runtime.txt
+
+# Keep render.yaml at root (for Render), but Vercel should ignore
 render.yaml
 
-# Data files - Never upload data to Vercel
+# Exclude data files
 *.csv
 *.xlsx
 *.xls
 *.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vercel.json
+!.vercel/project.json
 Data.xlsx
 data/
+**/data/
 
-# ML Artifacts - Heavy files
-artifacts_profitpulse/**
-artifacts_profitpulse_test/**
+# Exclude ML artifacts
+artifacts_profitpulse/
+artifacts_profitpulse_test/
 *.pkl
 *.h5
 *.model
 *.parquet
+*.joblib
+**/*.pkl
+**/*.h5
+**/*.model
 
-# Python cache
-__pycache__/**
-*.pyc
+# Exclude Python cache
+__pycache__/
+**/__pycache__/
 *.pyo
 *.pyd
 .Python
-venv/**
-.venv/**
-env/**
-*.egg-info/**
+venv/
+.venv/
+env/
+*.egg-info/
+build/
+.pytest_cache/
 
-# Documentation
-*.md
-!README.md
-demo.sh
-start.sh
+# Exclude tests
+test_*.py
+*_test.py
+tests/
+**/tests/
+
+# Exclude documentation (except main README)
+DEPLOYMENT.md
 DOCUMENTATION.md
 DATA_FLOW.md
 DEMO_SUMMARY.md
 QUICK_START.md
 RUNNING_DEMO.md
-DEPLOYMENT.md
 VERCEL_DEPLOY.md
+*.md
+!README.md
+!frontend/README.md
+
+# Exclude shell scripts
+*.sh
+!vercel-build.sh
 
 # IDE
-.vscode/**
-.idea/**
+.vscode/
+.idea/
 *.swp
 *.swo
-.vs/**
+.vs/
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Git
 .gitignore
 .gitattributes
 
