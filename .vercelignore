@@ -33,7 +33,7 @@ test_*.py
 tests/
 backend/test_*.py
 
-# Documentation (keep only README)
+# Documentation
 DEMO_SUMMARY.md
 DOCUMENTATION.md
 QUICK_START.md
@@ -44,8 +44,9 @@ DATA_FLOW.md
 .git/
 .gitignore
 
-# Frontend - keep source, ignore build artifacts and node_modules
+# Frontend build artifacts and node_modules (will be built by Vercel)
 frontend/node_modules/
+frontend/dist/
 node_modules/
 
 # Shell scripts
@@ -53,23 +54,13 @@ node_modules/
 demo.sh
 start.sh
 
-# Backend files not needed for Vercel API
-backend/api_server.py
-backend/app.py
-backend/main.py
-backend/pipeline.py
-backend/profitpulse_pipeline.py
-backend/Procfile
-backend/render.yaml
-backend/requirements-local.txt
-backend/runtime.txt
-backend/core/
-backend/cache/
+# Old backend files (using /api directory now)
+backend/
 
-# Keep only:
-# - backend/api_vercel.py
-# - backend/utils/ (minimal)
+# Keep:
+# - api/ (serverless functions)
+# - frontend/src/ (source files for build)
 # - artifacts_profitpulse/*.json
-# - requirements.txt
 # - vercel.json
+
 
