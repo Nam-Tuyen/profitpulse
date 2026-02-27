@@ -1,13 +1,10 @@
-# Flask & API (minimal for production)
+# Flask & API - optimized for Vercel Lambda
 Flask==3.0.0
 flask-cors==4.0.0
 
-# Data Processing (lighter versions)
+# Data Processing - minimal versions
 pandas==2.1.4
 numpy==1.26.2
-
-# Machine Learning (lighter, no xgboost for now)
-scikit-learn==1.3.2
 
 # Utils
 python-dotenv==1.0.0

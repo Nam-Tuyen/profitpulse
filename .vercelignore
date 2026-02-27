@@ -1,120 +1,75 @@
-# ============================================
-# CRITICAL: Vercel must ONLY build frontend/
-# Exclude EVERYTHING except frontend/
-# ============================================
-
-# Exclude backend directory completely
-backend
-backend/
-backend/**
-
-# Exclude ALL Python files everywhere
-*.py
-**/*.py
-*.pyc
-**/*.pyc
-
-# Exclude Python project files
-requirements.txt
-requirements*.txt
-**/requirements*.txt
-Pipfile
-Pipfile.lock
-poetry.lock
-pyproject.toml
-setup.py
-setup.cfg
-
-# Exclude Python runtime configs
-.python-version
-**/.python-version
-Procfile
-**/Procfile
-runtime.txt
-**/runtime.txt
-
-# Keep render.yaml at root (for Render), but Vercel should ignore
-render.yaml
-
-# Exclude data files
-*.csv
-*.xlsx
-*.xls
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!vercel.json
-!.vercel/project.json
-Data.xlsx
-data/
-**/data/
-
-# Exclude ML artifacts
-artifacts_profitpulse/
-artifacts_profitpulse_test/
-*.pkl
-*.h5
-*.model
-*.parquet
-*.joblib
-**/*.pkl
-**/*.h5
-**/*.model
-
-# Exclude Python cache
+# Python
 __pycache__/
-**/__pycache__/
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-venv/
-.venv/
-env/
 *.egg-info/
+dist/
 build/
-.pytest_cache/
 
-# Exclude tests
-test_*.py
-*_test.py
-tests/
-**/tests/
-
-# Exclude documentation (except main README)
-DEPLOYMENT.md
-DOCUMENTATION.md
-DATA_FLOW.md
-DEMO_SUMMARY.md
-QUICK_START.md
-RUNNING_DEMO.md
-VERCEL_DEPLOY.md
-*.md
-!README.md
-!frontend/README.md
-
-# Exclude shell scripts
-*.sh
-!vercel-build.sh
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-.vs/
-*.code-workspace
 
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
+# Data files
+*.xlsx
+*.xls
+*.csv
+*.parquet
+Data.xlsx
 
-# Logs
-*.log
-logs/
+# Tests
+test_*.py
+*_test.py
+tests/
+backend/test_*.py
+
+# Documentation (keep only README)
+DEMO_SUMMARY.md
+DOCUMENTATION.md
+QUICK_START.md
+RUNNING_DEMO.md
+DATA_FLOW.md
 
 # Git
+.git/
 .gitignore
-.gitattributes
+
+# Frontend source (deployed separately)
+frontend/
+node_modules/
+
+# Shell scripts
+*.sh
+demo.sh
+start.sh
+
+# Backend files not needed for Vercel API
+backend/api_server.py
+backend/app.py
+backend/main.py
+backend/pipeline.py
+backend/profitpulse_pipeline.py
+backend/Procfile
+backend/render.yaml
+backend/requirements-local.txt
+backend/runtime.txt
+backend/core/
+backend/cache/
+
+# Keep only:
+# - backend/api_vercel.py
+# - backend/utils/ (minimal)
+# - artifacts_profitpulse/*.json
+# - requirements.txt
+# - vercel.json
 

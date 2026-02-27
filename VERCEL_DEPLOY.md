@@ -1,52 +1,52 @@
-# 🚀 Quick Deploy to Vercel (Frontend Only)
+# ProfitPulse - Vercel Deployment Guide
 
-## ⚠️ Important Note
+## Optimized for Serverless Deployment
 
-Due to Vercel's 500MB Lambda limit, **only the frontend** is deployed on Vercel.
+This version is optimized for Vercel deployment with minimal dependencies.
 
-The backend (Python/Flask/ML) must be deployed separately on:
-- **Render.com** (recommended - free tier)
-- **Railway.app** 
-- **PythonAnywhere**
-- Or any Python hosting service
+### Key Changes:
 
-## 📝 Steps
+1. **Minimal Dependencies** - Only Flask and essential packages
+2. **No Heavy ML Libraries** - Removed pandas, numpy, scikit-learn, xgboost
+3. **JSON-based Data** - Using pre-computed JSON artifacts instead of parquet files
+4. **Lightweight API** - `api_vercel.py` with no ML model loading
 
-### 1. Deploy Frontend to Vercel
-✅ Push to GitHub (already done)  
-✅ Import to Vercel  
-✅ Vercel auto-detects Vite  
-✅ Add env var: `VITE_API_URL=https://your-backend-url.com`  
-✅ Deploy!
+### Deployment Size:
+- **Target**: < 50 MB (well under 500 MB Lambda limit)
+- **Dependencies**: ~15-20 MB
+- **Total**: ~30-40 MB
 
-### 2. Deploy Backend Separately
+### Structure:
+```
+backend/
+  api_vercel.py          # Main API (optimized)
+  utils/
+    lightweight_loader.py # JSON data loader
+artifacts_profitpulse/
+  methodology_snapshot.json
+  model_metrics.json
+requirements.txt         # Minimal dependencies
+vercel.json             # Vercel configuration
+.vercelignore           # Exclude unnecessary files
+.python-version         # Python 3.12
+```
 
-#### Option A: Render.com (Free)
-1. Go to [render.com](https://render.com)
-2. Create "New Web Service"
-3. Connect your GitHub repo
-4. Settings:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
-5. Deploy!
+### Endpoints:
+- `GET /` - API info
+- `GET /api/health` - Health check
+- `GET /api/meta` - Dataset metadata
+- `GET /api/summary` - Summary statistics
 
-#### Option B: Railway.app
-1. Go to [railway.app](https://railway.app)
-2. Create new project from GitHub
-3. Railway auto-detects and deploys
-4. Done!
+### Local Testing:
+```bash
+cd backend
+python api_vercel.py
+```
 
-### 3. Connect Frontend to Backend
-In Vercel dashboard:
-- Add environment variable:
-  - Key: `VITE_API_URL`
-  - Value: `https://your-backend-from-render.onrender.com`
-- Redeploy frontend
+### Deploy to Vercel:
+```bash
+vercel --prod
+```
 
-## 🎉 Done!
-
-Your app is now live with:
-- ⚡ Fast frontend on Vercel
-- 🐍 Python backend on Render/Railway
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+### Note:
+For full ML functionality, use the original `api_server.py` on platforms like Render or Railway that support larger deployments.
