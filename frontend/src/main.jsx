@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+// Version info for cache-busting and debugging
+console.log('🚀 ProfitPulse v1.0.1 - Build: ' + Date.now());
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter
