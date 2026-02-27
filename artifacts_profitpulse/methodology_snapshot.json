@@ -20,5 +20,23 @@
       "X4_EPS",
       "X5_NPM"
     ]
+  },
+  "data_info": {
+    "firms": ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH", "III", "JJJ"],
+    "firm_count": 10,
+    "years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "year_min": 2018,
+    "year_max": 2023,
+    "record_count": 60,
+    "total_firms": 10,
+    "high_risk_count": 3,
+    "low_risk_count": 7
+  },
+  "features": {
+    "X1_ROA": "Return on Assets",
+    "X2_ROE": "Return on Equity", 
+    "X3_ROC": "Return on Capital",
+    "X4_EPS": "Earnings per Share",
+    "X5_NPM": "Net Profit Margin"
   }
 }
