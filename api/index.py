@@ -16,6 +16,7 @@ class SimpleDataLoader:
     def __init__(self, artifacts_dir='artifacts_profitpulse'):
         self.artifacts_dir = artifacts_dir
         self._cache = {}
+        self._mock_mode = False
     
     def _load_json(self, filename):
         if filename not in self._cache:
@@ -26,14 +27,60 @@ class SimpleDataLoader:
                 os.path.join(os.path.dirname(__file__), '..', self.artifacts_dir, filename)
             ]
             
+            loaded = False
             for path in possible_paths:
                 if os.path.exists(path):
-                    with open(path, 'r', encoding='utf-8') as f:
-                        self._cache[filename] = json.load(f)
-                    break
-            else:
-                self._cache[filename] = {}
+                    try:
+                        with open(path, 'r', encoding='utf-8') as f:
+                            self._cache[filename] = json.load(f)
+                        loaded = True
+                        break
+                    except Exception as e:
+                        print(f"Error loading {path}: {e}")
+            
+            if not loaded:
+                print(f"Warning: {filename} not found, using mock data")
+                self._mock_mode = True
+                self._cache[filename] = self._get_mock_data(filename)
+        
         return self._cache[filename]
+    
+    def _get_mock_data(self, filename):
+        """Return mock data when files are not available"""
+        if filename == 'methodology_snapshot.json':
+            return {
+                'data_info': {
+                    'firms': ['AAA', 'BBB', 'CCC', 'DDD', 'EEE'],
+                    'firm_count': 5,
+                    'years': [2020, 2021, 2022, 2023],
+                    'year_min': 2020,
+                    'year_max': 2023,
+                    'record_count': 20,
+                    'total_firms': 5,
+                    'high_risk_count': 2,
+                    'low_risk_count': 3
+                },
+                'features': {
+                    'X1_ROA': 'Return on Assets',
+                    'X2_ROE': 'Return on Equity',
+                    'X3_ROC': 'Return on Capital',
+                    'X4_EPS': 'Earnings per Share',
+                    'X5_NPM': 'Net Profit Margin'
+                },
+                'methodology': {
+                    'model': 'Demo Model',
+                    'description': 'This is demo data. Please upload artifacts to see real data.'
+                }
+            }
+        elif filename == 'model_metrics.json':
+            return {
+                'accuracy': 0.85,
+                'precision': 0.82,
+                'recall': 0.88,
+                'f1_score': 0.85,
+                'note': 'Demo metrics - upload artifacts for real metrics'
+            }
+        return {}
     
     def get_metadata(self):
         methodology = self._load_json('methodology_snapshot.json')
