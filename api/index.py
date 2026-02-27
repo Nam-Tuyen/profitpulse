@@ -103,12 +103,24 @@ class SimpleDataLoader:
     def get_summary(self):
         methodology = self._load_json('methodology_snapshot.json')
         metrics = self._load_json('model_metrics.json')
+        stats = self._load_json('summary_stats.json')
         
         return {
             'model_metrics': metrics,
             'methodology': methodology.get('methodology', {}),
-            'data_info': methodology.get('data_info', {})
+            'data_info': methodology.get('data_info', {}),
+            'summary_stats': stats
         }
+    
+    def get_company_list(self):
+        """Get list of all companies"""
+        methodology = self._load_json('methodology_snapshot.json')
+        return methodology.get('data_info', {}).get('firms', [])
+    
+    def get_company_data(self, firm_id):
+        """Get company data"""
+        company_cache = self._load_json('company_cache.json')
+        return company_cache.get(firm_id, None)
 
 data_loader = SimpleDataLoader()
 
@@ -174,11 +186,46 @@ def get_summary():
 
 @app.route('/api/screener', methods=['GET'])
 def screener():
-    return success_response({'message': 'Screener endpoint - under development', 'results': []})
+    try:
+        year = request.args.get('year', type=int)
+        limit = request.args.get('limit', 50, type=int)
+        
+        # Get company list
+        firms = data_loader.get_company_list()
+        
+        # Mock results for now
+        results = []
+        for firm in firms[:limit]:
+            results.append({
+                'FIRM_ID': firm,
+                'year': year or 2023,
+                'label': 0,
+                'score': 0.5
+            })
+        
+        return jsonify({
+            'results': results,
+            'total': len(firms)
+        })
+    except Exception as e:
+        print(f"Error in /api/screener: {e}")
+        return error_response(f'Error in screener: {str(e)}', 500)
 
 @app.route('/api/company/<ticker>', methods=['GET'])
 def get_company(ticker):
-    return success_response({'ticker': ticker.upper(), 'message': 'Company detail endpoint - under development', 'data': []})
+    try:
+        company_data = data_loader.get_company_data(ticker)
+        
+        if company_data:
+            return jsonify({
+                'ticker': ticker,
+                'data': company_data
+            })
+        else:
+            return error_response(f'Company {ticker} not found', 404)
+    except Exception as e:
+        print(f"Error in /api/company/{ticker}: {e}")
+        return error_response(f'Error loading company: {str(e)}', 500)
 
 @app.route('/api/compare', methods=['POST'])
 def compare():
