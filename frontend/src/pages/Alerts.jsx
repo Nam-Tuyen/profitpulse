@@ -250,7 +250,7 @@ const Alerts = () => {
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-900">Borderline bật</span>
-                  <p className="text-xs text-gray-600">|P| < 0.1</p>
+                  <p className="text-xs text-gray-600">|P| &lt; 0.1</p>
                 </div>
               </label>
               
