@@ -4,8 +4,10 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/',
   build: {
     // Tối ưu build size
+    outDir: 'dist',
     minify: 'esbuild',
     target: 'es2015',
     cssCodeSplit: true,

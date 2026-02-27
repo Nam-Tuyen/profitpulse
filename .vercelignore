@@ -44,8 +44,8 @@ DATA_FLOW.md
 .git/
 .gitignore
 
-# Frontend source (deployed separately)
-frontend/
+# Frontend - keep source, ignore build artifacts and node_modules
+frontend/node_modules/
 node_modules/
 
 # Shell scripts
