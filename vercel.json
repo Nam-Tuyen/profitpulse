@@ -1,13 +1,17 @@
 {
   "version": 2,
-  "buildCommand": "npm ci --production=false && npm run build",
+  "buildCommand": "npm ci --omit=dev --prefer-offline && npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "installCommand": "npm ci --production=false",
+  "installCommand": "npm ci --omit=dev --prefer-offline",
   "framework": "vite",
   "rootDirectory": "frontend",
   "cleanUrls": true,
   "trailingSlash": false,
+  "ignoreCommand": "echo 'Building frontend only'",
+  "github": {
+    "silent": true
+  },
   "headers": [
     {
       "source": "/assets/(.*)",

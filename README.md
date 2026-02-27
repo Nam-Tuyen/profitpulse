@@ -2,25 +2,51 @@
 
 Hệ thống phân tích và dự báo lợi nhuận doanh nghiệp sử dụng Machine Learning (SVM, Random Forest, XGBoost).
 
-> **🚀 DEPLOYMENT GUIDE**  
-> - **Frontend**: Deploy on Vercel (see [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md))  
-> - **Backend**: Deploy on Render/Railway (see [DEPLOYMENT.md](DEPLOYMENT.md))  
-> - **Why split?**: Vercel has 500MB limit, our ML dependencies are ~800MB  
+> **🚀 DEPLOYMENT - SEPARATED ARCHITECTURE**  
 > 
-> **Quick Deploy:**  
-> 1. Push to GitHub ✅  
-> 2. Frontend → Vercel (auto-deploy, ~2-5MB)  
-> 3. Backend → Render.com (click "Deploy to Render" button below)  
+> **Frontend (Vercel)** - Automatically deployed from `/frontend`  
+> - ✅ React + Vite app (~3-5MB)
+> - ✅ Deployed to: https://your-project.vercel.app
+> - ✅ No Python dependencies
 > 
-> [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+> **Backend (Render/Railway)** - Deploy from `/backend`  
+> - 🐍 Python + Flask + ML models (~800MB)
+> - 🔗 Deploy to: Render.com or Railway.app
+> - 📖 See [backend/DEPLOY.md](backend/DEPLOY.md) for instructions
+> 
+> **Why split?** Vercel has 500MB limit. Our ML stack is ~800MB.
 
-> **✅ Backend Fixed & Production Ready** (Feb 27, 2026)  
-> - All type hints corrected (16 errors fixed)  
-> - Unified CLI interface (`backend/main.py`)  
-> - Comprehensive documentation (2,000+ lines)  
-> 
-> **Quick Start:** `python backend/main.py all --use-profitpulse`  
-> **Full Guide:** [QUICK_START.md](QUICK_START.md) | [FIXES_COMPLETE.md](FIXES_COMPLETE.md)
+## 📁 Project Structure
+
+```
+profitpulse/
+├── frontend/              # React app → Deploy to Vercel
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+│
+├── backend/               # Python API → Deploy to Render
+│   ├── app.py            # Flask server
+│   ├── requirements.txt  # Python deps
+│   ├── core/             # ML pipeline
+│   └── utils/            # Utilities
+│
+├── vercel.json           # Vercel config (frontend only)
+└── README.md             # This file
+```
+
+## 🚀 Quick Deploy
+
+### Frontend (Vercel) - Auto Deploy
+1. ✅ Push to GitHub (done automatically)
+2. ✅ Vercel auto-detects and deploys `/frontend`
+3. ✅ Done! Your frontend is live
+
+### Backend (Render.com)
+1. Go to https://render.com
+2. New Web Service → Connect GitHub
+3. Root Directory: `backend`
+4. Deploy! See [backend/DEPLOY.md](backend/DEPLOY.md)
 
 ## 🎯 Tính năng chính
 
