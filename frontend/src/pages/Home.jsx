@@ -222,19 +222,13 @@ const Home = () => {
         />
       </section>
 
-      {/* Helper text for KPIs */}
-      <div className="text-xs sm:text-sm text-muted italic px-2">
-        Các thẻ tổng quan giúp bạn nắm biên độ điểm số và tỷ trọng rủi ro của thị trường trong năm đang xem.
-      </div>
-
       {/* ===== Charts grid (2/3 + 1/3) ===== */}
       {(pieData || scoreDistData) && (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Large area chart */}
           {scoreDistData && (
             <div className="lg:col-span-2 card card-hover p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Phân phối điểm</h3>
-              <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Doanh nghiệp tập trung nhiều ở vùng điểm nào.</p>
+              <h3 className="text-base sm:text-lg font-display font-bold text-white mb-4">Biểu đồ phân phối</h3>
               <div className="chart-container">
                 <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={scoreDistData}>
@@ -252,15 +246,14 @@ const Home = () => {
                 </AreaChart>
               </ResponsiveContainer>
               </div>
-              <ChartCaption caption="Biểu đồ cho bạn thấy doanh nghiệp tập trung nhiều ở vùng điểm nào." />
+              <ChartCaption caption="Biểu đồ cho thấy các doanh nghiệp đang phân bổ ở các vùng điểm như thế nào." />
             </div>
           )}
 
           {/* Pie chart (1/3) */}
           {pieData && (
             <div className="card card-hover p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Phân bổ rủi ro</h3>
-              <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Thị trường nghiêng về rủi ro thấp hay cao.</p>
+              <h3 className="text-base sm:text-lg font-display font-bold text-white mb-4">Biểu đồ phân bổ rủi ro trong năm</h3>
               <div style={{ height: 220 }} className="sm:h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -271,7 +264,7 @@ const Home = () => {
                 </PieChart>
               </ResponsiveContainer>
               </div>
-              <ChartCaption caption="Biểu đồ cho bạn thấy năm này thị trường nghiêng về rủi ro thấp hay rủi ro cao." />
+              <ChartCaption caption="Biểu đồ cho thấy mức độ phân bổ rủi ro thấp và cao giữa các doanh nghiệp." />
             </div>
           )}
         </section>
@@ -282,8 +275,7 @@ const Home = () => {
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp</h3>
-              <p className="text-xs sm:text-sm text-muted">Top 10 doanh nghiệp nổi bật trong năm {currentYear}.</p>
+              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
             </div>
             <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
