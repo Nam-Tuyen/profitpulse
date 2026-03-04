@@ -1,16 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Activity, TrendingUp, BarChart3, Info, AlertTriangle } from 'lucide-react';
+import { Activity, TrendingUp, BarChart3, AlertTriangle } from 'lucide-react';
 import {
   LineChart, Line, ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RTooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import StatsCard from '../components/StatsCard';
-import { safeNum, CHART_CAPTIONS } from '../utils/helpers';
+import { safeNum } from '../utils/helpers';
 
 const ModelPerformance = () => {
   const [meta, setMeta] = useState(null);
@@ -73,7 +72,9 @@ const ModelPerformance = () => {
     }));
   }, [summaries]);
 
-  const currentYearData = summaries.length > 0 ? summaries[summaries.length - 1] : null;
+  const currentYearData = summaries.length > 0
+    ? (summaries.find(s => s.year === 2024) || summaries[summaries.length - 1])
+    : null;
 
   const chartTooltipStyle = { 
     background: 'rgba(26,32,53,0.95)', 
@@ -94,40 +95,34 @@ const ModelPerformance = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModelContextBar />
       <PageIntro
-        text="Trang Stability theo năm cho bạn thấy điểm trung bình và tỷ trọng rủi ro của thị trường biến động ra sao theo thời gian."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+        text="Trang Stability theo năm giúp bạn theo dõi mức điểm lợi nhuận trung bình và tỷ lệ rủi ro cao của toàn thị trường thay đổi như thế nào qua từng năm, từ đó đánh giá được mức độ ổn định hoặc biến động của thị trường."
       />
 
       {/* KPI Cards - Current Year */}
       {currentYearData && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard 
-            title="Năm gần nhất"
+            title="Năm hiện tại"
             value={currentYearData.year}
-            subtitle="Latest year"
             icon={Activity}
             color="purple"
           />
           <StatsCard 
-            title="Avg Score"
+            title="Điểm trung bình"
             value={currentYearData.avg_profit_score != null ? safeNum(currentYearData.avg_profit_score, 2) : 'N/A'}
-            subtitle={`Năm ${currentYearData.year}`}
             icon={TrendingUp}
             color="cyan"
           />
           <StatsCard 
-            title="Risk High"
+            title="Tỷ lệ doanh nghiệp có rủi ro cao"
             value={`${currentYearData.total_firms > 0 ? ((currentYearData.high_risk_count / currentYearData.total_firms) * 100).toFixed(1) : '0'}%`}
-            subtitle={`${currentYearData.high_risk_count} / ${currentYearData.total_firms}`}
             icon={AlertTriangle}
             color="red"
           />
           <StatsCard 
-            title="Số năm"
+            title="Khoảng thời gian"
             value={summaries.length}
-            subtitle="Có dữ liệu"
             icon={BarChart3}
             color="green"
           />
@@ -138,11 +133,8 @@ const ModelPerformance = () => {
       {chartData.length > 0 && (
         <section className="card card-hover p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
-            Điểm lợi nhuận trung bình theo năm
+            Xu hướng Profit Score qua từng năm
           </h3>
-          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">
-            Xu hướng điểm trung bình thị trường qua các năm với min/max range.
-          </p>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
@@ -196,7 +188,7 @@ const ModelPerformance = () => {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <ChartCaption caption={CHART_CAPTIONS.stability_market_chart} />
+          <ChartCaption caption="Biểu đồ cho bạn thấy Profit Score ở ba mốc trung bình, lớn nhất và nhỏ nhất qua từng năm để bạn có được cái nhìn tổng quan về biến động của thị trường." />
         </section>
       )}
 
@@ -204,11 +196,8 @@ const ModelPerformance = () => {
       {chartData.length > 0 && (
         <section className="card card-hover p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
-            Tỷ trọng rủi ro cao theo năm
+            Tỷ lệ doanh nghiệp có mức rủi ro cao qua từng năm
           </h3>
-          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">
-            Phần trăm doanh nghiệp có nhãn rủi ro cao thay đổi qua thời gian.
-          </p>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
@@ -250,7 +239,7 @@ const ModelPerformance = () => {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <ChartCaption caption="Biểu đồ cho bạn thấy tỷ trọng rủi ro cao thay đổi theo từng năm để đánh giá độ ổn định của thị trường." />
+          <ChartCaption caption="Biểu đồ cho bạn thấy tỷ trọng các doanh nghiệp có mức rủi ro cao qua từng năm để giúp bạn đánh giá được mức độ ổn định của thị trường." />
         </section>
       )}
 
@@ -259,15 +248,12 @@ const ModelPerformance = () => {
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6">
             <h3 className="text-base sm:text-lg font-display font-bold text-white">
-              Bảng tổng hợp theo năm
+              Bảng tổng hợp kết quả thống kê theo năm
             </h3>
-            <p className="text-xs sm:text-sm text-muted">
-              Bảng cho bạn nắm thông số dữ liệu và bối cảnh đọc kết quả.
-            </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
             <table className="w-full text-xs sm:text-sm min-w-[640px]">
-              <thead className="bg-white/3 text-muted">
+              <thead className="bg-white/3 text-muted sticky top-0 z-10" style={{ backgroundColor: '#131929' }}>
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Năm</th>
                   <th className="px-4 py-3 text-right font-medium">Tổng DN</th>
@@ -306,23 +292,7 @@ const ModelPerformance = () => {
         </section>
       )}
 
-      {/* Info Box */}
-      <section className="bg-primary-600/10 border border-primary-500/20 rounded-2xl p-5">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-primary-400 mt-0.5 shrink-0" />
-          <div>
-            <h4 className="text-white font-semibold mb-1">Về trang Stability</h4>
-            <p className="text-sm text-slate-300 mb-2">
-              Trang này giúp bạn đánh giá độ ổn định của thị trường theo thời gian. 
-              Nếu điểm trung bình biến động mạnh hoặc tỷ trọng rủi ro cao tăng nhanh, 
-              đó là dấu hiệu cần theo dõi sát hơn.
-            </p>
-            <p className="text-xs text-muted">
-              Dữ liệu được tổng hợp từ {summaries.length} năm: {summaries.map(s => s.year).join(', ')}
-            </p>
-          </div>
-        </div>
-      </section>
+
     </div>
   );
 };
