@@ -1,0 +1,83 @@
+✅ Found load_order.xlsx
+✅ Start uploading from: /Users/namtuyen/Downloads/Project_code/Profit Pulse/profitpulse/data/exports
+📊 Total tables to upload: 16
+
+
+[1/16] ==> TABLE: dim_exchange
+    FILE : dim_exchange.xlsx
+    KEY  : exchange_name,exchange_code
+    ROWS : 2 (before cleaning)
+    CLEAN: 2 (after removing nulls)
+   - Uploaded: 2 rows
+
+[2/16] ==> TABLE: dim_gics_industry
+    FILE : dim_gics_industry.xlsx
+    KEY  : gics_industry_name
+    ROWS : 48 (before cleaning)
+    CLEAN: 48 (after removing nulls)
+   - Uploaded: 48 rows
+
+[3/16] ==> TABLE: dim_gics_sub_industry
+    FILE : dim_gics_sub_industry.xlsx
+    KEY  : gics_sub_industry_name
+    ROWS : 83 (before cleaning)
+    CLEAN: 83 (after removing nulls)
+   - Uploaded: 83 rows
+
+[4/16] ==> TABLE: dim_trbc_industry
+    FILE : dim_trbc_industry.xlsx
+    KEY  : trbc_industry_name
+    ROWS : 87 (before cleaning)
+    CLEAN: 87 (after removing nulls)
+   - Uploaded: 87 rows
+
+[5/16] ==> TABLE: dim_auditor
+    FILE : dim_auditor.xlsx
+    KEY  : auditor_name
+    ROWS : 53 (before cleaning)
+    CLEAN: 53 (after removing nulls)
+   - Uploaded: 53 rows
+
+[6/16] ==> TABLE: companies
+    FILE : companies.xlsx
+    KEY  : symbol
+    ROWS : 628 (before cleaning)
+    CLEAN: 628 (after removing nulls in critical columns)
+Traceback (most recent call last):
+  File "/Users/namtuyen/Downloads/Project_code/Profit Pulse/profitpulse/scripts/supabase/upload_data.py", line 182, in <module>
+    main()
+  File "/Users/namtuyen/Downloads/Project_code/Profit Pulse/profitpulse/scripts/supabase/upload_data.py", line 176, in main
+    upload_table(table, df, on_conflict)
+  File "/Users/namtuyen/Downloads/Project_code/Profit Pulse/profitpulse/scripts/supabase/upload_data.py", line 103, in upload_table
+    sb.table(table).upsert(batch, on_conflict=on_conflict).execute()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 47, in execute
+    r = self.request.send()
+        ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/postgrest/base_request_builder.py", line 81, in send
+    return self.session.request(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/httpx/_client.py", line 812, in request
+    request = self.build_request(
+              ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/httpx/_client.py", line 378, in build_request
+    return Request(
+           ^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/httpx/_models.py", line 408, in __init__
+    headers, stream = encode_request(
+                      ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/httpx/_content.py", line 216, in encode_request
+    return encode_json(json)
+           ^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/httpx/_content.py", line 177, in encode_json
+    body = json_dumps(
+           ^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+ValueError: Out of range float values are not JSON compliant

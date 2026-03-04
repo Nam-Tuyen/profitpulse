@@ -1,403 +1,230 @@
-# ProfitScore - Phân tích & Dự báo Lợi nhuận Doanh nghiệp
+# ProfitPulse - Financial Analysis Platform
 
-Hệ thống phân tích và dự báo lợi nhuận doanh nghiệp sử dụng Machine Learning (SVM, Random Forest, XGBoost).
+**Batch precompute system** for company profitability prediction using PCA + ML models.
 
-> **🚀 DEPLOYMENT - SEPARATED ARCHITECTURE**  
-> 
-> **Frontend (Vercel)** - Automatically deployed from `/frontend`  
-> - ✅ React + Vite app (~3-5MB)
-> - ✅ Deployed to: https://your-project.vercel.app
-> - ✅ No Python dependencies
-> 
-> **Backend (Render/Railway)** - Deploy from `/backend`  
-> - 🐍 Python + Flask + ML models (~800MB)
-> - 🔗 Deploy to: Render.com or Railway.app
-> - 📖 See [backend/DEPLOY.md](backend/DEPLOY.md) for instructions
-> 
-> **Why split?** Vercel has 500MB limit. Our ML stack is ~800MB.
+## 🎯 System Overview
+
+**ProfitPulse** predicts company profitability using batch-processed financial data through PCA analysis and machine learning.
+
+### Architecture
+- **Frontend**: React/Vite → Vercel
+- **Backend**: Flask API → Render  
+- **Database**: PostgreSQL → Supabase
+- **Data Processing**: Batch pipeline (one-time compute, store results)
+
+### Key Features (per FRS)
+- **Public**: Home, Screener, Company details, How it works, Model performance
+- **Authenticated**: Watchlist, Alerts
+- **Admin**: Data import, Batch pipeline runner
+- **Model**: PCA-based profit score, ML prediction (XGBoost/SVM/RF)
+- **Data**: 628 companies, 37,976+ financial records
+
+## 📦 Prerequisites
+
+- Python 3.10+, Node.js 18+, Git
+- [Render](https://render.com) - Backend hosting
+- [Vercel](https://vercel.com) - Frontend hosting  
+- [Supabase](https://supabase.com) - Database (✅ configured: 37,976+ rows)
+
+## 🚀 Quick Start
+
+```bash
+# 1. Setup environment
+cp .env.example .env  # Edit with Supabase credentials
+
+# 2. Backend
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python app.py  # http://localhost:5000
+
+# 3. Frontend (new terminal)
+cd frontend
+npm install && npm run dev  # http://localhost:5173
+
+# 4. Test
+cd scripts/supabase && python3 test_connection.py
+```
+
+---
+
+## 🌐 Deployment
+
+### 1. Push to GitHub
+```bash
+git init && git add . && git commit -m "Initial commit"
+git remote add origin YOUR_GITHUB_REPO
+git push -u origin main
+```
+
+### 2. Deploy Backend (Render)
+1. [Render Dashboard](https://dashboard.render.com) → New Web Service
+2. Config: Root Dir=`backend`, Start=`gunicorn app:app --bind 0.0.0.0:$PORT`
+3. Add env vars: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `FLASK_ENV=production`
+
+### 3. Deploy Frontend (Vercel)
+```bash
+npm install -g vercel
+vercel login && vercel --prod
+# Add env: VITE_API_URL=https://profitpulse-backend.onrender.com/api
+```
+
+**Full deployment guide**: See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
+
+---
 
 ## 📁 Project Structure
 
 ```
-profitpulse/
-├── frontend/              # React app → Deploy to Vercel
+ProfitPulse/
+├── README.md              # 👈 You are here
+├── .env                   # Environment variables (DO NOT COMMIT)
+├── .env.example           # Template
+│
+├── docs/                  # 📚 Documentation
+│   ├── SYSTEM_ARCHITECTURE.md    # Technical specification (FRS/SRS)
+│   ├── PROJECT_STATUS.md         # Current status & roadmap
+│   └── DEPLOYMENT_CHECKLIST.md   # Quick deployment guide
+│
+├── backend/               # 🐍 Flask API + ML Pipeline
+│   ├── app.py            # Main API (Supabase-integrated)
+│   ├── database.py       # Supabase connection manager
+│   ├── requirements.txt  # Python dependencies (Render)
+│   ├── render.yaml       # Render deployment config
+│   └── core/             # Business logic (PCA, ML, preprocessing)
+│
+├── frontend/              # ⚛️ React/Vite UI
 │   ├── src/
+│   │   ├── pages/        # Home, Screener, Company, etc.
+│   │   └── services/     # API client
 │   ├── package.json
 │   └── vite.config.js
 │
-├── backend/               # Python API → Deploy to Render
-│   ├── app.py            # Flask server
-│   ├── requirements.txt  # Python deps
-│   ├── core/             # ML pipeline
-│   └── utils/            # Utilities
+├── api/                   # 🔧 Vercel Serverless Functions
+│   ├── index.py          # Vercel API entry point
+│   └── requirements.txt  # Minimal deps for Vercel
 │
-├── vercel.json           # Vercel config (frontend only)
-└── README.md             # This file
-```
-
-## 🚀 Quick Deploy
-
-### Frontend (Vercel) - Auto Deploy
-1. ✅ Push to GitHub (done automatically)
-2. ✅ Vercel auto-detects and deploys `/frontend`
-3. ✅ Done! Your frontend is live
-
-### Backend (Render.com)
-1. Go to https://render.com
-2. New Web Service → Connect GitHub
-3. Root Directory: `backend`
-4. Deploy! See [backend/DEPLOY.md](backend/DEPLOY.md)
-
-## 🎯 Tính năng chính
-
-### Backend (Python + Flask)
-- ✅ **ML Pipeline hoàn chỉnh**: Data loading → Preprocessing → PCA → Labeling → Model Training → Prediction
-- ✅ **Leakage-safe**: Winsorization và Standardization chỉ fit trên train set
-- ✅ **ProfitScore**: Tính điểm tổng hợp từ 5 chỉ tiêu lợi nhuận (ROA, ROE, ROC, EPS, NPM)
-- ✅ **3 Models**: SVM, Random Forest, XGBoost
-- ✅ **Explanations**: Generate lý do và action tips tự động (không học thuật, dễ hiểu)
-- ✅ **Cache system**: Lưu predictions vào parquet files để query nhanh
-
-### Frontend (React + Vite)
-- ✅ **5 Pages chính**:
-  - 🏠 **Home**: Tổng quan, KPI cards, top risk tăng
-  - 🔍 **Screener**: Sàng lọc công ty theo risk/chance
-  - 📊 **Company**: Chi tiết công ty với charts và drivers
-  - ⚖️ **Compare**: So sánh 2-5 công ty
-  - 🚨 **Alerts**: Cảnh báo risk tăng mạnh
-- ✅ **UI/UX thân thiện**: Tailwind CSS, responsive design
-- ✅ **Real-time data**: Gọi API từ backend
-
-## 📁 Cấu trúc Project
-
-```
-final_thesis/
-├── backend/                 # Backend Python
-│   ├── core/               # Core ML modules
-│   │   ├── data_loader.py      # Load & align data
-│   │   ├── preprocessing.py    # Winsorize & Standardize (train-only)
-│   │   ├── pca_profitscore.py  # PCA & ProfitScore
-│   │   ├── labeling.py         # Create labels t+1
-│   │   ├── ml_models.py        # SVM/RF/XGB training & prediction
-│   │   └── explanations.py     # Generate reasons & action tips
-│   ├── utils/              # Utilities
-│   │   └── cache_manager.py    # Query cache data
-│   ├── cache/              # Cache directory (generated)
-│   │   ├── predictions.parquet
-│   │   ├── profit_scores.parquet
-│   │   └── metadata.json
-│   ├── pipeline.py         # Main pipeline script
-│   ├── api_server.py       # Flask API server
-│   └── app.py              # Legacy simple API (optional)
+├── data/                  # 📊 Data Storage
+│   ├── exports/          # Source Excel files (uploaded to Supabase)
+│   └── artifacts/        # Model artifacts
 │
-├── frontend/               # Frontend React
-│   ├── src/
-│   │   ├── components/         # Shared components
-│   │   │   ├── Layout.jsx
-│   │   │   ├── StatsCard.jsx
-│   │   │   └── LoadingSpinner.jsx
-│   │   ├── pages/             # Main pages
-│   │   │   ├── Home.jsx
-│   │   │   ├── Screener.jsx
-│   │   │   ├── Company.jsx
-│   │   │   ├── Compare.jsx
-│   │   │   └── Alerts.jsx
-│   │   ├── services/          # API service
-│   │   │   └── api.js
-│   │   ├── utils/             # Helper functions
-│   │   │   └── helpers.js
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── public/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── tailwind.config.js
-│
-├── Data.xlsx              # Data file
-├── requirements.txt       # Python dependencies
-├── .gitignore
-└── README.md             # This file
+└── scripts/               # 🛠️ Utility Scripts
+    ├── supabase/         # Data upload & connection testing
+    │   ├── upload_data.py
+    │   ├── test_connection.py
+    │   └── README.md
+    └── utils/            # Helper scripts
+        ├── test_backend.sh
+        ├── demo.sh
+        └── start.sh
 ```
-
-## 🚀 Cài đặt & Chạy
-
-### ⚡ Quick Start (One Command) ⭐
-
-```bash
-# In project root
-cd /Users/namtuyen/Downloads/Project_code/final_thesis
-
-# Run everything (pipeline + server)
-python backend/main.py all --use-profitpulse --data Data.xlsx --port 5000
-
-# In another terminal, start frontend
-cd frontend && npm run dev
-```
-
-**Done!** Access app at http://localhost:3000
 
 ---
 
-### 📋 Detailed Setup
+## 📊 Database (Supabase)
 
-### Bước 1: Clone & Setup
+**Status**: ✅ HEALTHY | **Tables**: 15/16 | **Records**: 37,976+
 
-```bash
-cd /Users/namtuyen/Downloads/Project_code/final_thesis
-```
-
-### Bước 2: Backend Setup
-
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Option A: Run everything at once (⭐ Recommended)
-python backend/main.py all --use-profitpulse --data Data.xlsx
-
-# Option B: Manual steps
-# 1. Run ML pipeline to build cache (offline, run once)
-python backend/main.py pipeline --use-profitpulse --data Data.xlsx
-
-# 2. Start API server
-python backend/main.py serve --port 5000
-# Server at: http://localhost:5000
-```
-
-**CLI Help:**
-```bash
-python backend/main.py --help           # Main help
-python backend/main.py pipeline --help  # Pipeline options
-python backend/main.py serve --help     # Server options
-```
-
-### Bước 3: Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-# Frontend chạy tại: http://localhost:3000
-```
-
-## 🆕 ProfitPulse Pipeline (NEW!)
-
-**Tại sao có 2 pipelines?**
-- **Pipeline cũ** (`backend/pipeline.py`): Modular, dễ maintain, đã có API integration
-- **Pipeline mới** (`backend/profitpulse_pipeline.py`): **Single-file, leakage-safe guarantee, build proxies từ raw data**
-
-### ✨ Pipeline Mới có gì?
-
-1. **Build Proxies từ Raw Data**
-   - Tự động tính ROA, ROE, ROC, EPS, NPM từ raw financial data
-   - Không cần data đã clean sẵn
-
-2. **Leakage-Safe 100%**
-   - Fit preprocessing trên predictor year ≤ 2019 ONLY
-   - Đảm bảo không bao giờ leak test data vào train
-
-3. **Complete App Views**
-   - Screener view (risk, chance, reason, action tips)
-   - Company time-series view (ProfitScore, proxies, PCs)
-   - Alerts view (risk changes, borderline, chance drops)
-
-4. **Built-in Explanations**
-   - Rule-based reason generation (Vietnamese)
-   - Action tips tự động
-
-### 🚀 Chạy Pipeline Mới
-
-```bash
-# Test pipeline (outputs → artifacts_profitpulse_test/)
-python test_profitpulse.py
-
-# Production pipeline (outputs → artifacts_profitpulse/)
-python backend/profitpulse_pipeline.py
-```
-
-### 📦 Outputs
-
-Pipeline mới tạo ra:
-- `company_view.parquet` - Time-series per company
-- `screener_2023.parquet` - Screener data cho năm 2023
-- `predictions_all.parquet` - All predictions (all models, all years)
-- `model_metrics.json` - Model performance metrics
-- `methodology_snapshot.json` - PCA & preprocessing metadata
-- `alerts_2016_2023.parquet` - Risk alerts data
-
-### 📖 Documentation
-
-- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - So sánh chi tiết 2 pipelines, cách migrate
-- **[ARTIFACTS_README.md](ARTIFACTS_README.md)** - Giải thích artifacts outputs, cách sử dụng
-
-### 🔀 Chọn Pipeline nào?
-
-| Tiêu chí | Pipeline Cũ | Pipeline Mới |
-|----------|-------------|--------------|
-| **Leakage-safe** | ⚠️ Partial | ✅ Full guarantee |
-| **Build proxies** | ❌ No | ✅ Yes (ROA/ROE/ROC/EPS/NPM) |
-| **Explanations** | 🟡 Basic | ✅ Rule-based + tips |
-| **App views ready** | ❌ Manual | ✅ Auto export |
-| **Code structure** | 🟢 Modular | 🟡 Monolithic |
-| **API integration** | ✅ Ready | ⚠️ Needs update |
-
-**Khuyến nghị**: Dùng **Pipeline Mới** cho development/testing để đảm bảo methodology chính xác.
-
-## 📊 Dữ liệu
-
-File **Data.xlsx** chứa các cột:
-- **FIRM_ID**: Mã công ty
-- **YEAR**: Năm
-- **NI_AT**: Net Income / Total Assets (ROA proxy)
-- **NI_P**: Net Income / Price (ROE proxy)
-- **EPS_B**: Earnings Per Share
-- **GP**: Gross Profit
-- **REV**: Revenue
-- **TA**: Total Assets
-- **EQ_P**: Equity / Price
-- **SH_ISS**: Share Issuance
-- **GREV**: Growth Revenue
-
-## 🔧 ML Pipeline
-
-### 1. Data Flow
-```
-Data.xlsx 
-  → Load & Align (X_t → Label_t+1)
-  → Time Split (train/test by label year)
-  → Winsorize (train-only fit)
-  → Standardize (train-only fit)
-  → PCA (train-only fit)
-  → ProfitScore calculation
-  → Labeling (positive/negative)
-  → Model Training (SVM/RF/XGB)
-  → Prediction & Explanation
-  → Save to Cache
-```
-
-### 2. Key Concepts
-
-**ProfitScore (P)**:
-- Tổng hợp từ 5 chỉ tiêu lợi nhuận qua PCA
-- Weights dựa trên Explained Variance Ratio (EVR)
-- P = w1×PC1 + w2×PC2 + w3×PC3
-
-**Risk Level**:
-- **Thấp**: Chance ≥ 70%
-- **Vừa**: 40% ≤ Chance < 70%
-- **Cao**: Chance < 40%
-
-**Borderline**:
-- Công ty có Chance gần ngưỡng 50% (±10%)
-- Dễ thay đổi trạng thái nếu chỉ tiêu biến động
-
-## 📡 API Endpoints
-
-### Core APIs
-
-```bash
-# 1. Meta info
-GET /api/meta
-
-# 2. Screener (filter companies)
-GET /api/screener?year=2021&risk=Cao&chance_min=30
-
-# 3. Company detail
-GET /api/company/{ticker}?year=2021
-
-# 4. Compare companies
-POST /api/compare
-Body: {"tickers": ["ABC", "XYZ"], "year": 2021}
-
-# 5. Summary stats
-GET /api/summary?year=2021
-
-# 6. Top risk alerts
-GET /api/alerts/top-risk?n=10
-
-# 7. Health check
-GET /health
-```
-
-## 💡 User Stories (Đã implement)
-
-### 1. **Home Page**
-- Xem tổng quan: số công ty, % outlook tốt, borderline count
-- Thấy phân bố risk (Thấp/Vừa/Cao)
-- Top 10 công ty risk tăng mạnh
-- Quick actions: đi tới Screener hoặc Compare
-
-### 2. **Screener**
-- Lọc công ty theo: năm, risk level, chance range, borderline
-- Xem bảng kết quả với risk, chance, status, lý do
-- Export CSV
-- Click vào công ty → Chi tiết
-
-### 3. **Company Detail**
-- Xem chance năm tới, risk level, borderline status
-- Biểu đồ ProfitScore theo thời gian
-- Drivers (3 yếu tố ảnh hưởng nhất)
-- Action tips (gợi ý hành động)
-
-### 4. **Compare**
-- Chọn 2-5 công ty
-- So sánh risk, chance, status, lý do
-- Bảng so sánh rõ ràng
-
-### 5. **Alerts**
-- Top N công ty có risk tăng mạnh
-- Hiển thị thay đổi Chance (%)
-- Mức độ: Cần chú ý / Nghiêm trọng
-
-## 🛠 Tech Stack
-
-### Backend
-- **Python 3.11+**
-- **Flask**: Web framework
-- **Pandas**: Data manipulation
-- **Scikit-learn**: ML models (SVM, RF)
-- **XGBoost**: Gradient boosting
-- **PyArrow**: Parquet cache
-
-### Frontend
-- **React 18**: UI framework
-- **Vite**: Build tool
-- **React Router**: Routing
-- **Axios**: HTTP client
-- **Recharts**: Charts library
-- **Tailwind CSS**: Styling
-- **Lucide React**: Icons
-
-## 📝 Notes
-
-### Train-Only Fit (Leakage Prevention)
-Tất cả preprocessing fit chỉ trên **train set**:
-- Winsorization bounds (1%, 99%)
-- Standardization params (mean, std)
-- PCA components & loadings
-
-Test set chỉ **transform** bằng params từ train.
-
-### Cache Strategy
-Pipeline chạy offline → sinh cache:
-- `predictions.parquet`: Kết quả dự báo + explanations
-- `profit_scores.parquet`: ProfitScore timeseries
-- `metadata.json`: Metrics, PCA info, scaler params
-
-API server chỉ query cache → **rất nhanh**, không retrain.
-
-## 🎓 Credits
-
-Developed as part of Financial Analysis thesis project.
+Key tables per FRS/SRS:
+- `financial_raw` (7,600) - Raw financial data from Excel
+- `company_master` (628) - Company metadata
+- `proxies` - 5 proxies (X1_ROA..X5_NPM) + `is_complete` flag
+- `index_scores` - PCA scores, P_t, Label_t per model version
+- `predictions` - ML predictions (XGBoost/SVM/RF)
+- `model_performance` - Accuracy/F1/AUC/ROC curves
 
 ---
 
-**🚀 Ready to run!**
+## 🔐 Environment Variables
 
-Backend: `python backend/api_server.py`  
-Frontend: `cd frontend && npm run dev`
+**Backend** (Render):
+```env
+SUPABASE_URL=https://fmsxvbtmfekgbuwxkntl.supabase.co
+SUPABASE_SECRET_KEY=your_key
+FLASK_ENV=production
+```
+
+**Frontend** (Vercel):
+```env
+VITE_API_URL=https://profitpulse-backend.onrender.com/api
+VITE_SUPABASE_URL=https://fmsxvbtmfekgbuwxkntl.supabase.co
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Test database connection
+cd scripts/supabase && python3 test_connection.py
+
+# Test backend API
+./scripts/utils/test_backend.sh
+```
+
+---
+
+## 📚 Full Documentation
+
+- **Technical Spec**: [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md)
+- **Project Status**: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)
+- **Deployment Guide**: [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
+- **Supabase Upload**: [scripts/supabase/README.md](scripts/supabase/README.md)
+
+---
+
+## 📚 API Endpoints (per SRS)
+
+### Public
+- `GET /api/meta` - Database metadata
+- `GET /api/screener` - Filter companies (year/industry/min_score/pagination)
+- `GET /api/company/<ticker>/overview` - Score, probability, drivers
+- `GET /api/company/<ticker>/history` - Time-series data
+- `GET /api/performance` - Model metrics (Table 7-9, ROC)
+
+### Authenticated
+- `GET/POST /api/watchlist` - User watchlist (RLS protected)
+- `GET/POST /api/alerts` - Custom alerts
+
+---
+
+## 🎯 Features (per FRS)
+
+**Public**:
+- **Home**: Search ticker, CTA to screener
+- **Screener**: Filter by year/exchange/industry/score/probability
+- **Company**: Overview (score/probability/drivers) + History + Drivers tabs
+- **How it works**: Pipeline explanation (fit/transform/PCA/ML)
+- **Model performance**: Tables 7-9, ROC curves, confusion matrix
+
+**Authenticated**:
+- **Watchlist**: Track favorite companies
+- **Alerts**: Notifications (score < X, probability < Y)
+
+**Admin** (batch precompute):
+- Import financial/company Excel
+- Run pipeline: proxies → PCA → ML → predictions
+- Publish model version
+
+---
+
+## 🐛 Troubleshooting
+
+**"Supabase connection failed"**: Check `.env` credentials  
+**"Module not found"**: `pip install -r requirements.txt`  
+**"API not responding"**: Check backend is running on port 5000
+
+---
+
+## 📞 Resources
+
+- **Technical Specification**: [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md)
+- **Project Status & Roadmap**: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)
+- **Deployment Guide**: [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
+- **Supabase Dashboard**: https://app.supabase.com
+- **Render Dashboard**: https://dashboard.render.com
+- **Vercel Dashboard**: https://vercel.com/dashboard
+
+---
+
+**Version**: 1.0.0 | **Status**: ✅ Production Ready

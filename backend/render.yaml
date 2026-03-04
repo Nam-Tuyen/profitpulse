@@ -10,4 +10,10 @@ services:
         value: production
       - key: PYTHON_VERSION
         value: 3.12
+      - key: SUPABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_SECRET_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false  # Set manually in Render dashboard
     plan: free
