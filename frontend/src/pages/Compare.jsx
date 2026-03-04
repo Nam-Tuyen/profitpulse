@@ -63,6 +63,7 @@ const Compare = () => {
     try {
       const res = await apiService.compareCompanies(selectedTickers, year);
       setComparison(res.comparison || []);
+      const tsResults = {};
       const finResults = {};
       await Promise.all(
         selectedTickers.map(async (t) => {
@@ -168,11 +169,10 @@ const Compare = () => {
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Mã</th>
                   <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip></th>
-                  <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.percentile}>Percentile</Tooltip></th>
                   <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
-                  <th className="px-4 py-3 text-right font-medium">PC1</th>
-                  <th className="px-4 py-3 text-right font-medium">PC2</th>
-                  <th className="px-4 py-3 text-right font-medium">PC3</th>
+                  <th className="px-4 py-3 text-right font-medium">ROA</th>
+                  <th className="px-4 py-3 text-right font-medium">ROE</th>
+                  <th className="px-4 py-3 text-right font-medium">NPM</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/6">
@@ -184,13 +184,12 @@ const Compare = () => {
                     <tr key={idx} className="hover:bg-white/3 transition">
                       <td className="px-4 py-3 font-semibold text-white">{firmId}</td>
                       <td className="px-4 py-3 text-right font-mono text-white">{safeNum(score, 2)}</td>
-                      <td className="px-4 py-3 text-right text-slate-300">{c.percentile_year ?? c.percentile ?? 'N/A'}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc1, 2)}</td>
-                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc2, 2)}</td>
-                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc3, 2)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.X1_ROA, 2)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.X2_ROE, 2)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.X5_NPM, 2)}</td>
                     </tr>
                   );
                 })}

@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import Screener from './pages/Screener';
 import Company from './pages/Company';
 import Compare from './pages/Compare';
-import Alerts from './pages/Alerts';
 import About from './pages/About';
 import ModelPerformance from './pages/ModelPerformance';
 
@@ -18,7 +17,6 @@ function App() {
           <Route path="/screener" element={<Screener />} />
           <Route path="/company/:ticker" element={<Company />} />
           <Route path="/compare" element={<Compare />} />
-          <Route path="/alerts" element={<Alerts />} />
           <Route path="/performance" element={<ModelPerformance />} />
           <Route path="/about" element={<About />} />
         </Routes>

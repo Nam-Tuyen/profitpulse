@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, Search, AlertTriangle, GitCompare, Menu, X,
+  Home, Search, GitCompare, Menu, X,
   Info, Activity, ChevronLeft, User,
 } from 'lucide-react';
 
@@ -26,14 +26,13 @@ const Layout = ({ children }) => {
   ];
 
   const navInsights = [
-    { name: 'Cảnh báo', href: '/alerts', icon: AlertTriangle },
     { name: 'Mô hình', href: '/performance', icon: Activity },
     { name: 'Giới thiệu', href: '/about', icon: Info },
   ];
 
   const allNav = [...navMain, ...navInsights];
   /* Bottom bar shows max 5 items on mobile */
-  const bottomNav = [navMain[0], navMain[1], navInsights[0], navInsights[1], navInsights[2]];
+  const bottomNav = [navMain[0], navMain[1], navMain[2], navInsights[0], navInsights[1]];
 
   const isActive = (path) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
