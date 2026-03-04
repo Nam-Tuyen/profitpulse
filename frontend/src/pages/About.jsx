@@ -113,7 +113,7 @@ const About = () => {
               Giải thích
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              Đưa ra <strong>lý do ngắn</strong> dựa trên ngưỡng các chỉ tiêu (ProfitScore < -0.5, ROA < 0.02, NPM < 0.03) 
+              Đưa ra <strong>lý do ngắn</strong> dựa trên ngưỡng các chỉ tiêu (ProfitScore &lt; -0.5, ROA &lt; 0.02, NPM &lt; 0.03) 
               và <strong>gợi ý hành động</strong> cụ thể cho người dùng.
             </p>
           </div>
