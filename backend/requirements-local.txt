@@ -1,16 +1,21 @@
 # Flask & API
 Flask==3.0.0
 flask-cors==4.0.0
+Werkzeug==3.0.1
+gunicorn==21.2.0
 
-# Data Processing
+# Database
+supabase==2.3.0
+
+# Data Processing (optimized for production)
 pandas==2.1.4
 numpy==1.26.2
-openpyxl==3.1.2
-pyarrow==14.0.1
 
-# Machine Learning
+# Machine Learning (lighter version)
 scikit-learn==1.3.2
-xgboost==2.0.3
+
+# Excel support (needed for Data.xlsx)
+openpyxl==3.1.2
 
 # Utils
 python-dotenv==1.0.0
