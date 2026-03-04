@@ -103,14 +103,21 @@ class SupabaseDB:
     
     def get_index_scores(self, ticker: Optional[str] = None,
                         year: Optional[int] = None) -> Sequence[Dict]:
-        """Get index scores with optional filters"""
+        """Get index scores with optional filters (maps p_t → profit_score)"""
         filters = {}
         if ticker:
             filters['ticker'] = ticker
         if year:
             filters['year'] = year
         
-        return self.query_table('index_scores', filters=filters, order_by='-year')
+        results = self.query_table('index_scores', filters=filters, order_by='-year')
+        
+        # Map p_t → profit_score for API compatibility
+        for row in results:
+            if 'p_t' in row:
+                row['profit_score'] = row['p_t']
+        
+        return results
     
     def get_latest_year(self) -> int:
         """Get the latest year available in data"""
