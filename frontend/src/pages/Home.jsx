@@ -124,13 +124,13 @@ const Home = () => {
           <p className="text-slate-300 leading-relaxed mb-2">
             Trang chủ giúp bạn quan sát được tổng quan lợi nhuận của thị trường theo năm đồng thời cho phép bạn tìm hoặc dùng bộ lọc để chọn lọc nhóm cổ phiếu hoặc doanh nghiệp cần phân tích. Dữ liệu được thu thập từ năm 1999 đến 2025, mô hình kiểm định trong giai đoạn 2021 đến 2024
           </p>
-          <div className="flex items-start gap-1.5 text-amber-400">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <p className="text-xs italic font-semibold">
-              Lưu ý: Nội dung trên ProfitPulse chỉ phục vụ phân tích, cung cấp thêm góc nhìn và không phải khuyến nghị mua bán.
-            </p>
-          </div>
         </div>
+      </div>
+      <div className="flex items-start gap-2 text-amber-400 px-3">
+        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+        <p className="text-xs italic font-semibold">
+          Lưu ý: Nội dung trên ProfitPulse chỉ phục vụ phân tích, cung cấp thêm góc nhìn và không phải khuyến nghị mua bán.
+        </p>
       </div>
 
       {/* ===== Year Selector ===== */}
@@ -274,9 +274,7 @@ const Home = () => {
       {topCompanies.length > 0 && (
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
-            </div>
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear} theo bộ lọc người dùng đã chọn</h3>
             <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
             </Link>

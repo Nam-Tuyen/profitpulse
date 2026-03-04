@@ -1,103 +1,109 @@
-import { Database, BookOpen, ShieldCheck, AlertTriangle, BarChart3, Layers } from 'lucide-react';
-import ModelContextBar from '../components/ModelContextBar';
-import PageIntro from '../components/PageIntro';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 const About = () => {
-  const methodologyCards = [
-    {
-      icon: Database,
-      title: 'Dữ liệu gốc',
-      desc: 'ProfitPulse sử dụng dữ liệu báo cáo tài chính đã kiểm toán từ các công ty niêm yết trên sàn chứng khoán Việt Nam. Dữ liệu được chuẩn hóa và kiểm tra trước khi đưa vào pipeline.',
-    },
-    {
-      icon: Layers,
-      title: 'PCA & Scoring',
-      desc: 'Điểm ProfitScore được tính dựa trên PCA (Phân tích Thành phần Chính) từ 3 thành phần (PC1, PC2, PC3) của các chỉ tiêu tài chính, giúp nén nhiều chiều xuống thành một thang điểm duy nhất.',
-    },
-    {
-      icon: BarChart3,
-      title: 'Percentile & Label',
-      desc: 'Mỗi doanh nghiệp được xếp hạng theo percentile trong năm tương ứng. Nhãn rủi ro (Very High, High, Medium, Low) được gán dựa vào ngưỡng percentile, không phải đánh giá chủ quan.',
-    },
-    {
-      icon: BookOpen,
-      title: 'Minh bạch',
-      desc: 'Toàn bộ pipeline có thể tái tạo lại kết quả. Các hệ số PCA, artifact, và ngưỡng đều được lưu dưới dạng JSON để kiểm chứng và audit.',
-    },
-  ];
-
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModelContextBar />
-      <PageIntro
-        text="Trang giới thiệu giải thích phương pháp luận, cách tính điểm, và các nguyên tắc minh bạch mà ProfitPulse tuân thủ."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
-      />
+      {/* Giới thiệu */}
+      <section className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <h2 className="text-xl sm:text-2xl font-display font-bold text-white">Giới thiệu</h2>
+        <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+          ProfitPulse là website giúp bạn theo dõi và phân tích sức khỏe lợi nhuận của các doanh nghiệp được niêm yết trên sàn chứng khoán tại Việt Nam theo từng năm bằng một bộ chỉ báo đơn giản và dễ quan sát. Thay vì phải đọc nhiều bảng báo cáo tài chính rời rạc, hệ thống tổng hợp các chỉ số lợi nhuận cốt lõi thành một điểm lợi nhuận duy nhất gọi là điểm ProfitScore giúp bạn có thể so sánh các doanh nghiệp trong cùng một năm từ đó nhận diện doanh nghiệp nổi bật và phát hiện sớm các tín hiệu rủi ro.
+        </p>
+        <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+          Khi sử dụng ProfitPulse, bạn có thể bắt đầu từ trang chủ để xem tổng quan thị trường theo từng năm, sau đó tìm mã cổ phiếu bạn quan tâm để mở trang doanh nghiệp và xem chi tiết điểm lợi nhuận, vị trí của doanh nghiệp so với thị trường và xu hướng của doanh nghiệp đó trong nhiều năm. Nếu bạn muốn lọc nhanh một nhóm doanh nghiệp, trang bộ lọc cho phép bạn chọn năm và khoảng điểm để tìm ra danh sách phù hợp, rồi chuyển sang trang so sánh để có thể đưa nhiều doanh nghiệp lên cùng một thang đo để đối chiếu và đánh giá mức ổn định theo thời gian. Trang cảnh báo giúp bạn theo dõi các doanh nghiệp có sự thay đổi đáng chú ý về điểm số và nhãn rủi ro để ưu tiên đi sâu vào kiểm tra và phân tích
+        </p>
+      </section>
 
-      {/* Methodology */}
-      <section>
-        <h2 className="text-base sm:text-lg font-display font-bold text-white mb-3 sm:mb-4">Phương pháp luận</h2>
-        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
-          {methodologyCards.map(({ icon: Icon, title, desc }, idx) => (
-            <div key={idx} className="card card-hover p-4 sm:p-5 space-y-2 sm:space-y-3 anim-stagger" style={{ '--i': idx }}>
-              <div className="w-10 h-10 rounded-xl bg-primary-600/20 flex items-center justify-center">
-                <Icon className="h-5 w-5 text-primary-400" />
-              </div>
-              <h3 className="text-white font-semibold">{title}</h3>
-              <p className="text-sm text-slate-300 leading-relaxed">{desc}</p>
-            </div>
-          ))}
+      {/* Phương pháp luận */}
+      <section className="card p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <h2 className="text-xl sm:text-2xl font-display font-bold text-white">Phương pháp luận</h2>
+
+        {/* Dữ liệu gốc */}
+        <div className="space-y-2">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">Dữ liệu gốc</h3>
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            ProfitPulse sử dụng dữ liệu từ báo cáo tài chính đã kiểm toán của các doanh nghiệp niêm yết trên thị trường chứng khoán Việt Nam. Dữ liệu được chuẩn hóa và kiểm tra chất lượng trước khi đưa vào hệ thống tính toán nhằm đảm bảo các chỉ số được so sánh nhất quán giữa các doanh nghiệp và giữa các năm.
+          </p>
+        </div>
+
+        {/* Điểm ProfitScore */}
+        <div className="space-y-2">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">Điểm ProfitScore</h3>
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            Điểm ProfitScore là điểm lợi nhuận tổng hợp dùng để so sánh nhanh giữa các doanh nghiệp trong cùng một năm. Điểm này được tạo bằng phương pháp phân tích thành phần chính gọi là phân tích thành phần chính (Principal Component Analysis), trong đó nhiều chỉ số tài chính được rút gọn thành ba thành phần đại diện là PC1, PC2, PC3. Ba thành phần này giúp tóm tắt phần lớn thông tin quan trọng của dữ liệu và sau đó được kết hợp để tạo ra thang điểm ProfitScore.
+          </p>
+        </div>
+
+        {/* Xếp hạng phân vị */}
+        <div className="space-y-2">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">Xếp hạng phân vị và nhãn rủi ro</h3>
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            Mỗi doanh nghiệp được xếp hạng theo phân vị trong năm, còn gọi là phân vị (Percentile), để bạn biết doanh nghiệp đang đứng ở đâu so với toàn thị trường trong đúng năm đó. Hệ thống cũng gán nhãn rủi ro theo quy tắc thống kê nhất quán nhằm hỗ trợ theo dõi sớm các trường hợp cần chú ý, trong đó nhãn rủi ro được hiểu là mức cảnh báo dựa trên dữ liệu chứ không phải đánh giá chủ quan.
+          </p>
         </div>
       </section>
 
-      {/* Pipeline Flow */}
-      <section className="card p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-display font-bold text-white mb-3 sm:mb-4">Quy trình pipeline</h3>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-          {['Dữ liệu thô', 'Tiền xử lý', 'PCA fit', 'Scoring', 'Labeling', 'API / Dashboard'].map((step, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 text-white font-medium">
-                <span className="w-6 h-6 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">{i + 1}</span>
-                {step}
-              </span>
-              {i < 5 && <span className="text-muted">→</span>}
-            </div>
-          ))}
+      {/* Quy trình xử lý dữ liệu */}
+      <section className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <h3 className="text-base sm:text-lg font-display font-bold text-white">Quy trình xử lý dữ liệu</h3>
+        <div className="space-y-2.5 text-sm sm:text-base text-slate-300">
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">1</span>
+            <p className="leading-relaxed pt-0.5">Dữ liệu thô được thu thập từ báo cáo tài chính đã kiểm toán.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">2</span>
+            <p className="leading-relaxed pt-0.5">Dữ liệu được tiền xử lý để đảm bảo đúng định dạng và giảm ảnh hưởng của giá trị bất thường.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">3</span>
+            <p className="leading-relaxed pt-0.5">Thực hiện phân tích thành phần chính (Principal Component Analysis) để tạo ra PC1, PC2, PC3.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">4</span>
+            <p className="leading-relaxed pt-0.5">Tính điểm ProfitScore từ các thành phần PC.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">5</span>
+            <p className="leading-relaxed pt-0.5">Gán nhãn rủi ro theo quy tắc đã công bố.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">6</span>
+            <p className="leading-relaxed pt-0.5">Kết quả được cung cấp qua giao diện lập trình ứng dụng (API) và hiển thị trên bảng điều khiển (Dashboard).</p>
+          </div>
         </div>
       </section>
 
-      {/* Trust */}
+      {/* Cam kết minh bạch */}
       <section className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-emerald-400" />
           <h3 className="text-base sm:text-lg font-display font-bold text-white">Cam kết minh bạch</h3>
         </div>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 text-sm sm:text-base text-slate-300">
           {[
-            'Không sử dụng dữ liệu nhạy cảm hoặc dữ liệu nội bộ chưa công bố.',
-            'Pipeline có thể tái tạo 100% kết quả nếu cùng dữ liệu đầu vào.',
-            'Các artifact PCA (loadings, variance) được lưu trữ minh bạch.',
-            'Nhãn rủi ro dựa trên ngưỡng thống kê, không phải nhận định chủ quan.',
-            'Tất cả biểu đồ đều ghi chú nguồn và giải thích.',
+            'ProfitPulse không sử dụng dữ liệu nhạy cảm hoặc dữ liệu nội bộ chưa công bố.',
+            'Quy trình có thể tái tạo kết quả khi dùng cùng nguồn dữ liệu đầu vào.',
+            'Các thông tin PCA như trọng số và tỷ lệ giải thích được lưu để kiểm tra và đối chiếu.',
+            'Nhãn rủi ro dựa trên ngưỡng thống kê và được áp dụng nhất quán theo thời gian.',
+            'Mỗi biểu đồ đều có mô tả ngắn để người dùng hiểu biểu đồ cung cấp thông tin gì.',
           ].map((item, i) => (
-            <li key={i} className="flex items-start gap-2">
+            <li key={i} className="flex items-start gap-2.5">
               <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-              {item}
+              <span className="leading-relaxed">{item}</span>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Disclaimer */}
+      {/* Tuyên bố miễn trừ trách nhiệm */}
       <section className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 sm:p-6">
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
           <div className="space-y-2">
-            <h3 className="text-white font-semibold">Tuyên bố miễn trừ trách nhiệm</h3>
-            <p className="text-sm text-amber-200/80 leading-relaxed">
-              ProfitPulse là công cụ phân tích dữ liệu, <span className="font-semibold text-amber-400">không phải khuyến nghị đầu tư</span>.
-              Kết quả chỉ mang tính tham khảo và không nên được sử dụng làm căn cứ duy nhất cho quyết định mua/bán.
-              Người dùng chịu hoàn toàn trách nhiệm với các quyết định đầu tư của mình.
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Tuyên bố miễn trừ trách nhiệm</h3>
+            <p className="text-sm sm:text-base text-amber-200/90 leading-relaxed">
+              ProfitPulse là công cụ phân tích dữ liệu và không phải công cụ tư vấn đầu tư. Kết quả chỉ mang tính tham khảo và không nên là căn cứ duy nhất cho quyết định mua hoặc bán. Người dùng tự chịu trách nhiệm với mọi quyết định đầu tư của mình.
             </p>
           </div>
         </div>
@@ -105,7 +111,7 @@ const About = () => {
 
       {/* Footer */}
       <div className="text-center text-sm text-muted py-4">
-        Phát triển bởi <span className="text-primary-400 font-medium">ProfitPulse Team</span> — Dữ liệu cập nhật định kỳ.
+        Phát triển bởi <span className="text-primary-400 font-medium">ProfitPulse Team</span> và dữ liệu được cập nhật định kỳ.
       </div>
     </div>
   );
