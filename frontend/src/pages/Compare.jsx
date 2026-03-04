@@ -79,8 +79,7 @@ const Compare = () => {
         })
       );
       setTimeseriesMap(tsResults);
-      setFinancialMap(fin
-      setTimeseriesMap(tsResults);
+      setFinancialMap(finResults);
     } catch (err) {
       console.error(err);
       setError('Không thể so sánh. Kiểm tra lại mã hoặc năm.');
