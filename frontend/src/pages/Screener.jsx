@@ -7,7 +7,6 @@ import {
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
@@ -92,13 +91,12 @@ const Screener = () => {
   const years = meta?.years || [];
 
   const inputClasses = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white placeholder:text-muted focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm min-h-[40px]';
+  const selectClasses = 'w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white placeholder:text-muted focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm min-h-[40px]';
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModelContextBar selectedYear={year} />
       <PageIntro
-        text="Trang bộ lọc giúp bạn lọc doanh nghiệp theo năm và theo khoảng điểm lợi nhuận để tìm nhanh nhóm mã đáng xem."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+        text="Trang bộ lọc giúp bạn chọn nhanh nhóm doanh nghiệp theo năm và theo khoảng điểm lợi nhuận, để tìm ra các mã đáng xem mà không cần mở từng mã thủ công. Kết quả hiển thị điểm lợi nhuận, phân vị và nhãn rủi ro để bạn quyết định mã nào nên xem chi tiết tiếp."
       />
 
       {/* Filter Panel */}
@@ -110,7 +108,7 @@ const Screener = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
           <div>
             <label className="block label-xs mb-1.5">Năm</label>
-            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={inputClasses}>
+            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={selectClasses}>
               {years.map((y) => (<option key={y} value={y}>{y}</option>))}
             </select>
           </div>
@@ -124,7 +122,7 @@ const Screener = () => {
           </div>
           <div>
             <label className="block label-xs mb-1.5">Số kết quả</label>
-            <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className={inputClasses}>
+            <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className={selectClasses}>
               {[20, 50, 100, 200].map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </div>
@@ -155,34 +153,27 @@ const Screener = () => {
 
         return (
           <section className="card p-4 sm:p-6 bg-surface-100 border border-primary-500/10">
-            <h3 className="text-sm font-semibold text-white mb-3">Thống kê nhanh</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">Kết quả thống kê</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white/5 p-3 rounded-xl">
-                <p className="text-xs text-muted mb-1">Avg Profit Score</p>
+                <p className="text-xs text-muted mb-1">Trung bình Profit Score</p>
                 <p className="text-xl font-bold text-white">
                   {avgScore != null ? safeNum(avgScore, 2) : 'N/A'}
                 </p>
               </div>
               <div className="bg-white/5 p-3 rounded-xl">
-                <p className="text-xs text-muted mb-1">High Risk Share</p>
+                <p className="text-xs text-muted mb-1">Tỷ lệ doanh nghiệp thuộc rủi ro cao</p>
                 <p className="text-xl font-bold text-rose-400">
                   {highRiskShare.toFixed(1)}%
                 </p>
-                <p className="text-xs text-muted mt-1">{highRiskCount} / {results.length}</p>
               </div>
               <div className="bg-white/5 p-3 rounded-xl">
-                <p className="text-xs text-muted mb-1">Missing Data</p>
+                <p className="text-xs text-muted mb-1">Mức độ thiếu sót dữ liệu</p>
                 <p className="text-xl font-bold text-amber-400">
                   {missingDataShare.toFixed(1)}%
                 </p>
-                <p className="text-xs text-muted mt-1">
-                  {missingPercentile} thiếu percentile, {missingPC} thiếu PC
-                </p>
               </div>
             </div>
-            <p className="text-xs text-muted italic mt-3">
-              Thống kê nhanh giúp bạn biết danh sách lọc đang nghiêng về nhóm mạnh hay nhóm rủi ro cao.
-            </p>
           </section>
         );
       })()}
@@ -190,8 +181,7 @@ const Screener = () => {
       {/* Top 10 bar chart — alternating purple/cyan */}
       {!loading && top10Chart.length > 0 && (
         <section className="card card-hover p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Top 10 theo điểm</h3>
-          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Nhận ra nhóm dẫn đầu ngay trong kết quả lọc.</p>
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-3">Top 10 doanh nghiệp xếp theo Profit Score</h3>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={top10Chart} layout="vertical" margin={{ left: 40, right: 8, top: 4, bottom: 4 }}>
@@ -207,7 +197,7 @@ const Screener = () => {
             </BarChart>
           </ResponsiveContainer>
           </div>
-          <ChartCaption caption="Biểu đồ giúp bạn nhận ra nhóm dẫn đầu ngay trong kết quả lọc." />
+          <ChartCaption caption="Biểu đồ xếp hạng top 10 doanh nghiệp từ trên xuống xếp theo Profit Score trong khoảng điểm và mốc thời gian bạn đã chọn." />
         </section>
       )}
 
@@ -220,9 +210,9 @@ const Screener = () => {
               <Download className="h-4 w-4" /> Xuất CSV
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[1000px] overflow-y-auto">
             <table className="w-full text-xs sm:text-sm min-w-[700px]">
-              <thead className="bg-white/3 text-muted">
+              <thead className="text-muted sticky top-0 z-10" style={{ backgroundColor: '#131929' }}>
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">#</th>
                   <th className="px-4 py-3 text-left font-medium cursor-pointer select-none" onClick={() => handleSort('firm_id')}>Mã <SortIcon col="firm_id" /></th>
