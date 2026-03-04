@@ -107,3 +107,6 @@ db.sqlite3-journal
 # Build outputs
 *.wasm
 *.pyc
+
+# Upload logs
+scripts/supabase/upload_log*.txt
