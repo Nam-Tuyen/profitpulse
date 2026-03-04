@@ -8,12 +8,12 @@
  * ============================================================ */
 
 :root {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
   color: #e2e8f0;
-  background-color: #0F1117;
+  background-color: #0D1117;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,7 +27,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh; /* dynamic viewport height for mobile */
-  background: linear-gradient(135deg, #0F1117 0%, #161B2E 100%);
+  background: linear-gradient(135deg, #0D1117 0%, #0A0E1A 100%);
   overflow-x: hidden;
 }
 
@@ -50,8 +50,8 @@ body {
  * ============================================================ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
 
 /* Hide scrollbar on mobile for horizontal scrollable areas */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -63,9 +63,9 @@ body {
 @layer components {
   .card {
     @apply rounded-xl md:rounded-2xl;
-    background: #1A2035;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 20px rgba(124, 58, 237, 0.05);
+    background: #131929;
+    border: 1px solid rgba(99, 102, 241, 0.10);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 20px rgba(99, 102, 241, 0.05);
   }
 
   .card-hover {
@@ -74,7 +74,7 @@ body {
   @media (hover: hover) {
     .card-hover:hover {
       transform: scale(1.01);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(124, 58, 237, 0.12);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(99, 102, 241, 0.12);
     }
   }
 
@@ -83,15 +83,15 @@ body {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5
            font-display font-semibold text-sm text-white rounded-xl
            transition-all duration-200 active:scale-95;
-    background: linear-gradient(135deg, #7C3AED, #6D28D9);
-    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
+    background: linear-gradient(135deg, #6366F1, #22D3EE);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
     -webkit-tap-highlight-color: transparent;
     min-height: 40px;
   }
   @media (hover: hover) {
     .btn-primary:hover {
-      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+      background: linear-gradient(135deg, #818CF8, #67E8F9);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
     }
   }
 
@@ -131,8 +131,8 @@ body {
   /* Metric number (responsive) */
   .metric {
     @apply font-display font-extrabold text-white leading-none;
-    font-size: clamp(1.5rem, 2.5vw, 3rem);
-    letter-spacing: -0.02em;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    letter-spacing: -0.03em;
   }
 
   /* Label text — small uppercase */
@@ -237,8 +237,8 @@ body {
   .recharts-text { font-size: 12px; }
 }
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: rgba(26, 32, 53, 0.95) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: rgba(19, 25, 41, 0.95) !important;
+  border: 1px solid rgba(99, 102, 241, 0.15) !important;
   border-radius: 12px !important;
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;

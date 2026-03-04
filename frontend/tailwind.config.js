@@ -9,42 +9,58 @@ export default {
       colors: {
         /* Deep space background layers */
         surface: {
-          DEFAULT: '#0F1117',
+          DEFAULT: '#0D1117',
+          sidebar: '#0A0E1A',
+          card: '#131929',
           50: '#161B2E',
           100: '#1A2035',
           200: '#1E2540',
           300: '#252B45',
           400: '#2D3450',
         },
-        /* Vivid purple-violet primary */
+        /* Indigo primary */
         primary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8B5CF6',
-          600: '#7C3AED',
-          700: '#6D28D9',
-          800: '#5B21B6',
-          900: '#4C1D95',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366F1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
         },
-        /* Cyan / teal secondary */
+        /* Cyan accent */
         accent: {
           50: '#ecfeff',
           100: '#cffafe',
           200: '#a5f3fc',
           300: '#67e8f9',
-          400: '#22d3ee',
+          400: '#22D3EE',
           500: '#06B6D4',
           600: '#0891b2',
           700: '#0e7490',
           800: '#155e75',
           900: '#164e63',
         },
+        /* Violet secondary */
+        violet: {
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#A78BFA',
+          500: '#8B5CF6',
+          600: '#7C3AED',
+          700: '#6D28D9',
+          800: '#5B21B6',
+          900: '#4C1D95',
+        },
         /* Semantic colors */
         positive: '#10B981',
         negative: '#F43F5E',
+        warning: '#F59E0B',
         muted: '#94A3B8',
         risk: {
           low: '#10B981',
@@ -53,12 +69,12 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        body: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Outfit"', 'system-ui', 'sans-serif'],
+        body: ['"Inter"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        glow: '0 0 20px rgba(124, 58, 237, 0.15)',
-        'glow-lg': '0 0 40px rgba(124, 58, 237, 0.2)',
+        glow: '0 0 20px rgba(99, 102, 241, 0.15)',
+        'glow-lg': '0 0 40px rgba(99, 102, 241, 0.2)',
         card: '0 4px 24px rgba(0, 0, 0, 0.3)',
       },
       borderRadius: {

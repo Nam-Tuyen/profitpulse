@@ -11,9 +11,12 @@ import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
-import { safeNum, riskBadge, tickerFromFirmId } from '../utils/helpers';
+import { 
+  safeNum, riskBadge, tickerFromFirmId,
+  formatVND, getFinancialBadge, CHART_CAPTIONS
+} from '../utils/helpers';
 
-const COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#F43F5E'];
+const COLORS = ['#6366F1', '#22D3EE', '#F59E0B', '#F43F5E'];
 
 const Compare = () => {
   const [meta, setMeta] = useState(null);
@@ -23,6 +26,7 @@ const Compare = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [comparison, setComparison] = useState([]);
   const [timeseriesMap, setTimeseriesMap] = useState({});
+  const [financialMap, setFinancialMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -59,15 +63,23 @@ const Compare = () => {
     try {
       const res = await apiService.compareCompanies(selectedTickers, year);
       setComparison(res.comparison || []);
-      const tsResults = {};
+      const finResults = {};
       await Promise.all(
         selectedTickers.map(async (t) => {
           try {
             const d = await apiService.getCompany(t);
             tsResults[t] = (d.timeseries || []).sort((a, b) => a.year - b.year);
           } catch { tsResults[t] = []; }
+          
+          try {
+            const finData = await apiService.getFinancial(t, year);
+            const yearData = (finData.financial_data || []).find(f => f.year === year);
+            finResults[t] = yearData || null;
+          } catch { finResults[t] = null; }
         })
       );
+      setTimeseriesMap(tsResults);
+      setFinancialMap(fin
       setTimeseriesMap(tsResults);
     } catch (err) {
       console.error(err);
@@ -192,6 +204,98 @@ const Compare = () => {
               Một số mã thiếu dữ liệu lịch sử — biểu đồ có thể không đầy đủ.
             </div>
           )}
+        </section>
+      )}
+
+      {/* Financial Comparison Table - P0.3 */}
+      {!loading && comparison.length > 0 && Object.keys(financialMap).length > 0 && (
+        <section className="card overflow-hidden">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6">
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">So sánh chỉ số tài chính — Năm {year}</h3>
+            <p className="text-xs sm:text-sm text-muted">
+              Bảng cho bạn thấy khác biệt về chỉ số nền để giải thích chênh lệch điểm.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[680px]">
+              <thead className="bg-white/3 text-muted">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Mã</th>
+                  <th className="px-4 py-3 text-right font-medium">ROA (%)</th>
+                  <th className="px-4 py-3 text-right font-medium">ROE (%)</th>
+                  <th className="px-4 py-3 text-right font-medium">ROC (%)</th>
+                  <th className="px-4 py-3 text-right font-medium">EPS (VND)</th>
+                  <th className="px-4 py-3 text-right font-medium">NPM (%)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/6">
+                {selectedTickers.map((ticker) => {
+                  const financial = financialMap[ticker];
+                  const roaBadge = financial ? getFinancialBadge('roa', financial.roa) : null;
+                  const roeBadge = financial ? getFinancialBadge('roe', financial.roe) : null;
+                  const rocBadge = financial ? getFinancialBadge('roc', financial.roc) : null;
+                  const npmBadge = financial ? getFinancialBadge('npm', financial.npm) : null;
+                  
+                  return (
+                    <tr key={ticker} className="hover:bg-white/3 transition">
+                      <td className="px-4 py-3 font-semibold text-white">{ticker}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-mono text-white">
+                            {financial && financial.roa != null ? safeNum(financial.roa, 2) : 'N/A'}
+                          </span>
+                          {roaBadge && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roaBadge.className}`}>
+                              {roaBadge.text}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-mono text-white">
+                            {financial && financial.roe != null ? safeNum(financial.roe, 2) : 'N/A'}
+                          </span>
+                          {roeBadge && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roeBadge.className}`}>
+                              {roeBadge.text}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-mono text-white">
+                            {financial && financial.roc != null ? safeNum(financial.roc, 2) : 'N/A'}
+                          </span>
+                          {rocBadge && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${rocBadge.className}`}>
+                              {rocBadge.text}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-white">
+                        {financial && financial.eps != null ? formatVND(financial.eps, 0) : 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-mono text-white">
+                            {financial && financial.npm != null ? safeNum(financial.npm, 2) : 'N/A'}
+                          </span>
+                          {npmBadge && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${npmBadge.className}`}>
+                              {npmBadge.text}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

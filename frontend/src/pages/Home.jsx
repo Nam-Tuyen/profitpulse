@@ -20,7 +20,7 @@ import Tooltip, { TOOLTIPS } from '../components/Tooltip';
 import { safeNum, riskBadge, tickerFromFirmId } from '../utils/helpers';
 
 const PIE_COLORS = ['#10B981', '#F43F5E'];
-const PURPLE = '#7C3AED';
+const PURPLE = '#6366F1';
 const CYAN = '#06B6D4';
 
 const Home = () => {
@@ -86,7 +86,7 @@ const Home = () => {
       <ModelContextBar selectedYear={currentYear} />
 
       {/* ===== Hero ===== */}
-      <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #1A2035 0%, #252060 60%, #3B1F8E 100%)' }}>
+      <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #131929 0%, #1E284E 60%, #3730A3 100%)' }}>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-48 sm:w-96 h-48 sm:h-96 bg-primary-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
@@ -117,13 +117,60 @@ const Home = () => {
         note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
       />
 
-      {/* ===== KPI Cards ===== */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 anim-stagger">
-        <StatsCard title="Tổng DN" value={kpi.total_firms ?? '—'} subtitle={`Năm ${currentYear || '—'}`} icon={Building2} color="purple" />
-        <StatsCard title="Điểm TB" value={kpi.avg_profit_score != null ? safeNum(kpi.avg_profit_score, 2) : '—'} subtitle="Avg Score" icon={BarChart3} color="cyan" />
-        <StatsCard title="Risk Cao" value={kpi.high_risk_count ?? '—'} subtitle="label_t = 1" icon={AlertTriangle} color="red" />
-        <StatsCard title="Risk Thấp" value={kpi.low_risk_count ?? '—'} subtitle="label_t = 0" icon={TrendingUp} color="green" />
+      {/* ===== KPI Cards - P1.1 Enhanced ===== */}
+      <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 anim-stagger">
+        <StatsCard 
+          title="Tổng DN" 
+          value={kpi.total_firms ?? '—'} 
+          subtitle={`Năm ${currentYear || '—'}`} 
+          icon={Building2} 
+          color="purple" 
+        />
+        <StatsCard 
+          title="Điểm TB" 
+          value={kpi.avg_profit_score != null ? safeNum(kpi.avg_profit_score, 2) : '—'} 
+          subtitle="Avg Score" 
+          icon={BarChart3} 
+          color="cyan" 
+        />
+        <StatsCard 
+          title="Min Score" 
+          value={kpi.min_profit_score != null ? safeNum(kpi.min_profit_score, 2) : '—'} 
+          subtitle="Thấp nhất" 
+          icon={TrendingUp} 
+          color="gray" 
+        />
+        <StatsCard 
+          title="Max Score" 
+          value={kpi.max_profit_score != null ? safeNum(kpi.max_profit_score, 2) : '—'} 
+          subtitle="Cao nhất" 
+          icon={TrendingUp} 
+          color="green" 
+        />
+        <StatsCard 
+          title="Risk Cao" 
+          value={kpi.high_risk_count ?? '—'} 
+          subtitle="label_t = 1" 
+          icon={AlertTriangle} 
+          color="red" 
+        />
+        <StatsCard 
+          title="Risk Cao %" 
+          value={
+            kpi.high_risk_count != null && kpi.total_firms != null && kpi.total_firms > 0
+              ? `${((kpi.high_risk_count / kpi.total_firms) * 100).toFixed(1)}%`
+              : '—'
+          } 
+          subtitle="Tỷ trọng rủi ro" 
+          icon={AlertTriangle} 
+          color="red" 
+        />
       </section>
+
+      {/* Helper text for KPIs */}
+      <div className="text-xs sm:text-sm text-muted italic px-2">
+        Các thẻ tổng quan giúp bạn nắm biên độ điểm số và tỷ trọng rủi ro của thị trường trong năm đang xem.
+      </div>
 
       {/* ===== Charts grid (2/3 + 1/3) ===== */}
       {(pieData || scoreDistData) && (

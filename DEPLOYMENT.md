@@ -1,8 +1,8 @@
-# 🚀 Deployment Guide - Production Setup
+# Deployment Guide - Production Setup
 
 Deploy ProfitPulse to production using Render (backend) and Vercel (frontend).
 
-## 📋 Overview
+## Overview
 
 ```
 GitHub Repository (Main Branch)
@@ -14,7 +14,7 @@ profitpulse-ihv0...       (Your Vercel URL)
 Both Connect to Supabase Database
 ```
 
-## 🔧 Backend Deployment (Render)
+## Backend Deployment (Render)
 
 ### Prerequisites
 - Render account (free tier available): https://render.com
@@ -58,7 +58,7 @@ On Render Dashboard → Settings → Environment Variables:
 
 **Expected success message:**
 ```
-✅ Connected to Supabase
+Connected to Supabase
 [INFO] Listening at: http://0.0.0.0:10000
 [INFO] Using worker: sync
 ```
@@ -75,7 +75,7 @@ curl https://profitpulse-ihv0.onrender.com/health
 
 ---
 
-## 🌐 Frontend Deployment (Vercel)
+## Frontend Deployment (Vercel)
 
 ### Prerequisites
 - Vercel account (free tier): https://vercel.com
@@ -94,7 +94,7 @@ On Vercel Dashboard → Project Settings → Environment Variables:
 
 | Key | Value | Environments |
 |-----|-------|--------------|
-| `VITE_API_URL` | `https://profitpulse-ihv0.onrender.com` | ✅ Prod ✅ Preview ✅ Dev |
+| `VITE_API_URL` | `https://profitpulse-ihv0.onrender.com` | Prod, Preview, Dev |
 
 ### Step 3: Redeploy
 
@@ -114,7 +114,7 @@ On Vercel Dashboard → Project Settings → Environment Variables:
 
 ---
 
-## ✅ Post-Deployment Verification
+## Post-Deployment Verification
 
 ### Test All Endpoints
 
@@ -136,12 +136,12 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
 
 1. Open Vercel deployment URL
 2. Navigate to each page:
-   - ✅ Home
-   - ✅ Screener
-   - ✅ Company page (search VNM)
-   - ✅ Compare
-   - ✅ Alerts
-   - ✅ About
+   - Home
+   - Screener
+   - Company page (search VNM)
+   - Compare
+   - Alerts
+   - About
 3. Check console for errors (F12)
 4. Verify data loads from backend
 
@@ -149,15 +149,15 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
 
 **Render Backend Logs:**
 - Dashboard → `profitpulse` → Logs
-- Look for: ✅ Supabase connection confirmation
+- Look for: Supabase connection confirmation
 
 **Vercel Frontend Logs:**
 - Dashboard → Project → Deployments → Latest → Logs
-- Look for: ✅ Build successful, no errors
+- Look for: Build successful, no errors
 
 ---
 
-## 🐛 Troubleshooting Deployment
+## Troubleshooting Deployment
 
 ### Backend: Build Failed
 
@@ -194,7 +194,7 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
 
 ---
 
-## 📊 Deployment Checklist
+## Deployment Checklist
 
 ### Code Preparation
 - [ ] All changes committed to GitHub
@@ -210,9 +210,9 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
   - [ ] Build Command = `pip install -r requirements.txt`
   - [ ] Start Command = `gunicorn app:app --bind 0.0.0.0:$PORT`
 - [ ] Environment Variables set:
-  - [ ] `SUPABASE_URL`
-  - [ ] `SUPABASE_SECRET_KEY`
-  - [ ] `FLASK_ENV=production`
+   - `SUPABASE_URL`
+   - `SUPABASE_SECRET_KEY`
+   - `FLASK_ENV=production`
 - [ ] Deployment successful (green status)
 - [ ] Health endpoint working: `/health`
 - [ ] API endpoints responding with data
@@ -222,7 +222,7 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
 - [ ] GitHub connected to Vercel
 - [ ] Project auto-created or manually added
 - [ ] Environment Variables set:
-  - [ ] `VITE_API_URL=https://profitpulse-ihv0.onrender.com`
+   - `VITE_API_URL=https://profitpulse-ihv0.onrender.com`
 - [ ] Redeploy triggered after adding env vars
 - [ ] Deployment successful (green status)
 - [ ] Website loads at provided URL
@@ -245,7 +245,7 @@ curl "https://profitpulse-ihv0.onrender.com/api/screener?year=2023&limit=5"
 
 ---
 
-## 🔄 Continuous Deployment
+## Continuous Deployment
 
 ### Auto-Deploy on Push
 
@@ -271,7 +271,7 @@ git push origin main  # Auto-triggers Vercel build
 
 ---
 
-## 📈 Monitoring
+## Monitoring
 
 ### Health Checks
 
@@ -297,26 +297,26 @@ curl https://profitpulse-ihv0.onrender.com/api/meta
 
 ---
 
-## 🔐 Security in Production
+## Security in Production
 
 1. **Secret Management:**
-   - Never commit `.env` to Git ✅ (in .gitignore)
-   - Use Render/Vercel dashboard for secrets ✅
+   - Never commit `.env` to Git (in .gitignore)
+   - Use Render/Vercel dashboard for secrets
    - Rotate Supabase keys regularly
 
 2. **Access Control:**
-   - Service role key only in backend ✅
+   - Service role key only in backend
    - Frontend uses public key (not implemented yet)
    - CORS configured for specific origins
 
 3. **Data Protection:**
-   - All connections over HTTPS ✅
-   - Database behind Supabase auth ✅
+   - All connections over HTTPS
+   - Database behind Supabase auth
    - Consider RLS policies for public data
 
 ---
 
-## 📞 Support
+## Support
 
 For deployment issues:
 
@@ -341,4 +341,4 @@ For deployment issues:
 ---
 
 **Last Updated:** March 2026  
-**Status:** ✅ Production Stable
+**Status:** Production Stable

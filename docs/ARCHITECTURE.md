@@ -1,4 +1,4 @@
-# 🏗️ System Architecture
+# System Architecture
 
 Complete technical design and database schema for ProfitPulse.
 

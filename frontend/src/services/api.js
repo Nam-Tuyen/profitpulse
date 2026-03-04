@@ -71,6 +71,24 @@ export const apiService = {
     return data;
   },
 
+  /* ----- FINANCIAL DATA (for P0.1) ----- */
+  getFinancial: async (ticker, year = null) => {
+    if (!ticker || ticker === 'undefined') throw new Error('Ticker is required');
+    const params = new URLSearchParams();
+    params.append('ticker', ticker);
+    if (year) params.append('year', year);
+    const { data } = await api.get(`/api/financial?${params.toString()}`);
+    return data;
+  },
+
+  getFinancialSeries: async (ticker) => {
+    if (!ticker || ticker === 'undefined') throw new Error('Ticker is required');
+    const params = new URLSearchParams();
+    params.append('ticker', ticker);
+    const { data } = await api.get(`/api/financial?${params.toString()}`);
+    return data;
+  },
+
   /* ----- COMPARE ----- */
   compareCompanies: async (tickers, year) => {
     const { data } = await api.post('/api/compare', { tickers, year });
@@ -88,6 +106,15 @@ export const apiService = {
       top_companies: data.top_companies ?? [],
       year: data.year ?? year,
     };
+  },
+
+  /* ----- SUMMARIES (multi-year for P2.1) ----- */
+  getSummaries: async (years) => {
+    if (!years || !Array.isArray(years) || years.length === 0) {
+      throw new Error('Years array is required');
+    }
+    const promises = years.map(year => apiService.getSummary(year));
+    return Promise.all(promises);
   },
 
   /* ----- ALERTS ----- */

@@ -13,7 +13,7 @@ import ChartCaption from '../components/ChartCaption';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
 import { safeNum, riskBadge, tickerFromFirmId, sortBy, exportToCSV } from '../utils/helpers';
 
-const PURPLE = '#7C3AED';
+const PURPLE = '#6366F1';
 const CYAN = '#06B6D4';
 
 const Screener = () => {
@@ -136,6 +136,56 @@ const Screener = () => {
 
       {loading && <LoadingSpinner message="Đang lọc doanh nghiệp..." />}
       {error && <p className="text-rose-400 text-center py-4">{error}</p>}
+
+      {/* Mini Stats - P1.2 */}
+      {!loading && results.length > 0 && (() => {
+        const validScores = results.filter(r => (r.profit_score ?? r.score ?? r.p_t) != null);
+        const avgScore = validScores.length > 0
+          ? validScores.reduce((sum, r) => sum + (r.profit_score ?? r.score ?? r.p_t ?? 0), 0) / validScores.length
+          : null;
+        
+        const highRiskCount = results.filter(r => (r.label_t ?? r.label) === 1 || (r.label_t ?? r.label) === '1').length;
+        const highRiskShare = results.length > 0 ? (highRiskCount / results.length) * 100 : 0;
+        
+        const missingPercentile = results.filter(r => !r.percentile_year && !r.percentile).length;
+        const missingPC = results.filter(r => r.pc1 == null || r.pc2 == null || r.pc3 == null).length;
+        const missingDataShare = results.length > 0 
+          ? ((missingPercentile + missingPC) / (results.length * 2)) * 100 
+          : 0;
+
+        return (
+          <section className="card p-4 sm:p-6 bg-surface-100 border border-primary-500/10">
+            <h3 className="text-sm font-semibold text-white mb-3">Thống kê nhanh</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white/5 p-3 rounded-xl">
+                <p className="text-xs text-muted mb-1">Avg Profit Score</p>
+                <p className="text-xl font-bold text-white">
+                  {avgScore != null ? safeNum(avgScore, 2) : 'N/A'}
+                </p>
+              </div>
+              <div className="bg-white/5 p-3 rounded-xl">
+                <p className="text-xs text-muted mb-1">High Risk Share</p>
+                <p className="text-xl font-bold text-rose-400">
+                  {highRiskShare.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted mt-1">{highRiskCount} / {results.length}</p>
+              </div>
+              <div className="bg-white/5 p-3 rounded-xl">
+                <p className="text-xs text-muted mb-1">Missing Data</p>
+                <p className="text-xl font-bold text-amber-400">
+                  {missingDataShare.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  {missingPercentile} thiếu percentile, {missingPC} thiếu PC
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted italic mt-3">
+              Thống kê nhanh giúp bạn biết danh sách lọc đang nghiêng về nhóm mạnh hay nhóm rủi ro cao.
+            </p>
+          </section>
+        );
+      })()}
 
       {/* Top 10 bar chart — alternating purple/cyan */}
       {!loading && top10Chart.length > 0 && (

@@ -14,14 +14,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
+import DataCoverageBadge from '../components/DataCoverageBadge';
+import FinancialMetricsTable from '../components/FinancialMetricsTable';
+import MetricTrendChart from '../components/MetricTrendChart';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
 import { useWatchlist } from '../hooks/useWatchlist';
 import {
   safeNum, riskBadge, percentileInterpretation, rankBucket,
   computeYoYDeltas, PC_DESCRIPTIONS,
+  computeProxyCoverage, getMissingProxies, computeHistoricalCoverage,
+  CHART_CAPTIONS,
 } from '../utils/helpers';
 
-const PURPLE = '#7C3AED';
+const PURPLE = '#6366F1';
 const CYAN = '#06B6D4';
 const GREEN = '#10B981';
 const ROSE = '#F43F5E';
@@ -41,16 +46,21 @@ const Company = () => {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
   const [selectedYear, setSelectedYear] = useState(null);
+  const [financialData, setFinancialData] = useState(null);
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
 
   useEffect(() => {
     if (!ticker) return;
     setLoading(true);
     setError(null);
-    apiService.getCompany(ticker)
-      .then((d) => {
-        setData(d);
-        setSelectedYear(d.latest_score?.year || null);
+    Promise.all([
+      apiService.getCompany(ticker),
+      apiService.getFinancialSeries(ticker).catch(() => ({ financial_data: [] }))
+    ])
+      .then(([companyData, finData]) => {
+        setData(companyData);
+        setFinancialData(finData.financial_data || []);
+        setSelectedYear(companyData.latest_score?.year || null);
       })
       .catch((e) => {
         console.error(e);
@@ -64,6 +74,29 @@ const Company = () => {
   const timeseries = useMemo(() => data?.timeseries || [], [data]);
   const predictions = data?.predictions || [];
   const tsWithDeltas = useMemo(() => computeYoYDeltas(timeseries), [timeseries]);
+
+  // Financial data processing
+  const financialSeries = useMemo(() => (financialData || []).sort((a, b) => a.year - b.year), [financialData]);
+  const currentFinancial = useMemo(() => {
+    if (!selectedYear || !financialSeries.length) return null;
+    return financialSeries.find(f => f.year === selectedYear) || null;
+  }, [selectedYear, financialSeries]);
+  const previousFinancial = useMemo(() => {
+    if (!selectedYear || !financialSeries.length) return null;
+    return financialSeries.find(f => f.year === selectedYear - 1) || null;
+  }, [selectedYear, financialSeries]);
+
+  // Data coverage metrics
+  const coverageYear = useMemo(() => {
+    if (!currentFinancial) return 0;
+    return computeProxyCoverage(currentFinancial);
+  }, [currentFinancial]);
+  const coverageHistorical = useMemo(() => {
+    return computeHistoricalCoverage(financialSeries);
+  }, [financialSeries]);
+  const missingProxies = useMemo(() => {
+    return getMissingProxies(currentFinancial);
+  }, [currentFinancial]);
 
   const yearData = useMemo(() => {
     if (!selectedYear || !timeseries.length) return latest;
@@ -140,15 +173,37 @@ const Company = () => {
         })}
       </div>
 
-      {tab === 'overview' && <OverviewTab yearData={yearData} badge={badge} interp={interp} bucket={bucket} latest={latest} predictions={predictions} />}
+      {tab === 'overview' && <OverviewTab 
+        yearData={yearData} 
+        badge={badge} 
+        interp={interp} 
+        bucket={bucket} 
+        latest={latest} 
+        predictions={predictions} 
+        currentFinancial={currentFinancial}
+        previousFinancial={previousFinancial}
+        coverageYear={coverageYear}
+        missingProxies={missingProxies}
+      />}
       {tab === 'history' && <HistoryTab timeseries={timeseries} tsWithDeltas={tsWithDeltas} />}
-      {tab === 'drivers' && <DriversTab yearData={yearData} latest={latest} selectedYear={selectedYear} tsWithDeltas={tsWithDeltas} />}
+      {tab === 'drivers' && <DriversTab 
+        yearData={yearData} 
+        latest={latest} 
+        selectedYear={selectedYear} 
+        tsWithDeltas={tsWithDeltas} 
+        financialSeries={financialSeries}
+        currentFinancial={currentFinancial}
+        previousFinancial={previousFinancial}
+      />}
     </div>
   );
 };
 
 /* OverviewTab */
-const OverviewTab = ({ yearData, badge, interp, bucket, latest, predictions }) => {
+const OverviewTab = ({ 
+  yearData, badge, interp, bucket, latest, predictions,
+  currentFinancial, previousFinancial, coverageYear, missingProxies
+}) => {
   const prob = predictions?.[0]?.probability;
   const predLabel = predictions?.[0]?.pred_label;
   const hasProbability = prob != null;
@@ -156,6 +211,22 @@ const OverviewTab = ({ yearData, badge, interp, bucket, latest, predictions }) =
   return (
     <div className="space-y-4 sm:space-y-6 anim-stagger">
       <p className="text-xs sm:text-sm text-muted italic">Tab này giúp bạn biết doanh nghiệp mạnh hay yếu, đang đứng ở đâu và yếu tố nào đang kéo điểm.</p>
+      
+      {/* Data Coverage Badge */}
+      {currentFinancial && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <DataCoverageBadge 
+            availableYears={Math.round(coverageYear / 20)} 
+            totalYears={5} 
+            missingFields={missingProxies}
+            showDetails={true}
+          />
+          <p className="text-xs text-muted">
+            Huy hiệu độ phủ dữ liệu cho bạn biết năm này có đủ 5 chỉ số nền để đọc kết quả tự tin hơn.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Card 1: Profit Score & Percentile */}
         <div className="card card-hover p-4 sm:p-6">
@@ -216,6 +287,25 @@ const OverviewTab = ({ yearData, badge, interp, bucket, latest, predictions }) =
           <p className="text-xs text-muted mt-4">Thẻ này cho bạn biết thành phần nào đóng góp nhiều nhất vào điểm lợi nhuận.</p>
         </div>
       </div>
+
+      {/* Financial Snapshot Table - P0.1 */}
+      {currentFinancial && (
+        <div className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
+            Financial Snapshot
+          </h3>
+          <p className="text-xs sm:text-sm text-muted mb-4">
+            Bảng chỉ số tài chính cho bạn thấy ROA ROE ROC EPS NPM của năm đang chọn và mức thay đổi so với năm trước.
+          </p>
+          <FinancialMetricsTable 
+            currentYear={currentFinancial}
+            previousYear={previousFinancial}
+            showBadges={true}
+            showYoY={!!previousFinancial}
+            compact={false}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -352,7 +442,10 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
 };
 
 /* DriversTab */
-const DriversTab = ({ yearData, latest, selectedYear, tsWithDeltas }) => {
+const DriversTab = ({ 
+  yearData, latest, selectedYear, tsWithDeltas, 
+  financialSeries, currentFinancial, previousFinancial
+}) => {
   const pc1 = latest.pc1 ?? yearData.pc1;
   const pc2 = latest.pc2 ?? yearData.pc2;
   const pc3 = latest.pc3 ?? yearData.pc3;
@@ -391,7 +484,7 @@ const DriversTab = ({ yearData, latest, selectedYear, tsWithDeltas }) => {
           </BarChart>
         </ResponsiveContainer>
         </div>
-        <ChartCaption caption="Biểu đồ cho bạn thấy thành phần nào tác động mạnh nhất trong năm đang xem." />
+        <ChartCaption caption={CHART_CAPTIONS.company_pc_breakdown} />
         <div className="mt-3 sm:mt-4 space-y-2">
           {['pc1', 'pc2', 'pc3'].map((key) => {
             const info = PC_DESCRIPTIONS[key];
@@ -406,6 +499,43 @@ const DriversTab = ({ yearData, latest, selectedYear, tsWithDeltas }) => {
           })}
         </div>
       </div>
+
+      {/* Financial Metrics Trend - P0.1 */}
+      {financialSeries && financialSeries.length > 0 && (
+        <div className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
+            Financial Metrics Trend
+          </h3>
+          <p className="text-xs sm:text-sm text-muted mb-4">
+            Biểu đồ cho bạn thấy ROA ROE ROC EPS NPM đang cải thiện hay suy giảm theo thời gian.
+          </p>
+          <MetricTrendChart 
+            data={financialSeries}
+            defaultMetric="roa"
+            showSelector={true}
+            height={300}
+          />
+        </div>
+      )}
+
+      {/* Financial Metrics Table with YoY - P0.1 */}
+      {currentFinancial && (
+        <div className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
+            Financial Metrics — Năm {selectedYear}
+          </h3>
+          <p className="text-xs sm:text-sm text-muted mb-4">
+            Bảng cho bạn thấy mức thay đổi so với năm trước để nhận ra biến động mạnh hay nhẹ.
+          </p>
+          <FinancialMetricsTable 
+            currentYear={currentFinancial}
+            previousYear={previousFinancial}
+            showBadges={true}
+            showYoY={!!previousFinancial}
+            compact={false}
+          />
+        </div>
+      )}
 
       {/* Score decomposition */}
       <div className="card p-4 sm:p-6">
@@ -468,15 +598,6 @@ const DriversTab = ({ yearData, latest, selectedYear, tsWithDeltas }) => {
           </div>
         </div>
       )}
-
-      {/* Upgrade note */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3 text-xs text-amber-400 flex items-start gap-2">
-        <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-        <span>
-          Để hiển thị đúng top drivers (ROA, ROE, ROC, EPS, NPM), backend cần trả 5 proxy winsorised theo firm/year.
-          Hiện tại tab này chỉ dựa trên PCA components.
-        </span>
-      </div>
     </div>
   );
 };

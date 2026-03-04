@@ -132,14 +132,14 @@ const Layout = ({ children }) => {
     <div className="flex min-h-screen bg-surface">
       {/* ===== Desktop Sidebar (md+) ===== */}
       <aside
-        className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-white/6 bg-surface-100 transition-all duration-300 ${
+        className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-white/6 bg-surface-sidebar transition-all duration-300 ${
           sidebarOpen ? 'w-60' : 'w-[72px]'
         }`}
       >
         <SidebarContent collapsed={!sidebarOpen} />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface-200 border border-white/10 flex items-center justify-center text-muted hover:text-white transition"
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface-card border border-white/10 flex items-center justify-center text-muted hover:text-white transition"
         >
           <ChevronLeft className={`h-3.5 w-3.5 transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -149,7 +149,7 @@ const Layout = ({ children }) => {
       {mobileOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-surface-100 border-r border-white/6 md:hidden animate-slide-in-left">
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-surface-sidebar border-r border-white/6 md:hidden animate-slide-in-left">
             <div className="flex items-center justify-between px-4 pt-4">
               <span className="text-sm font-display font-bold text-white">Menu</span>
               <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-white/5 transition">
@@ -209,7 +209,7 @@ const Layout = ({ children }) => {
       </div>
 
       {/* ===== Mobile Bottom Navigation Bar (< md) ===== */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-100/95 backdrop-blur-lg border-t border-white/6 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-card/95 backdrop-blur-lg border-t border-white/6 safe-area-bottom">
         <div className="flex items-center justify-around h-14 px-1">
           {bottomNav.map((item) => {
             const Icon = item.icon;

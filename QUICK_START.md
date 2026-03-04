@@ -1,15 +1,15 @@
-# 🚀 Quick Start - Local Development
+# Quick Start - Local Development
 
 Get ProfitPulse running locally in ~5 minutes.
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.10+ (for backend)
 - Node.js 18+ (for frontend)
 - Git
 - Basic terminal knowledge
 
-## 🔧 Setup
+## Setup
 
 ### 1. Clone & Navigate
 ```bash
@@ -44,7 +44,7 @@ python app.py
 
 **Expected output:**
 ```
-✅ Connected to Supabase: https://fmsxvbtmfekgbuwxkntl.supabase.co
+Connected to Supabase: https://fmsxvbtmfekgbuwxkntl.supabase.co
  * Running on http://127.0.0.1:5000
 ```
 
@@ -67,7 +67,7 @@ npm run dev
 
 Navigate to: **http://localhost:5173**
 
-## ✅ Verify Everything Works
+## Verify Everything Works
 
 ### Backend Health
 ```bash
@@ -93,7 +93,7 @@ curl "http://localhost:5000/api/screener?year=2023&limit=10"
 3. No errors should appear
 4. Try navigating pages and loading data
 
-## 🛑 Stop Services
+## Stop Services
 
 **Backend:**
 ```bash
@@ -105,7 +105,7 @@ curl "http://localhost:5000/api/screener?year=2023&limit=10"
 # In frontend terminal: Ctrl+C
 ```
 
-## 🐛 Common Issues
+## Common Issues
 
 ### "Cannot find module" / Import errors
 ```bash
@@ -146,14 +146,14 @@ CORS(app)  # ✅ Must be present
 2. Check `VITE_API_URL=http://localhost:5000` in `.env`
 3. Open DevTools Network tab to verify requests
 
-## 📖 Next Steps
+## Next Steps
 
 - Explore [DEPLOYMENT.md](DEPLOYMENT.md) for production setup
 - Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
 - Check [docs/API.md](docs/API.md) for all available endpoints
 - See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for advanced issues
 
-## 📊 Development Tips
+## Development Tips
 
 ### Hot Reload
 - **Backend:** Restart required (no auto-reload for Flask)
@@ -178,19 +178,19 @@ git commit -m "message"    # Commit
 git push origin main       # Push to GitHub
 ```
 
-## ⚡ Performance Tips
+## Performance Tips
 
 1. **Backend:** Use production mode for testing (`FLASK_ENV=production`)
 2. **Frontend:** Test with `npm run build` to check bundle size
 3. **Database:** API responses should be <500ms normally
 
-## 🎯 Success Criteria
+## Success Criteria
 
-✅ Backend running without errors  
-✅ Frontend loads at http://localhost:5173  
-✅ Data displays from database  
-✅ No console errors in DevTools  
-✅ API responses return valid JSON  
-✅ All pages navigable  
+- Backend running without errors  
+- Frontend loads at http://localhost:5173  
+- Data displays from database  
+- No console errors in DevTools  
+- API responses return valid JSON  
+- All pages navigable  
 
-**If all green → Ready for development!** 🎉
+**If all criteria met, you are ready for development!**

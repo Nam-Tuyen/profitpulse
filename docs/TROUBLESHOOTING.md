@@ -1,4 +1,4 @@
-# 🐛 Troubleshooting Guide
+# Troubleshooting Guide
 
 Common issues and solutions for ProfitPulse.
 
@@ -62,7 +62,7 @@ client = create_client(
     "https://fmsxvbtmfekgbuwxkntl.supabase.co",
     "your_key_here"
 )
-print("✅ Connected" if client else "❌ Failed")
+print("Connected" if client else "Failed")
 ```
 4. Check Supabase status: https://status.supabase.com
 
@@ -351,7 +351,7 @@ Access to XMLHttpRequest... blocked by CORS policy
 ```python
 # In app.py, should have:
 from flask_cors import CORS
-CORS(app)  # ✅ Required
+CORS(app)  # Required
 ```
 2. Check API response includes CORS headers:
 ```bash

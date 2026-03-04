@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { Bell, Filter, Download, AlertTriangle, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -9,8 +10,9 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
+import ExpandRowDetails from '../components/ExpandRowDetails';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
-import { safeNum, riskBadge, severityColor } from '../utils/helpers';
+import { safeNum, riskBadge, severityColor, tickerFromFirmId } from '../utils/helpers';
 
 const Alerts = () => {
   const [meta, setMeta] = useState(null);
@@ -193,20 +195,35 @@ const Alerts = () => {
                 {filtered.slice(0, 50).map((a, idx) => {
                   const delta = a.yoy_delta ?? a.delta ?? 0;
                   const badge = riskBadge(a.label_t ?? a.label);
+                  const firmId = a.FIRM_ID || a.firm_id;
+                  const ticker = tickerFromFirmId(firmId);
+                  const alertYear = a.year || year;
+                  
                   return (
-                    <tr key={idx} className="hover:bg-white/3 transition">
-                      <td className="px-4 py-3 font-semibold text-white">{a.FIRM_ID || a.firm_id}</td>
-                      <td className="px-4 py-3 text-right font-mono text-white">{safeNum(a.profit_score ?? a.score, 3)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className={`inline-flex items-center gap-1 font-mono ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-muted'}`}>
-                          {delta > 0 ? <ArrowUp className="h-3.5 w-3.5" /> : delta < 0 ? <ArrowDown className="h-3.5 w-3.5" /> : null}
-                          {safeNum(delta, 3)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
-                      </td>
-                    </tr>
+                    <React.Fragment key={idx}>
+                      <tr className="hover:bg-white/3 transition">
+                        <td className="px-4 py-3 font-semibold text-white">{firmId}</td>
+                        <td className="px-4 py-3 text-right font-mono text-white">{safeNum(a.profit_score ?? a.score, 3)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={`inline-flex items-center gap-1 font-mono ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-muted'}`}>
+                            {delta > 0 ? <ArrowUp className="h-3.5 w-3.5" /> : delta < 0 ? <ArrowDown className="h-3.5 w-3.5" /> : null}
+                            {safeNum(delta, 3)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan="4" className="p-0">
+                          <ExpandRowDetails 
+                            ticker={ticker}
+                            year={alertYear}
+                            severity={a.severity || 'medium'}
+                          />
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   );
                 })}
               </tbody>

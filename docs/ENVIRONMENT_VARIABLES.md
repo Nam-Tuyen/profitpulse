@@ -1,4 +1,4 @@
-# 🔌 Environment Variables Guide
+# Environment Variables Guide
 
 Complete reference for all environment variables used in ProfitPulse.
 
@@ -35,7 +35,7 @@ Production on Render & Vercel
 - **Format:** JWT token (starts with `eyJ`)
 - **Length:** 220 characters
 - **Example:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...`
-- **Security:** ⚠️ Contains full database access - keep secret!
+- **Security:** WARNING: Contains full database access - keep secret!
 - **Where to find:** Supabase Dashboard → Project Settings → API → Service Role Key
 - **Required in:** Render (production), Local (if using Supabase)
 - **Never:** Commit to Git, share in public, use in frontend
@@ -179,24 +179,24 @@ cp .env.example .env
 
 | Key | Access Level | Use Case |
 |-----|--------------|----------|
-| Service Role | Full (bypass RLS) | Backend only ⚠️ |
+| Service Role | Full (bypass RLS) | Backend only (keep secret) |
 | Anon Public | Limited (RLS enforced) | Frontend (if RLS configured) |
 
 **Rule:** Never expose service role key in frontend!
 
 ## Security Best Practices
 
-### ✅ DO
+### DO
 
-- [ ] Store sensitive keys in environment variables only
-- [ ] Use Render/Vercel dashboards for secrets (encrypted at rest)
-- [ ] Rotate keys periodically
-- [ ] Use different keys for dev/prod
-- [ ] Add `.env` to `.gitignore` ✅
-- [ ] Keep `SUPABASE_SECRET_KEY` private
-- [ ] Use HTTPS for all connections
+- Store sensitive keys in environment variables only
+- Use Render/Vercel dashboards for secrets (encrypted at rest)
+- Rotate keys periodically
+- Use different keys for dev/prod
+- Add `.env` to `.gitignore`
+- Keep `SUPABASE_SECRET_KEY` private
+- Use HTTPS for all connections
 
-### ❌ DON'T
+### DON'T
 
 - [ ] Commit `.env` to Git
 - [ ] Share credentials in Slack/Email
