@@ -165,8 +165,9 @@ const Layout = ({ children }) => {
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
         sidebarOpen ? 'md:ml-60' : 'md:ml-[72px]'
       }`}>
-        {/* Top header bar */}
-        <header className="sticky top-0 z-30 h-14 md:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 border-b border-white/6 bg-surface/80 backdrop-blur-lg">
+        {/* Top header bar - hidden on home page */}
+        {location.pathname !== '/' && (
+          <header className="sticky top-0 z-30 h-14 md:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 border-b border-white/6 bg-surface/80 backdrop-blur-lg">
           <div className="flex items-center gap-3">
             {/* Hamburger — only on mobile */}
             <button
@@ -199,12 +200,11 @@ const Layout = ({ children }) => {
             </Link>
           </div>
         </header>
+        )}
 
         {/* Page content — bottom padding for mobile nav bar */}
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8 overflow-x-hidden">
-          <div className="max-w-[1600px] mx-auto">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
 

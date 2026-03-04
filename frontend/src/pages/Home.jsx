@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   TrendingUp, AlertTriangle, Search, ArrowRight,
-  Building2, BarChart3, Eye,
+  Building2, BarChart3, Eye, Calendar, Info, Shield,
 } from 'lucide-react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
@@ -29,16 +29,21 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [meta, setMeta] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [metaRes, summaryRes] = await Promise.all([
-          apiService.getMeta(),
-          apiService.getSummary(),
-        ]);
+        const metaRes = await apiService.getMeta();
         setMeta(metaRes);
+        
+        // Set default year to latest
+        const latestYear = metaRes?.years?.length ? metaRes.years[metaRes.years.length - 1] : 2025;
+        if (!selectedYear) setSelectedYear(latestYear);
+        
+        const summaryRes = await apiService.getSummary(selectedYear || latestYear);
         setSummary(summaryRes);
       } catch (err) {
         console.error(err);
@@ -48,7 +53,7 @@ const Home = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   if (loading) return <LoadingSpinner message="Đang tải tổng quan..." />;
   if (error) {
@@ -64,8 +69,9 @@ const Home = () => {
   const kpi = summary?._normalised || {};
   const chartData = summary?.chart_data;
   const topCompanies = summary?.top_companies || [];
-  const currentYear = summary?.year;
+  const currentYear = selectedYear || summary?.year || 2025;
   const firms = meta?.companies || meta?.firms || [];
+  const availableYears = meta?.years || [];
 
   const pieData = chartData?.risk_distribution
     ? [
@@ -82,8 +88,21 @@ const Home = () => {
   const scoreDistData = chartData?.score_distribution || null;
 
   return (
-    <div className="space-y-5 sm:space-y-6 md:space-y-8">
-      <ModelContextBar selectedYear={currentYear} />
+    <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 md:space-y-8">
+      {/* ===== Description Bar ===== */}
+      <div className="card p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <Shield className="h-5 w-5 text-primary-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-2">
+              ProfitPulse là công cụ giúp bạn phân tích và theo dõi sức khỏe lợi nhuận của các doanh nghiệp niêm yết tại Việt Nam bằng cách tạo điểm lợi nhuận tổng hợp bằng phương pháp PCA và gắn nhãn rủi ro thông qua các mô hình Machine Learning như XGBoost, SVM RBF và RandomForest.
+            </p>
+            <p className="text-muted text-xs italic">
+              Dữ liệu được thu thập từ năm 1999 đến 2025, mô hình kiểm định trong giai đoạn 2021 đến 2024
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ===== Hero ===== */}
       <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #131929 0%, #1E284E 60%, #3730A3 100%)' }}>
@@ -112,56 +131,103 @@ const Home = () => {
         </div>
       </section>
 
-      <PageIntro
-        text="Trang chủ cho bạn nhìn nhanh bức tranh lợi nhuận của thị trường theo năm gần nhất và giúp bạn đi thẳng đến mã cần xem hoặc bộ lọc."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
-      />
+      {/* ===== Page Intro ===== */}
+      <div className="flex items-start gap-2 sm:gap-2.5 bg-primary-600/8 border border-primary-500/15 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm">
+        <Info className="h-5 w-5 text-primary-400 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-slate-300 leading-relaxed mb-1">
+            Trang chủ giúp bạn quan sát được tổng quan lợi nhuận của thị trường theo năm đồng thời cho phép bạn tìm hoặc dùng bộ lọc để chọn lọc nhóm cổ phiếu hoặc doanh nghiệp cần phân tích. Dữ liệu được thu thập từ năm 1999 đến 2025, mô hình kiểm định trong giai đoạn 2021 đến 2024
+          </p>
+          <p className="text-muted text-xs italic">
+            Lưu ý: Nội dung trên ProfitPulse chỉ phục vụ phân tích, cung cấp thêm góc nhìn và không phải khuyến nghị mua bán.
+          </p>
+        </div>
+      </div>
 
-      {/* ===== KPI Cards - P1.1 Enhanced ===== */}
+      {/* ===== Year Selector ===== */}
+      <div className="card p-4 sm:p-5 bg-gradient-to-r from-primary-600/10 to-accent-500/10 border-primary-500/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-muted mb-1">Năm quan sát hiện tại</p>
+            <p className="text-2xl sm:text-3xl font-display font-extrabold text-white">{currentYear}</p>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowYearPicker(!showYearPicker)}
+              className="btn-primary flex items-center gap-2 px-4 py-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span>Chọn năm</span>
+            </button>
+            {showYearPicker && (
+              <div className="absolute right-0 top-full mt-2 bg-surface-card border border-white/10 rounded-xl shadow-lg z-50 p-2 min-w-[200px] max-h-[300px] overflow-y-auto">
+                {availableYears.slice().reverse().map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => {
+                      setSelectedYear(year);
+                      setShowYearPicker(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                      year === currentYear
+                        ? 'bg-primary-600/20 text-primary-400 font-semibold'
+                        : 'text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== KPI Cards ===== */}
       <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 anim-stagger">
         <StatsCard 
-          title="Tổng DN" 
+          title="Tổng số lượng doanh nghiệp" 
           value={kpi.total_firms ?? '—'} 
-          subtitle={`Năm ${currentYear || '—'}`} 
+          subtitle={`Trong năm ${currentYear || '—'}`} 
           icon={Building2} 
           color="purple" 
         />
         <StatsCard 
-          title="Điểm TB" 
+          title="Điểm trung bình" 
           value={kpi.avg_profit_score != null ? safeNum(kpi.avg_profit_score, 2) : '—'} 
-          subtitle="Avg Score" 
+          subtitle="Số điểm trung bình toàn thị trường" 
           icon={BarChart3} 
           color="cyan" 
         />
         <StatsCard 
-          title="Min Score" 
+          title="Điểm thấp nhất" 
           value={kpi.min_profit_score != null ? safeNum(kpi.min_profit_score, 2) : '—'} 
-          subtitle="Thấp nhất" 
+          subtitle="Số điểm thấp nhất" 
           icon={TrendingUp} 
           color="gray" 
         />
         <StatsCard 
-          title="Max Score" 
+          title="Điểm cao nhất" 
           value={kpi.max_profit_score != null ? safeNum(kpi.max_profit_score, 2) : '—'} 
-          subtitle="Cao nhất" 
+          subtitle="Số điểm cao nhất" 
           icon={TrendingUp} 
           color="green" 
         />
         <StatsCard 
-          title="Risk Cao" 
+          title="Số lượng công ty có rủi ro cao" 
           value={kpi.high_risk_count ?? '—'} 
-          subtitle="label_t = 1" 
+          subtitle="Khi tỷ lệ label_t = 1 vì P_t > 0" 
           icon={AlertTriangle} 
           color="red" 
         />
         <StatsCard 
-          title="Risk Cao %" 
+          title="Tỷ lệ công ty có rủi ro cao" 
           value={
             kpi.high_risk_count != null && kpi.total_firms != null && kpi.total_firms > 0
               ? `${((kpi.high_risk_count / kpi.total_firms) * 100).toFixed(1)}%`
               : '—'
           } 
-          subtitle="Tỷ trọng rủi ro" 
+          subtitle={`Tỷ lệ công ty có rủi ro cao trong năm ${currentYear || '—'}`} 
           icon={AlertTriangle} 
           color="red" 
         />
@@ -227,16 +293,16 @@ const Home = () => {
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top doanh nghiệp</h3>
-              <p className="text-xs sm:text-sm text-muted">Chọn nhanh các mã nổi bật để theo dõi hoặc so sánh.</p>
+              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 5 doanh nghiệp</h3>
+              <p className="text-xs sm:text-sm text-muted">Top 5 doanh nghiệp nổi bật trong năm {currentYear}.</p>
             </div>
             <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs sm:text-sm min-w-[640px]">
-              <thead className="bg-white/3 text-muted">
+              <thead className="bg-white/3 text-muted sticky top-0">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">#</th>
                   <th className="px-4 py-3 text-left font-medium">Mã</th>
@@ -248,7 +314,7 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/6">
-                {topCompanies.slice(0, 15).map((c, idx) => {
+                {topCompanies.slice(0, 5).map((c, idx) => {
                   const badge = riskBadge(c.label_t);
                   const ticker = tickerFromFirmId(c.firm_id);
                   return (
