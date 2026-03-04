@@ -1,316 +1,111 @@
-import { useState, useEffect } from 'react';
-import { Shield, CheckCircle, AlertCircle, TrendingUp, Database, Book, Target } from 'lucide-react';
-import apiService from '../services/api';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { Database, BookOpen, ShieldCheck, AlertTriangle, BarChart3, Layers } from 'lucide-react';
+import ModelContextBar from '../components/ModelContextBar';
+import PageIntro from '../components/PageIntro';
 
 const About = () => {
-  const [aboutData, setAboutData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    loadAboutData();
-  }, []);
-  
-  const loadAboutData = async () => {
-    try {
-      const data = await apiService.getAbout();
-      setAboutData(data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading about data:', error);
-      // Set default data so the page still renders
-      setAboutData(null);
-      setLoading(false);
-    }
-  };
-  
-  if (loading) {
-    return <LoadingSpinner message="Đang tải thông tin..." />;
-  }
-  
+  const methodologyCards = [
+    {
+      icon: Database,
+      title: 'Dữ liệu gốc',
+      desc: 'ProfitPulse sử dụng dữ liệu báo cáo tài chính đã kiểm toán từ các công ty niêm yết trên sàn chứng khoán Việt Nam. Dữ liệu được chuẩn hóa và kiểm tra trước khi đưa vào pipeline.',
+    },
+    {
+      icon: Layers,
+      title: 'PCA & Scoring',
+      desc: 'Điểm ProfitScore được tính dựa trên PCA (Phân tích Thành phần Chính) từ 3 thành phần (PC1, PC2, PC3) của các chỉ tiêu tài chính, giúp nén nhiều chiều xuống thành một thang điểm duy nhất.',
+    },
+    {
+      icon: BarChart3,
+      title: 'Percentile & Label',
+      desc: 'Mỗi doanh nghiệp được xếp hạng theo percentile trong năm tương ứng. Nhãn rủi ro (Very High, High, Medium, Low) được gán dựa vào ngưỡng percentile, không phải đánh giá chủ quan.',
+    },
+    {
+      icon: BookOpen,
+      title: 'Minh bạch',
+      desc: 'Toàn bộ pipeline có thể tái tạo lại kết quả. Các hệ số PCA, artifact, và ngưỡng đều được lưu dưới dạng JSON để kiểm chứng và audit.',
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-8 sm:p-12">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 text-center">
-          <Shield className="h-16 w-16 text-white mx-auto mb-4" />
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Về ProfitPulse
-          </h1>
-          <p className="text-indigo-100 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
-            ProfitPulse giúp người dùng theo dõi "sức khỏe lợi nhuận" của doanh nghiệp niêm yết 
-            bằng cách kết hợp nhiều chỉ tiêu (ROA, ROE, ROC, EPS, NPM) thành một điểm tổng hợp 
-            và dự báo rủi ro năm tới dựa trên Machine Learning.
-          </p>
-        </div>
-      </div>
-      
-      {/* Mission Statement */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-            <Target className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              Sứ mệnh
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              ProfitPulse ra đời với mục tiêu hỗ trợ nhà đầu tư cá nhân và phân tích viên 
-              trong việc <strong>sàng lọc và theo dõi tình hình lợi nhuận</strong> của công ty niêm yết 
-              một cách nhanh chóng và khách quan.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              Thay vì phải phân tích thủ công từng chỉ tiêu tài chính, người dùng có thể dựa vào 
-              <strong> ProfitScore</strong> (điểm tổng hợp) và <strong>dự báo Risk</strong> để ưu tiên xem công ty nào 
-              cần quan tâm ngay, tiết kiệm thời gian và công sức.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* How It Works */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-          <TrendingUp className="h-7 w-7 mr-3 text-purple-600" />
-          Cách hoạt động
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Step 1 */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex items-center justify-center font-bold mb-4">
-              1
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Tổng hợp
-            </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Kết hợp 5 chỉ tiêu lợi nhuận (ROA, ROE, ROC, EPS, NPM) bằng phương pháp PCA 
-              để tạo ra <strong>ProfitScore</strong> - điểm tổng hợp phản ánh "sức khỏe lợi nhuận".
-            </p>
-          </div>
-          
-          {/* Step 2 */}
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg flex items-center justify-center font-bold mb-4">
-              2
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Dự báo
-            </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Sử dụng Machine Learning (SVM, Random Forest, XGBoost) để tính <strong>Chance</strong> - 
-              xác suất duy trì trạng thái lợi nhuận tốt ở năm tiếp theo (t+1).
-            </p>
-          </div>
-          
-          {/* Step 3 */}
-          <div className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-200 rounded-xl p-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg flex items-center justify-center font-bold mb-4">
-              3
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Giải thích
-            </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Đưa ra <strong>lý do ngắn</strong> dựa trên ngưỡng các chỉ tiêu (ProfitScore &lt; -0.5, ROA &lt; 0.02, NPM &lt; 0.03) 
-              và <strong>gợi ý hành động</strong> cụ thể cho người dùng.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Trust & Transparency */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-          <Shield className="h-7 w-7 mr-3 text-green-600" />
-          Độ tin cậy & Minh bạch
-        </h2>
-        
-        {aboutData && (
-          <div className="space-y-6">
-            {/* Methodology */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
-                Phương pháp & Mô hình
-              </h3>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Phương pháp:
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {aboutData.methodology?.name || 'PCA + Machine Learning'}
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Đặc trưng chính:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(aboutData.methodology?.metrics || ['ROA', 'ROE', 'ROC', 'EPS', 'NPM']).map((feature, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Mô hình:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(aboutData.methodology?.models || ['PCA (chấm điểm)', 'XGBoost / Random Forest (phân loại risk)']).map((model, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                        {model}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Nguồn dữ liệu:
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {aboutData.methodology?.data_source || 'Dữ liệu tài chính doanh nghiệp niêm yết Việt Nam'}
-                  </p>
-                </div>
+    <div className="space-y-4 sm:space-y-6">
+      <ModelContextBar />
+      <PageIntro
+        text="Trang giới thiệu giải thích phương pháp luận, cách tính điểm, và các nguyên tắc minh bạch mà ProfitPulse tuân thủ."
+        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+      />
+
+      {/* Methodology */}
+      <section>
+        <h2 className="text-base sm:text-lg font-display font-bold text-white mb-3 sm:mb-4">Phương pháp luận</h2>
+        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+          {methodologyCards.map(({ icon: Icon, title, desc }, idx) => (
+            <div key={idx} className="card card-hover p-4 sm:p-5 space-y-2 sm:space-y-3 anim-stagger" style={{ '--i': idx }}>
+              <div className="w-10 h-10 rounded-xl bg-primary-600/20 flex items-center justify-center">
+                <Icon className="h-5 w-5 text-primary-400" />
               </div>
+              <h3 className="text-white font-semibold">{title}</h3>
+              <p className="text-sm text-slate-300 leading-relaxed">{desc}</p>
             </div>
-            
-            {/* Data Coverage */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <Database className="h-5 w-5 mr-2 text-purple-600" />
-                Phạm vi dữ liệu
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">Tổng số công ty</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {aboutData.stats?.total_companies || aboutData.data_coverage?.total_firms || '600+'} mã
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">Tổng bản ghi tài chính</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {aboutData.stats?.total_records || '1000+'}
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">Khoảng thời gian</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {aboutData.stats?.year_range 
-                      ? `${aboutData.stats.year_range.min} - ${aboutData.stats.year_range.max}`
-                      : aboutData.data_coverage?.years || '1999-2025'}
-                  </p>
-                </div>
-              </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pipeline Flow */}
+      <section className="card p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-display font-bold text-white mb-3 sm:mb-4">Quy trình pipeline</h3>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+          {['Dữ liệu thô', 'Tiền xử lý', 'PCA fit', 'Scoring', 'Labeling', 'API / Dashboard'].map((step, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 text-white font-medium">
+                <span className="w-6 h-6 rounded-full bg-primary-600/30 text-primary-400 flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                {step}
+              </span>
+              {i < 5 && <span className="text-muted">→</span>}
             </div>
-            
-            {/* Trust Badges */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Cam kết minh bạch
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {aboutData.trust_indicators?.train_test_split || 'Train ≤ 2020, Test 2021+'}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Temporal split đảm bảo không data leakage
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Không có preprocessing leakage
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Mọi bước chuẩn hóa học từ TRAIN và áp nguyên cho TEST
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Cross-validation & hyperparameter tuning
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Lựa chọn tham số dựa trên validation set độc lập
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Trust */}
+      <section className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-emerald-400" />
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">Cam kết minh bạch</h3>
+        </div>
+        <ul className="space-y-2 text-sm text-slate-300">
+          {[
+            'Không sử dụng dữ liệu nhạy cảm hoặc dữ liệu nội bộ chưa công bố.',
+            'Pipeline có thể tái tạo 100% kết quả nếu cùng dữ liệu đầu vào.',
+            'Các artifact PCA (loadings, variance) được lưu trữ minh bạch.',
+            'Nhãn rủi ro dựa trên ngưỡng thống kê, không phải nhận định chủ quan.',
+            'Tất cả biểu đồ đều ghi chú nguồn và giải thích.',
+          ].map((item, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Disclaimer */}
+      <section className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
+          <div className="space-y-2">
+            <h3 className="text-white font-semibold">Tuyên bố miễn trừ trách nhiệm</h3>
+            <p className="text-sm text-amber-200/80 leading-relaxed">
+              ProfitPulse là công cụ phân tích dữ liệu, <span className="font-semibold text-amber-400">không phải khuyến nghị đầu tư</span>.
+              Kết quả chỉ mang tính tham khảo và không nên được sử dụng làm căn cứ duy nhất cho quyết định mua/bán.
+              Người dùng chịu hoàn toàn trách nhiệm với các quyết định đầu tư của mình.
+            </p>
           </div>
-        )}
-      </div>
-      
-      {/* Limitations */}
-      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 sm:p-8">
-        <h2 className="text-xl font-bold text-red-900 mb-4 flex items-center">
-          <AlertCircle className="h-6 w-6 mr-2" />
-          Giới hạn & Khuyến cáo
-        </h2>
-        
-        <div className="space-y-3 text-sm text-red-800 leading-relaxed">
-          <p>
-            ⚠️ <strong>Không thay thế phân tích định tính:</strong> ProfitPulse chỉ là công cụ sàng lọc nhanh. 
-            Người dùng cần đọc thuyết minh báo cáo tài chính, tin tức ngành, và phân tích định tính để có quyết định đầy đủ.
-          </p>
-          
-          <p>
-            ⚠️ <strong>Không phải khuyến nghị mua/bán:</strong> Risk High không đồng nghĩa với "nên bán ngay", 
-            và Risk Low không đồng nghĩa với "nên mua ngay". Đây chỉ là dự báo xác suất dựa trên dữ liệu lịch sử.
-          </p>
-          
-          <p>
-            ⚠️ <strong>Giới hạn dữ liệu:</strong> Chất lượng dự báo phụ thuộc vào độ đầy đủ và chính xác của dữ liệu đầu vào. 
-            Dữ liệu thiếu sẽ được báo cáo rõ trong phần Data Coverage của từng công ty.
-          </p>
-          
-          <p>
-            ⚠️ <strong>Biến động thị trường:</strong> Mô hình học từ dữ liệu quá khứ và có thể không phản ánh 
-            kịp các sự kiện đột ngột (khủng hoảng, thay đổi chính sách, M&A lớn).
-          </p>
         </div>
-      </div>
-      
-      {/* Contact/Feedback */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl shadow-xl p-6 sm:p-8 text-center">
-        <h2 className="text-2xl font-bold text-white mb-3">
-          Đóng góp ý kiến
-        </h2>
-        <p className="text-indigo-100 mb-6">
-          ProfitPulse vẫn đang trong quá trình cải thiện. Mọi phản hồi và đề xuất tính năng mới 
-          đều được đón nhận để phục vụ cộng đồng tốt hơn.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <span className="px-6 py-2 bg-white/20 backdrop-blur-sm rounded-lg text-white font-medium">
-            📧 profitpulse@example.com
-          </span>
-          <span className="px-6 py-2 bg-white/20 backdrop-blur-sm rounded-lg text-white font-medium">
-            🐛 GitHub Issues
-          </span>
-        </div>
+      </section>
+
+      {/* Footer */}
+      <div className="text-center text-sm text-muted py-4">
+        Phát triển bởi <span className="text-primary-400 font-medium">ProfitPulse Team</span> — Dữ liệu cập nhật định kỳ.
       </div>
     </div>
   );

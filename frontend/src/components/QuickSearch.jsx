@@ -50,10 +50,10 @@ const QuickSearch = ({ firms = [] }) => {
   };
   
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
+    <div ref={searchRef} className="relative w-full max-w-md touch-manipulation">
       <div className="relative">
         <label htmlFor="quick-search" className="sr-only">Tìm kiếm công ty</label>
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted" />
         <input
           id="quick-search"
           name="company-search"
@@ -62,22 +62,22 @@ const QuickSearch = ({ firms = [] }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setShowResults(true)}
-          placeholder="Tìm mã công ty (VD: VNM, FPT, VCB...)"
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+          placeholder="Tìm mã (VD: VNM, FPT...)"
+          className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder:text-muted focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
         />
       </div>
       
       {/* Results Dropdown */}
       {showResults && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 rounded-xl shadow-lg max-h-96 overflow-y-auto" style={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
           {results.map((ticker, idx) => (
             <button
               key={idx}
               onClick={() => handleSelect(ticker)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3 border-b border-gray-100 last:border-0"
+              className="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center space-x-3 border-b border-white/6 last:border-0"
             >
-              <TrendingUp className="h-4 w-4 text-primary-600" />
-              <span className="font-medium text-gray-900">{ticker}</span>
+              <TrendingUp className="h-4 w-4 text-primary-400" />
+              <span className="font-medium text-white">{ticker}</span>
             </button>
           ))}
         </div>
@@ -85,9 +85,9 @@ const QuickSearch = ({ firms = [] }) => {
       
       {/* No Results */}
       {showResults && query.length >= 2 && results.length === 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-          <p className="text-sm text-gray-500 text-center">
-            Không tìm thấy mã <strong>{query}</strong>
+        <div className="absolute z-50 w-full mt-2 rounded-xl shadow-lg p-4" style={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <p className="text-sm text-muted text-center">
+            Không tìm thấy mã <strong className="text-white">{query}</strong>
           </p>
         </div>
       )}

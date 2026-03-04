@@ -1,390 +1,227 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Download, RefreshCw, Star, AlertCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, Eye, Download, BarChart3 } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, ResponsiveContainer, Cell,
+} from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useWatchlist } from '../hooks/useWatchlist';
+import ModelContextBar from '../components/ModelContextBar';
+import PageIntro from '../components/PageIntro';
+import ChartCaption from '../components/ChartCaption';
+import Tooltip, { TOOLTIPS } from '../components/Tooltip';
+import { safeNum, riskBadge, tickerFromFirmId, sortBy, exportToCSV } from '../utils/helpers';
+
+const PURPLE = '#7C3AED';
+const CYAN = '#06B6D4';
 
 const Screener = () => {
   const navigate = useNavigate();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
-  const [loading, setLoading] = useState(false);
+  const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [year, setYear] = useState(null);
+  const [minScore, setMinScore] = useState('');
+  const [maxScore, setMaxScore] = useState('');
+  const [limit, setLimit] = useState(50);
   const [results, setResults] = useState([]);
-  const [availableYears, setAvailableYears] = useState([]);
-  
-  // Filters
-  const [filters, setFilters] = useState({
-    year: null,
-    risk_high: true,
-    risk_medium: true,
-    risk_low: true,
-    chance_min: 0,
-    chance_max: 100,
-    borderline_only: false,
-    min_score: null,
-    limit: 100
-  });
-  
+  const [totalResults, setTotalResults] = useState(0);
+  const [sortKey, setSortKey] = useState('profit_score');
+  const [sortOrder, setSortOrder] = useState('desc');
+
   useEffect(() => {
-    loadMeta();
+    apiService.getMeta().then((m) => {
+      setMeta(m);
+      const years = m.years || [];
+      if (years.length) setYear(Math.max(...years));
+    }).catch(() => setError('Không thể tải metadata.'));
   }, []);
-  
-  const loadMeta = async () => {
-    try {
-      const metaData = await apiService.getMeta();
-      setAvailableYears(metaData.years);
-      
-      if (metaData.years.length > 0) {
-        const latestYear = metaData.years[metaData.years.length - 1];
-        setFilters(prev => ({ ...prev, year: latestYear }));
-        // Auto search on load
-        handleSearch({ ...filters, year: latestYear });
-      }
-    } catch (error) {
-      console.error('Error loading meta:', error);
-    }
-  };
-  
-  const handleSearch = async (customFilters = null) => {
+
+  const fetchScreener = async () => {
+    if (!year) return;
     try {
       setLoading(true);
-      const searchFilters = customFilters || filters;
-      const data = await apiService.screener(searchFilters);
+      setError(null);
+      const data = await apiService.screener({
+        year,
+        min_score: minScore || undefined,
+        max_score: maxScore || undefined,
+        limit,
+      });
       setResults(data.results || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error searching:', error);
+      setTotalResults(data.count ?? data.total_results ?? (data.results || []).length);
+    } catch (err) {
+      console.error(err);
+      setError('Lỗi khi tải dữ liệu sàng lọc.');
+    } finally {
       setLoading(false);
     }
   };
-  
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    if (year) fetchScreener();
+  }, [year]);
+
+  const sorted = useMemo(() => {
+    if (!results.length) return [];
+    return sortBy(results, sortKey, sortOrder);
+  }, [results, sortKey, sortOrder]);
+
+  const top10Chart = useMemo(() => {
+    return [...results]
+      .sort((a, b) => (b.profit_score ?? b.score ?? 0) - (a.profit_score ?? a.score ?? 0))
+      .slice(0, 10)
+      .map((r, i) => ({
+        name: tickerFromFirmId(r.firm_id || r.FIRM_ID),
+        score: r.profit_score ?? r.score ?? 0,
+        fill: i % 2 === 0 ? PURPLE : CYAN,
+      }));
+  }, [results]);
+
+  const handleSort = (key) => {
+    if (key === sortKey) setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortOrder('desc'); }
   };
-  
-  const handleReset = () => {
-    const resetFilters = {
-      year: availableYears[availableYears.length - 1],
-      risk_high: true,
-      risk_medium: true,
-      risk_low: true,
-      chance_min: 0,
-      chance_max: 100,
-      borderline_only: false,
-      min_score: null,
-      limit: 100
-    };
-    setFilters(resetFilters);
-    handleSearch(resetFilters);
+
+  const SortIcon = ({ col }) => {
+    if (col !== sortKey) return null;
+    return <span className="ml-1 text-primary-400">{sortOrder === 'asc' ? '▲' : '▼'}</span>;
   };
-  
-  const handleExportCSV = () => {
-    const csv = [
-      ['Mã', 'Năm', 'Risk', 'ProfitScore', 'ROA', 'ROE', 'NPM'].join(','),
-      ...results.map(r => [
-        r.firm_id || r.FIRM_ID || '',
-        r.year || '',
-        (r.label_t ?? r.label) === 1 ? 'High' : 'Low',
-        r.profit_score || r.score || 0,
-        r.X1_ROA || r.pc1 || '',
-        r.X2_ROE || r.pc2 || '',
-        r.X5_NPM || r.pc3 || ''
-      ].join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `screener_${filters.year}.csv`;
-    link.click();
-  };
-  
-  const getRiskLabel = (label) => {
-    return (label === 1 || label === '1') ? 'High' : 'Low';
-  };
-  
-  const toggleWatchlist = (firmId) => {
-    if (isInWatchlist(firmId)) {
-      removeFromWatchlist(firmId);
-    } else {
-      addToWatchlist(firmId);
-    }
-  };
-  
+
+  const years = meta?.years || [];
+
+  const inputClasses = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white placeholder:text-muted focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm min-h-[40px]';
+
   return (
-    <div className="space-y-6">
-      {/* Modern Header with Gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 rounded-2xl shadow-xl p-6 sm:p-8">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            Sàng lọc & Phân tích
-          </h1>
-          <p className="text-purple-100 text-sm sm:text-base">
-            Lọc nhanh danh sách công ty theo Risk/ProfitScore để tạo shortlist ưu tiên
-          </p>
+    <div className="space-y-4 sm:space-y-6">
+      <ModelContextBar selectedYear={year} />
+      <PageIntro
+        text="Trang bộ lọc giúp bạn lọc doanh nghiệp theo năm và theo khoảng điểm lợi nhuận để tìm nhanh nhóm mã đáng xem."
+        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+      />
+
+      {/* Filter Panel */}
+      <section className="card p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <SlidersHorizontal className="h-5 w-5 text-primary-400" />
+          <h2 className="text-base sm:text-lg font-display font-bold text-white">Bộ lọc</h2>
         </div>
-      </div>
-      
-      {/* Filters Card */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Bộ lọc điều kiện
-            </h2>
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-medium rounded-lg transition"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Reset
-            </button>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
+          <div>
+            <label className="block label-xs mb-1.5">Năm</label>
+            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={inputClasses}>
+              {years.map((y) => (<option key={y} value={y}>{y}</option>))}
+            </select>
           </div>
+          <div>
+            <label className="block label-xs mb-1.5">Min score</label>
+            <input type="number" step="0.1" value={minScore} onChange={(e) => setMinScore(e.target.value)} placeholder="0" className={inputClasses} />
+          </div>
+          <div>
+            <label className="block label-xs mb-1.5">Max score</label>
+            <input type="number" step="0.1" value={maxScore} onChange={(e) => setMaxScore(e.target.value)} placeholder="10" className={inputClasses} />
+          </div>
+          <div>
+            <label className="block label-xs mb-1.5">Số kết quả</label>
+            <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className={inputClasses}>
+              {[20, 50, 100, 200].map((n) => (<option key={n} value={n}>{n}</option>))}
+            </select>
+          </div>
+          <button onClick={fetchScreener} disabled={loading} className="btn-primary disabled:opacity-50 col-span-2 sm:col-span-1 w-full">
+            <Search className="h-4 w-4" /> Lọc
+          </button>
         </div>
-        
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {/* Year */}
-            <div>
-              <label htmlFor="screener-year" className="block text-sm font-semibold text-gray-700 mb-2">
-                Năm phân tích (t)
-              </label>
-              <select
-                id="screener-year"
-                name="year"
-                autoComplete="off"
-                value={filters.year || ''}
-                onChange={(e) => handleFilterChange('year', Number(e.target.value))}
-                className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              >
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>{year}</option>
+      </section>
+
+      {loading && <LoadingSpinner message="Đang lọc doanh nghiệp..." />}
+      {error && <p className="text-rose-400 text-center py-4">{error}</p>}
+
+      {/* Top 10 bar chart — alternating purple/cyan */}
+      {!loading && top10Chart.length > 0 && (
+        <section className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Top 10 theo điểm</h3>
+          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Nhận ra nhóm dẫn đầu ngay trong kết quả lọc.</p>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={top10Chart} layout="vertical" margin={{ left: 40, right: 8, top: 4, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <YAxis dataKey="name" type="category" tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <RTooltip contentStyle={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }} />
+              <Bar dataKey="score" radius={[0, 6, 6, 0]}>
+                {top10Chart.map((d, i) => (
+                  <Cell key={i} fill={d.fill} />
                 ))}
-              </select>
-            </div>
-            
-            {/* Min Score */}
-            <div>
-              <label htmlFor="screener-min-score" className="block text-sm font-semibold text-gray-700 mb-2">
-                ProfitScore tối thiểu
-              </label>
-              <input
-                id="screener-min-score"
-                name="min_score"
-                type="number"
-                step="0.1"
-                autoComplete="off"
-                value={filters.min_score || ''}
-                onChange={(e) => handleFilterChange('min_score', e.target.value ? Number(e.target.value) : null)}
-                className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                placeholder="Tất cả"
-              />
-            </div>
-            
-            {/* Limit */}
-            <div>
-              <label htmlFor="screener-limit" className="block text-sm font-semibold text-gray-700 mb-2">
-                Số lượng kết quả
-              </label>
-              <select
-                id="screener-limit"
-                name="limit"
-                autoComplete="off"
-                value={filters.limit}
-                onChange={(e) => handleFilterChange('limit', Number(e.target.value))}
-                className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              >
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-            </div>
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
           </div>
-          
-          {/* Risk checkboxes */}
-          <div className="mb-4">
-            <div className="block text-sm font-semibold text-gray-700 mb-3">
-              Mức Risk (checkbox)
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <label htmlFor="screener-risk-high" className="inline-flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="screener-risk-high"
-                  name="risk_high"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={filters.risk_high}
-                  onChange={(e) => handleFilterChange('risk_high', e.target.checked)}
-                  className="rounded text-red-600 focus:ring-red-500 mr-2"
-                />
-                <span className="text-sm font-medium text-red-700">High Risk</span>
-              </label>
-              
-              <label htmlFor="screener-risk-low" className="inline-flex items-center px-4 py-2 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="screener-risk-low"
-                  name="risk_low"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={filters.risk_low}
-                  onChange={(e) => handleFilterChange('risk_low', e.target.checked)}
-                  className="rounded text-green-600 focus:ring-green-500 mr-2"
-                />
-                <span className="text-sm font-medium text-green-700">Low Risk</span>
-              </label>
-            </div>
-          </div>
-          
-          {/* Search Button */}
-          <div className="mt-6 flex gap-3">
-            <button
-              onClick={() => handleSearch()}
-              disabled={loading}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="h-5 w-5 animate-spin" />
-                  Đang tìm...
-                </>
-              ) : (
-                <>
-                  <Search className="h-5 w-5" />
-                  Tìm kiếm
-                </>
-              )}
-            </button>
-            
-            <button
-              onClick={handleExportCSV}
-              disabled={results.length === 0}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl shadow-sm transition-all disabled:opacity-50"
-            >
-              <Download className="h-5 w-5" />
-              <span className="hidden sm:inline">Export CSV</span>
+          <ChartCaption caption="Biểu đồ giúp bạn nhận ra nhóm dẫn đầu ngay trong kết quả lọc." />
+        </section>
+      )}
+
+      {/* Results table */}
+      {!loading && sorted.length > 0 && (
+        <section className="card overflow-hidden">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Kết quả: {totalResults} doanh nghiệp</h3>
+            <button onClick={() => exportToCSV(results, `screener_${year}.csv`)} className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
+              <Download className="h-4 w-4" /> Xuất CSV
             </button>
           </div>
-        </div>
-      </div>
-      
-      {/* Results */}
-      {loading ? (
-        <LoadingSpinner message="Đang tìm kiếm..." />
-      ) : (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="text-lg font-bold text-gray-900">
-                Kết quả: {results.length} công ty
-              </h3>
-              <p className="text-sm text-gray-600">
-                <strong>Cách dùng:</strong> Lọc theo Risk High hoặc ProfitScore thấp để tìm công ty cần xem kỹ
-              </p>
-            </div>
-          </div>
-          
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="w-full text-xs sm:text-sm min-w-[700px]">
+              <thead className="bg-white/3 text-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Mã
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Risk
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    ProfitScore
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    PC1
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    PC2
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    PC3
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-4 py-3 text-left font-medium">#</th>
+                  <th className="px-4 py-3 text-left font-medium cursor-pointer select-none" onClick={() => handleSort('firm_id')}>Mã <SortIcon col="firm_id" /></th>
+                  <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => handleSort('profit_score')}><Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip> <SortIcon col="profit_score" /></th>
+                  <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => handleSort('percentile_year')}><Tooltip text={TOOLTIPS.percentile}>Percentile</Tooltip> <SortIcon col="percentile_year" /></th>
+                  <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
+                  <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => handleSort('pc1')}>PC1 <SortIcon col="pc1" /></th>
+                  <th className="px-4 py-3 text-center font-medium">Năm</th>
+                  <th className="px-4 py-3 text-center font-medium"></th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {results.map((row, idx) => {
-                  const firmId = row.firm_id || row.FIRM_ID;
-                  const risk = getRiskLabel(row.label_t ?? row.label);
-                  const inWatchlist = isInWatchlist(firmId);
-                  
+              <tbody className="divide-y divide-white/6">
+                {sorted.map((r, idx) => {
+                  const firmId = r.firm_id || r.FIRM_ID;
+                  const ticker = tickerFromFirmId(firmId);
+                  const badge = riskBadge(r.label_t ?? r.label);
+                  const score = r.profit_score ?? r.score ?? r.p_t;
                   return (
-                    <tr key={idx} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-gray-900">{firmId}</span>
+                    <tr key={idx} className="hover:bg-white/3 transition">
+                      <td className="px-4 py-3 text-muted">{idx + 1}</td>
+                      <td className="px-4 py-3 font-semibold text-white">{firmId}</td>
+                      <td className="px-4 py-3 text-right font-mono text-white">{safeNum(score, 2)}</td>
+                      <td className="px-4 py-3 text-right text-slate-300">{r.percentile_year ?? 'N/A'}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                          risk === 'High' 
-                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' 
-                            : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
-                        }`}>
-                          {risk}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-semibold ${(row.profit_score ?? row.score ?? 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {(row.profit_score ?? row.score)?.toFixed(4) || '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.pc1?.toFixed(4) || row.X1_ROA?.toFixed(4) || row.x1_roa?.toFixed(4) || '—'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.pc2?.toFixed(4) || row.X2_ROE?.toFixed(4) || row.x2_roe?.toFixed(4) || '—'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.pc3?.toFixed(4) || row.X5_NPM?.toFixed(4) || row.x5_npm?.toFixed(4) || '—'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => toggleWatchlist(firmId)}
-                            className={`p-2 rounded-lg transition ${
-                              inWatchlist 
-                                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
-                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                            }`}
-                            title={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
-                          >
-                            <Star className={`h-4 w-4 ${inWatchlist ? 'fill-current' : ''}`} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (firmId) navigate(`/company/${firmId}`);
-                            }}
-                            disabled={!firmId}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition disabled:opacity-50"
-                          >
-                            Xem
-                          </button>
-                        </div>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(r.pc1, 2)}</td>
+                      <td className="px-4 py-3 text-center text-muted">{r.year || year}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={() => navigate(`/company/${ticker}`)} className="text-primary-400 hover:text-primary-300 transition" title="Xem doanh nghiệp">
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            
-            {results.length === 0 && (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Không tìm thấy kết quả phù hợp với bộ lọc</p>
-              </div>
-            )}
           </div>
+          <p className="text-xs text-muted px-6 py-3">Trend xem trong Company History. Hiện backend chưa có pagination.</p>
+        </section>
+      )}
+
+      {/* Empty state */}
+      {!loading && !error && sorted.length === 0 && (
+        <div className="text-center py-16 card">
+          <BarChart3 className="h-12 w-12 text-muted mx-auto mb-4" />
+          <p className="text-white font-medium">Không tìm thấy kết quả</p>
+          <p className="text-sm text-muted mt-1">Thử giảm min score, tăng max score hoặc đổi năm.</p>
         </div>
       )}
     </div>

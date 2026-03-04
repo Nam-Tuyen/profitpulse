@@ -21,27 +21,27 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+        <div className="min-h-screen flex items-center justify-center bg-surface p-4">
+          <div className="max-w-md w-full card p-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-rose-500/15 rounded-full mb-4">
+              <AlertTriangle className="h-8 w-8 text-rose-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Có lỗi xảy ra</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-2xl font-display font-bold text-white mb-2">Oops! Có lỗi xảy ra</h2>
+            <p className="text-muted mb-6">
               Đã xảy ra lỗi không mong muốn. Vui lòng tải lại trang.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all"
+              className="w-full btn-primary py-3"
             >
               Tải lại trang
             </button>
             {this.props.showError && (
               <details className="mt-4 text-left">
-                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
+                <summary className="text-sm text-muted cursor-pointer hover:text-white">
                   Chi tiết lỗi (dành cho developer)
                 </summary>
-                <pre className="mt-2 p-3 bg-gray-100 rounded-lg text-xs text-red-600 overflow-auto">
+                <pre className="mt-2 p-3 bg-surface-200 rounded-lg text-xs text-rose-400 overflow-auto">
                   {this.state.error?.toString()}
                 </pre>
               </details>

@@ -1,405 +1,224 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, Filter, RefreshCw, ArrowRight, Search } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Bell, Filter, Download, AlertTriangle, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, ResponsiveContainer, Cell,
+} from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useWatchlist } from '../hooks/useWatchlist';
+import ModelContextBar from '../components/ModelContextBar';
+import PageIntro from '../components/PageIntro';
+import ChartCaption from '../components/ChartCaption';
+import Tooltip, { TOOLTIPS } from '../components/Tooltip';
+import { safeNum, riskBadge, severityColor } from '../utils/helpers';
 
 const Alerts = () => {
-  const navigate = useNavigate();
-  const { watchlist } = useWatchlist();
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [availableYears, setAvailableYears] = useState([]);
-  
-  const [filters, setFilters] = useState({
-    scope: 'market',
-    year_from: null,
-    year_to: null,
-    rules: ['risk_change', 'chance_drop', 'borderline']
-  });
-  
-  const [selectedRules, setSelectedRules] = useState({
-    risk_change: true,
-    chance_drop: true,
-    borderline: true,
-    roa_decline: false,
-    npm_decline: false
-  });
-  
+  const [meta, setMeta] = useState(null);
+  const [year, setYear] = useState(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [filterRisk, setFilterRisk] = useState('ALL');
+  const [filterDir, setFilterDir] = useState('ALL');
+  const [sortBy, setSortBy] = useState('abs_delta');
+  const [sortDir, setSortDir] = useState('desc');
+
   useEffect(() => {
-    loadMeta();
+    apiService.getMeta().then((m) => {
+      setMeta(m);
+      const yrs = m.years || [];
+      if (yrs.length) setYear(Math.max(...yrs));
+    }).catch(() => setLoading(false));
   }, []);
-  
-  const loadMeta = async () => {
-    try {
-      const metaData = await apiService.getMeta();
-      setAvailableYears(metaData.years || []);
-      
-      if (metaData.years && metaData.years.length >= 2) {
-        const latest = metaData.years[metaData.years.length - 1];
-        const earliest = metaData.years[0];
-        setFilters(prev => ({
-          ...prev,
-          year_from: earliest,
-          year_to: latest
-        }));
-        // Auto-load alerts
-        handleGenerateAlerts({
-          ...filters,
-          year_from: earliest,
-          year_to: latest
-        });
-      }
-    } catch (error) {
-      console.error('Error loading meta:', error);
+
+  useEffect(() => {
+    if (!year) return;
+    setLoading(true);
+    apiService.getAlerts(year).then((d) => setData(d)).catch(() => setData(null)).finally(() => setLoading(false));
+  }, [year]);
+
+  const years = meta?.years || [];
+  const alerts = data?.alerts || [];
+
+  const filtered = useMemo(() => {
+    let arr = [...alerts];
+    if (filterRisk !== 'ALL') arr = arr.filter((a) => (a.label_t ?? a.label ?? '').toLowerCase() === filterRisk.toLowerCase());
+    if (filterDir !== 'ALL') {
+      arr = arr.filter((a) => {
+        const delta = a.yoy_delta ?? a.delta ?? 0;
+        return filterDir === 'UP' ? delta > 0 : delta < 0;
+      });
     }
+    arr.sort((a, b) => {
+      const valA = sortBy === 'abs_delta' ? Math.abs(a.yoy_delta ?? a.delta ?? 0) : (a.profit_score ?? a.score ?? 0);
+      const valB = sortBy === 'abs_delta' ? Math.abs(b.yoy_delta ?? b.delta ?? 0) : (b.profit_score ?? b.score ?? 0);
+      return sortDir === 'desc' ? valB - valA : valA - valB;
+    });
+    return arr;
+  }, [alerts, filterRisk, filterDir, sortBy, sortDir]);
+
+  const severityDist = useMemo(() => {
+    const map = {};
+    alerts.forEach((a) => {
+      const lbl = a.label_t ?? a.label ?? 'Unknown';
+      map[lbl] = (map[lbl] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [alerts]);
+
+  const barColor = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('high') || n.includes('very') || n.includes('critical')) return '#F43F5E';
+    if (n.includes('medium') || n.includes('moderate') || n.includes('elevated')) return '#F59E0B';
+    return '#10B981';
   };
-  
-  const handleGenerateAlerts = async (customFilters = null) => {
-    try {
-      setLoading(true);
-      const searchFilters = customFilters || filters;
-      
-      // Build rules array from selected checkboxes
-      const rules = Object.keys(selectedRules).filter(key => selectedRules[key]);
-      
-      const params = {
-        scope: searchFilters.scope,
-        year_from: searchFilters.year_from,
-        year_to: searchFilters.year_to,
-        rules: rules.join(',')
-      };
-      
-      if (searchFilters.scope === 'watchlist' && watchlist.length > 0) {
-        params.watchlist = watchlist.join(',');
-      }
-      
-      const data = await apiService.getAlerts(params);
-      setAlerts(data.alerts || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error generating alerts:', error);
-      setAlerts([]);
-      setLoading(false);
-    }
+
+  const downloadCSV = () => {
+    const header = 'Mã,Score,Delta,Nhãn';
+    const rows = filtered.map((a) => `${a.FIRM_ID || a.firm_id},${safeNum(a.profit_score ?? a.score, 3)},${safeNum(a.yoy_delta ?? a.delta, 3)},${a.label_t ?? a.label}`);
+    const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `alerts_${year}.csv`; a.click();
+    URL.revokeObjectURL(url);
   };
-  
-  const handleRuleToggle = (rule) => {
-    setSelectedRules(prev => ({
-      ...prev,
-      [rule]: !prev[rule]
-    }));
+
+  const toggleSort = (col) => {
+    if (sortBy === col) setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
+    else { setSortBy(col); setSortDir('desc'); }
   };
-  
-  const getSeverityBadge = (severity) => {
-    const colors = {
-      high: 'bg-gradient-to-r from-red-500 to-red-600 text-white',
-      medium: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
-      low: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-    };
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${colors[severity] || colors.medium}`}>
-        {severity === 'high' ? 'Cao' : severity === 'medium' ? 'Trung bình' : 'Thấp'}
-      </span>
-    );
-  };
-  
-  const getAlertTypeLabel = (type) => {
-    const labels = {
-      risk_change: 'Risk tăng',
-      chance_drop: 'ProfitScore giảm',
-      borderline: 'Borderline',
-      roa_decline: 'ROA giảm liên tục',
-      npm_decline: 'NPM giảm liên tục'
-    };
-    return labels[type] || type;
-  };
-  
+
+  const inputClasses = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
+  const chartTooltipStyle = { background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 };
+
+  if (loading) return <LoadingSpinner message="Đang tải cảnh báo..." />;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 rounded-2xl shadow-xl p-6 sm:p-8">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center">
-            <Bell className="h-10 w-10 mr-3" />
-            Cảnh báo tự động
-          </h1>
-          <p className="text-orange-100 text-sm sm:text-base">
-            Tự động nhắc "mã nào cần xem ngay" theo watchlist hoặc toàn thị trường
-          </p>
+    <div className="space-y-4 sm:space-y-6">
+      <ModelContextBar selectedYear={year} />
+      <PageIntro
+        text="Cảnh báo tự động phát hiện doanh nghiệp có biến động lớn (tăng hoặc giảm đáng kể) về điểm lợi nhuận so với năm trước."
+        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+      />
+
+      {/* Filters */}
+      <section className="card p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <Filter className="h-5 w-5 text-primary-400" />
+          <h2 className="text-base sm:text-lg font-display font-bold text-white">Bộ lọc</h2>
         </div>
-      </div>
-      
-      {/* Filter Panel */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
-          <h2 className="text-lg font-bold text-white flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
-            Thiết lập cảnh báo
-          </h2>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 sm:gap-4">
+          <div>
+            <label className="block label-xs mb-1.5">Năm</label>
+            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={inputClasses}>
+              {years.map((y) => (<option key={y} value={y}>{y}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block label-xs mb-1.5">Nhãn rủi ro</label>
+            <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className={inputClasses}>
+              <option value="ALL">Tất cả</option>
+              <option value="Very High Risk">Very High Risk</option>
+              <option value="High Risk">High Risk</option>
+              <option value="Medium Risk">Medium Risk</option>
+              <option value="Low Risk">Low Risk</option>
+            </select>
+          </div>
+          <div>
+            <label className="block label-xs mb-1.5">Hướng</label>
+            <select value={filterDir} onChange={(e) => setFilterDir(e.target.value)} className={inputClasses}>
+              <option value="ALL">Tất cả</option>
+              <option value="UP">Tăng</option>
+              <option value="DOWN">Giảm</option>
+            </select>
+          </div>
+          <button onClick={downloadCSV} className="btn-ghost text-sm col-span-2 sm:col-span-1"><Download className="h-4 w-4" /> Tải CSV</button>
         </div>
-        
-        <div className="p-6">
-          {/* Scope Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Phạm vi theo dõi
-            </label>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, scope: 'market' }))}
-                className={`px-6 py-3 rounded-xl font-medium transition ${
-                  filters.scope === 'market'
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Toàn thị trường
-              </button>
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, scope: 'watchlist' }))}
-                className={`px-6 py-3 rounded-xl font-medium transition ${
-                  filters.scope === 'watchlist'
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Chỉ Watchlist ({watchlist.length})
-              </button>
-            </div>
-            {filters.scope === 'watchlist' && watchlist.length === 0 && (
-              <p className="text-sm text-red-600 mt-2">
-                Watchlist trống. Hãy thêm công ty vào watchlist từ trang Sàng lọc.
-              </p>
-            )}
+      </section>
+
+      {/* Severity distribution */}
+      {severityDist.length > 0 && (
+        <section className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Phân bổ mức độ</h3>
+          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Có bao nhiêu doanh nghiệp ở mỗi mức rủi ro.</p>
+          <div className="chart-container">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={severityDist}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="name" tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <RTooltip contentStyle={chartTooltipStyle} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {severityDist.map((entry, idx) => (
+                  <Cell key={idx} fill={barColor(entry.name)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
           </div>
-          
-          {/* Year Range */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Khoảng năm phân tích
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Từ năm</label>
-                <select
-                  value={filters.year_from || ''}
-                  onChange={(e) => setFilters(prev => ({ ...prev, year_from: Number(e.target.value) }))}
-                  className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Đến năm</label>
-                <select
-                  value={filters.year_to || ''}
-                  onChange={(e) => setFilters(prev => ({ ...prev, year_to: Number(e.target.value) }))}
-                  className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          {/* Rules */}
-          <div className="mb-6">
-            <div className="block text-sm font-semibold text-gray-700 mb-3">
-              Loại cảnh báo (chọn nhiều)
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label htmlFor="alert-risk-change" className="flex items-center p-3 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="alert-risk-change"
-                  name="risk_change"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={selectedRules.risk_change}
-                  onChange={() => handleRuleToggle('risk_change')}
-                  className="rounded text-red-600 focus:ring-red-500 mr-3"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">Risk đổi cấp</span>
-                  <p className="text-xs text-gray-600">Low → High</p>
-                </div>
-              </label>
-              
-              <label htmlFor="alert-chance-drop" className="flex items-center p-3 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="alert-chance-drop"
-                  name="chance_drop"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={selectedRules.chance_drop}
-                  onChange={() => handleRuleToggle('chance_drop')}
-                  className="rounded text-orange-600 focus:ring-orange-500 mr-3"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">ProfitScore giảm mạnh</span>
-                  <p className="text-xs text-gray-600">Giảm ≥ 0.15 điểm</p>
-                </div>
-              </label>
-              
-              <label htmlFor="alert-borderline" className="flex items-center p-3 bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="alert-borderline"
-                  name="borderline"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={selectedRules.borderline}
-                  onChange={() => handleRuleToggle('borderline')}
-                  className="rounded text-yellow-600 focus:ring-yellow-500 mr-3"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">Borderline bật</span>
-                  <p className="text-xs text-gray-600">|P| &lt; 0.1</p>
-                </div>
-              </label>
-              
-              <label htmlFor="alert-roa-decline" className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="alert-roa-decline"
-                  name="roa_decline"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={selectedRules.roa_decline}
-                  onChange={() => handleRuleToggle('roa_decline')}
-                  className="rounded text-blue-600 focus:ring-blue-500 mr-3"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">ROA giảm 2 năm</span>
-                  <p className="text-xs text-gray-600">Liên tục giảm</p>
-                </div>
-              </label>
-              
-              <label htmlFor="alert-npm-decline" className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg cursor-pointer transition">
-                <input
-                  id="alert-npm-decline"
-                  name="npm_decline"
-                  type="checkbox"
-                  autoComplete="off"
-                  checked={selectedRules.npm_decline}
-                  onChange={() => handleRuleToggle('npm_decline')}
-                  className="rounded text-purple-600 focus:ring-purple-500 mr-3"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">NPM giảm 2 năm</span>
-                  <p className="text-xs text-gray-600">Biên lợi nhuận giảm</p>
-                </div>
-              </label>
-            </div>
-          </div>
-          
-          {/* Generate Button */}
-          <button
-            onClick={() => handleGenerateAlerts()}
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="h-5 w-5 animate-spin" />
-                Đang tạo cảnh báo...
-              </>
-            ) : (
-              <>
-                <Bell className="h-5 w-5" />
-                Tạo cảnh báo
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {/* Alerts List */}
-      {loading ? (
-        <LoadingSpinner message="Đang phân tích dữ liệu..." />
-      ) : (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">
-                Danh sách cảnh báo: {alerts.length} mục
-              </h3>
-              <p className="text-sm text-gray-600">
-                Sắp xếp theo năm mới nhất
-              </p>
-            </div>
-          </div>
-          
-          {alerts.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {alerts.map((alert, idx) => (
-                <div
-                  key={idx}
-                  className="px-6 py-4 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-bold text-gray-900">
-                          {alert.firm_id}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Năm {alert.year}
-                        </span>
-                        {getSeverityBadge(alert.severity)}
-                        <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                          {getAlertTypeLabel(alert.type || alert.alert_type)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700">
-                        {alert.message}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const id = alert.firm_id || alert.FIRM_ID;
-                        if (id) navigate(`/company/${id}`);
-                      }}
-                      disabled={!alert.firm_id && !alert.FIRM_ID}
-                      className="flex-shrink-0 inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition disabled:opacity-50"
-                    >
-                      Xem chi tiết
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <AlertTriangle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">
-                Không có cảnh báo nào với điều kiện hiện tại
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                Thử điều chỉnh khoảng năm hoặc chọn thêm loại cảnh báo
-              </p>
-            </div>
-          )}
-        </div>
+          <ChartCaption caption="Biểu đồ phân bổ mức độ cảnh báo theo nhãn rủi ro." />
+        </section>
       )}
-      
-      {/* Info Box */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-        <h4 className="text-sm font-bold text-blue-900 mb-2 flex items-center">
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Lưu ý quan trọng
-        </h4>
-        <p className="text-sm text-blue-800 leading-relaxed">
-          <strong>Ý nghĩa:</strong> Cảnh báo giúp ưu tiên đọc báo cáo tài chính và theo dõi biến động chỉ tiêu. 
-          Đây là công cụ hỗ trợ quyết định, không phải khuyến nghị mua/bán. 
-          Luôn kết hợp với phân tích định tính và tin tức thị trường.
-        </p>
-      </div>
+
+      {/* Alerts Table */}
+      <section className="card overflow-hidden">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Danh sách cảnh báo</h3>
+            <p className="text-xs sm:text-sm text-muted">{filtered.length} doanh nghiệp được gắn cờ</p>
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <Bell className="h-12 w-12 text-muted mx-auto mb-3 opacity-50" />
+            <p className="text-white font-medium mb-1">Không có cảnh báo</p>
+            <p className="text-sm text-muted">Thử đổi bộ lọc để xem thêm doanh nghiệp.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[440px]">
+              <thead className="bg-white/3 text-muted">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Mã</th>
+                  <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => toggleSort('score')}>
+                    <Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip> {sortBy === 'score' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => toggleSort('abs_delta')}>
+                    <Tooltip text="Biến động so với năm trước">Delta</Tooltip> {sortBy === 'abs_delta' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/6">
+                {filtered.slice(0, 50).map((a, idx) => {
+                  const delta = a.yoy_delta ?? a.delta ?? 0;
+                  const badge = riskBadge(a.label_t ?? a.label);
+                  return (
+                    <tr key={idx} className="hover:bg-white/3 transition">
+                      <td className="px-4 py-3 font-semibold text-white">{a.FIRM_ID || a.firm_id}</td>
+                      <td className="px-4 py-3 text-right font-mono text-white">{safeNum(a.profit_score ?? a.score, 3)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`inline-flex items-center gap-1 font-mono ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-muted'}`}>
+                          {delta > 0 ? <ArrowUp className="h-3.5 w-3.5" /> : delta < 0 ? <ArrowDown className="h-3.5 w-3.5" /> : null}
+                          {safeNum(delta, 3)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {filtered.length > 50 && (
+          <div className="px-6 py-3 border-t border-white/6 text-center text-sm text-muted">
+            Hiển thị 50 / {filtered.length} — tải CSV để xem tất cả.
+          </div>
+        )}
+      </section>
     </div>
   );
 };

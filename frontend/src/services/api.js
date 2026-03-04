@@ -1,113 +1,123 @@
 /**
- * API Service
- * Chức năng: Gọi các API endpoints của backend
+ * API Service – ProfitPulse Frontend
+ * All backend calls centralised here.
  */
 
 import axios from 'axios';
 
-// API Base URL Configuration
-// Production: Use Render backend URL (without /api prefix as routes handle it)
-// Development: Use localhost
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  import.meta.env.PROD 
-    ? 'https://profitpulse-ihv0.onrender.com' 
+  import.meta.env.PROD
+    ? 'https://profitpulse-ihv0.onrender.com'
     : 'http://localhost:5000'
 );
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 30000,
 });
 
-// Interceptor để handle errors
 api.interceptors.response.use(
-  response => response,
-  error => {
+  (r) => r,
+  (error) => {
     console.error('API Error:', error);
     return Promise.reject(error);
   }
 );
 
-/**
- * API Service Object
- */
+/* ============================================================
+ * Normalise helpers (handle nested vs flat summary)
+ * ============================================================ */
+const normaliseSummary = (raw) => {
+  const s = raw.summary || raw;
+  return {
+    total_firms: s.total_firms ?? s.total_companies ?? 0,
+    total_companies: s.total_companies ?? s.total_firms ?? 0,
+    avg_profit_score: s.avg_profit_score ?? null,
+    max_profit_score: s.max_profit_score ?? null,
+    min_profit_score: s.min_profit_score ?? null,
+    high_risk_count: s.high_risk_count ?? 0,
+    low_risk_count: s.low_risk_count ?? 0,
+  };
+};
+
+/* ============================================================
+ * Public API
+ * ============================================================ */
 export const apiService = {
-  
-  // ===== META =====
+
+  /* ----- META ----- */
   getMeta: async () => {
-    const response = await api.get('/api/meta');
-    return response.data;
+    const { data } = await api.get('/api/meta');
+    return data;
   },
 
-  // ===== SCREENER =====
-  screener: async (filters) => {
+  /* ----- SCREENER ----- */
+  screener: async (filters = {}) => {
     const params = new URLSearchParams();
-    
     if (filters.year) params.append('year', filters.year);
-    if (filters.min_score) params.append('min_score', filters.min_score);
-    if (filters.max_score) params.append('max_score', filters.max_score);
+    if (filters.min_score != null) params.append('min_score', filters.min_score);
+    if (filters.max_score != null) params.append('max_score', filters.max_score);
     if (filters.limit) params.append('limit', filters.limit);
-    
-    const response = await api.get(`/api/screener?${params.toString()}`);
-    return response.data;
+    const { data } = await api.get(`/api/screener?${params.toString()}`);
+    return data;
   },
 
-  // ===== COMPANY =====
+  /* ----- COMPANY ----- */
   getCompany: async (ticker, year = null) => {
-    if (!ticker || ticker === 'undefined') {
-      throw new Error('Ticker is required');
-    }
+    if (!ticker || ticker === 'undefined') throw new Error('Ticker is required');
     const params = year ? `?year=${year}` : '';
-    const response = await api.get(`/api/company/${ticker}${params}`);
-    return response.data;
+    const { data } = await api.get(`/api/company/${ticker}${params}`);
+    return data;
   },
 
-  // ===== COMPARE =====
+  /* ----- COMPARE ----- */
   compareCompanies: async (tickers, year) => {
-    const response = await api.post('/api/compare', {
-      tickers,
-      year
-    });
-    return response.data;
+    const { data } = await api.post('/api/compare', { tickers, year });
+    return data;
   },
 
-  // ===== SUMMARY =====
+  /* ----- SUMMARY (normalised) ----- */
   getSummary: async (year = null) => {
     const params = year ? `?year=${year}` : '';
-    const response = await api.get(`/api/summary${params}`);
-    return response.data;
+    const { data } = await api.get(`/api/summary${params}`);
+    return {
+      ...data,
+      _normalised: normaliseSummary(data),
+      chart_data: data.chart_data ?? null,
+      top_companies: data.top_companies ?? [],
+      year: data.year ?? year,
+    };
   },
 
-  // ===== ALERTS =====
+  /* ----- ALERTS ----- */
   getAlerts: async (params = {}) => {
-    const query = new URLSearchParams();
-    if (params.scope) query.append('scope', params.scope);
-    if (params.year_from) query.append('year_from', params.year_from);
-    if (params.year_to) query.append('year_to', params.year_to);
-    if (params.rules) query.append('rules', params.rules);
-    if (params.watchlist) query.append('watchlist', params.watchlist);
-    const response = await api.get(`/api/alerts?${query.toString()}`);
-    return response.data;
+    const q = new URLSearchParams();
+    if (params.scope) q.append('scope', params.scope);
+    if (params.year_from) q.append('year_from', params.year_from);
+    if (params.year_to) q.append('year_to', params.year_to);
+    if (params.rules) q.append('rules', params.rules);
+    if (params.watchlist) q.append('watchlist', params.watchlist);
+    const { data } = await api.get(`/api/alerts?${q.toString()}`);
+    return data;
   },
 
   getTopRisk: async (n = 10) => {
-    const response = await api.get(`/api/alerts/top-risk?n=${n}`);
-    return response.data;
+    const { data } = await api.get(`/api/alerts/top-risk?n=${n}`);
+    return data;
   },
 
-  // ===== ABOUT =====
+  /* ----- ABOUT ----- */
   getAbout: async () => {
-    const response = await api.get('/api/about');
-    return response.data;
+    const { data } = await api.get('/api/about');
+    return data;
   },
 
-  // ===== HEALTH =====
+  /* ----- HEALTH ----- */
   healthCheck: async () => {
-    const response = await api.get('/health');
-    return response.data;
-  }
+    const { data } = await api.get('/health');
+    return data;
+  },
 };
 
 export default apiService;

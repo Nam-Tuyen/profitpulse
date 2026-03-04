@@ -1,400 +1,221 @@
-import { useState, useEffect } from 'react';
-import { Search, GitCompare, X, TrendingUp, AlertCircle } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState, useEffect, useMemo } from 'react';
+import { GitCompare, Plus, X, AlertTriangle, Eye } from 'lucide-react';
+import {
+  LineChart, Line, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ModelContextBar from '../components/ModelContextBar';
+import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
+import Tooltip, { TOOLTIPS } from '../components/Tooltip';
+import { safeNum, riskBadge, tickerFromFirmId } from '../utils/helpers';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#F43F5E'];
 
 const Compare = () => {
-  const [allFirms, setAllFirms] = useState([]);
-  const [selectedFirms, setSelectedFirms] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [availableYears, setAvailableYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(null);
-  const [comparisonData, setComparisonData] = useState(null);
+  const [meta, setMeta] = useState(null);
+  const [year, setYear] = useState(null);
+  const [selectedTickers, setSelectedTickers] = useState([]);
+  const [inputTicker, setInputTicker] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [comparison, setComparison] = useState([]);
+  const [timeseriesMap, setTimeseriesMap] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    loadMeta();
+    apiService.getMeta().then((m) => {
+      setMeta(m);
+      const years = m.years || [];
+      if (years.length) setYear(Math.max(...years));
+    }).catch(() => {});
   }, []);
-  
-  const loadMeta = async () => {
-    try {
-      const metaData = await apiService.getMeta();
-      setAllFirms(metaData.companies || metaData.firms || []);
-      setAvailableYears(metaData.years || []);
-      if (metaData.years && metaData.years.length > 0) {
-        setSelectedYear(metaData.years[metaData.years.length - 1]);
-      }
-    } catch (error) {
-      console.error('Error loading meta:', error);
-    }
+
+  const firms = meta?.companies || meta?.firms || [];
+  const years = meta?.years || [];
+
+  useEffect(() => {
+    if (inputTicker.length < 1) { setSuggestions([]); return; }
+    const q = inputTicker.toUpperCase();
+    setSuggestions(firms.filter((f) => f.toUpperCase().includes(q) && !selectedTickers.includes(f)).slice(0, 8));
+  }, [inputTicker, firms, selectedTickers]);
+
+  const addTicker = (t) => {
+    if (selectedTickers.length >= 4) return;
+    if (!selectedTickers.includes(t)) setSelectedTickers([...selectedTickers, t]);
+    setInputTicker('');
+    setSuggestions([]);
   };
-  
-  const filteredFirms = allFirms.filter(firm => 
-    firm.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    !selectedFirms.includes(firm)
-  ).slice(0, 10);
-  
-  const handleAddFirm = (firm) => {
-    if (selectedFirms.length < 5) {
-      setSelectedFirms([...selectedFirms, firm]);
-      setSearchQuery('');
-      setShowDropdown(false);
-    }
-  };
-  
-  const handleRemoveFirm = (firm) => {
-    setSelectedFirms(selectedFirms.filter(f => f !== firm));
-  };
-  
+
+  const removeTicker = (t) => setSelectedTickers(selectedTickers.filter((x) => x !== t));
+
   const handleCompare = async () => {
-    if (selectedFirms.length < 2 || !selectedYear) {
-      return;
-    }
-    
+    if (selectedTickers.length < 2 || !year) return;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const data = await apiService.compareCompanies(selectedFirms, selectedYear);
-      
-      // Process data for charts
-      const processedData = await processComparisonData(data.comparison);
-      setComparisonData(processedData);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error comparing:', error);
+      const res = await apiService.compareCompanies(selectedTickers, year);
+      setComparison(res.comparison || []);
+      const tsResults = {};
+      await Promise.all(
+        selectedTickers.map(async (t) => {
+          try {
+            const d = await apiService.getCompany(t);
+            tsResults[t] = (d.timeseries || []).sort((a, b) => a.year - b.year);
+          } catch { tsResults[t] = []; }
+        })
+      );
+      setTimeseriesMap(tsResults);
+    } catch (err) {
+      console.error(err);
+      setError('Không thể so sánh. Kiểm tra lại mã hoặc năm.');
+    } finally {
       setLoading(false);
     }
   };
-  
-  const processComparisonData = async (comparison) => {
-    // Get historical data for each firm
-    const timeseriesData = {};
-    
-    for (const firm of selectedFirms) {
-      try {
-        const firmData = await apiService.getCompany(firm);
-        timeseriesData[firm] = (firmData.timeseries || []).map(p => ({
-          year: p.year,
-          profitscore: p.profitscore ?? p.profit_score ?? 0
-        }));
-      } catch (error) {
-        console.error(`Error loading ${firm}:`, error);
-        timeseriesData[firm] = [];
-      }
-    }
-    
-    return {
-      comparison,
-      timeseries: timeseriesData
-    };
-  };
-  
-  const prepareTimeSeriesChart = () => {
-    if (!comparisonData || !comparisonData.timeseries) return [];
-    
-    // Combine all years
-    const allYears = new Set();
-    Object.values(comparisonData.timeseries).forEach(series => {
-      series.forEach(point => allYears.add(point.year));
-    });
-    
-    const sortedYears = Array.from(allYears).sort();
-    
-    return sortedYears.map(year => {
-      const dataPoint = { year };
-      selectedFirms.forEach(firm => {
-        const series = comparisonData.timeseries[firm] || [];
-        const point = series.find(p => p.year === year);
-        dataPoint[firm] = point?.profitscore ?? null;
+
+  const chartData = useMemo(() => {
+    const yearsSet = new Set();
+    Object.values(timeseriesMap).forEach((ts) => ts.forEach((d) => yearsSet.add(d.year)));
+    const allYears = [...yearsSet].sort((a, b) => a - b);
+    return allYears.map((y) => {
+      const point = { year: y };
+      selectedTickers.forEach((t) => {
+        const match = (timeseriesMap[t] || []).find((d) => d.year === y);
+        point[t] = match ? match.profitscore : null;
       });
-      return dataPoint;
+      return point;
     });
-  };
-  
-  const prepareChanceChart = () => {
-    if (!comparisonData || !comparisonData.comparison) return [];
-    
-    return comparisonData.comparison.map(item => ({
-      firm: item.ticker,
-      score: item.scores?.profit_score ?? item.scores?.p_t ?? 0
-    }));
-  };
-  
-  const getRiskBadge = (label) => {
-    const risk = (label === 1 || label === '1') ? 'High' : 'Low';
-    const colors = risk === 'High' 
-      ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
-      : 'bg-gradient-to-r from-green-500 to-green-600 text-white';
-    return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors}`}>{risk}</span>;
-  };
-  
+  }, [timeseriesMap, selectedTickers]);
+
+  const inputClasses = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white placeholder:text-muted text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
+  const chartTooltipStyle = { background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 sm:p-8">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            So sánh công ty
-          </h1>
-          <p className="text-cyan-100 text-sm sm:text-base">
-            So sánh 2–5 mã để ra quyết định nhanh về Risk và ProfitScore
-          </p>
+    <div className="space-y-4 sm:space-y-6">
+      <ModelContextBar selectedYear={year} />
+      <PageIntro
+        text="Trang so sánh giúp bạn đặt nhiều doanh nghiệp lên cùng một khung để so điểm hiện tại và độ ổn định theo thời gian."
+        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+      />
+
+      {/* Inputs */}
+      <section className="card p-4 sm:p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <GitCompare className="h-5 w-5 text-primary-400" />
+          <h2 className="text-base sm:text-lg font-display font-bold text-white">Chọn doanh nghiệp (2–4)</h2>
         </div>
-      </div>
-      
-      {/* Selection Panel */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Firm Selector */}
-          <div>
-            <label htmlFor="compare-search" className="block text-sm font-semibold text-gray-700 mb-3">
-              Chọn công ty (tối đa 5)
-            </label>
-            <div className="relative">
-              <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                <Search className="h-5 w-5 text-gray-400" />
-                <input
-                  id="compare-search"
-                  name="company-search"
-                  type="text"
-                  autoComplete="off"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  placeholder="Tìm mã công ty..."
-                  className="flex-1 outline-none text-gray-900"
-                  disabled={selectedFirms.length >= 5}
-                />
+        <div className="flex flex-wrap gap-2">
+          {selectedTickers.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 bg-primary-600/20 text-primary-400 px-3 py-1 rounded-full text-sm font-medium">
+              {t}
+              <button onClick={() => removeTicker(t)} className="hover:text-rose-400 transition"><X className="h-3.5 w-3.5" /></button>
+            </span>
+          ))}
+        </div>
+        {selectedTickers.length < 4 && (
+          <div className="relative max-w-xs">
+            <input value={inputTicker} onChange={(e) => setInputTicker(e.target.value)} placeholder="Nhập mã (VD: FPT)" className={inputClasses + ' w-full'} onKeyDown={(e) => { if (e.key === 'Enter' && suggestions.length) addTicker(suggestions[0]); }} />
+            {suggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 rounded-xl shadow-lg max-h-48 overflow-y-auto" style={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                {suggestions.map((s) => (
+                  <button key={s} onClick={() => addTicker(s)} className="w-full text-left px-4 py-2 hover:bg-white/5 text-sm text-white transition">{s}</button>
+                ))}
               </div>
-              
-              {/* Dropdown */}
-              {showDropdown && searchQuery && filteredFirms.length > 0 && (
-                <div className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
-                  {filteredFirms.map((firm) => (
-                    <button
-                      key={firm}
-                      onClick={() => handleAddFirm(firm)}
-                      className="w-full text-left px-4 py-2 hover:bg-blue-50 transition"
-                    >
-                      {firm}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Selected Chips */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              {selectedFirms.map((firm, idx) => (
-                <div
-                  key={firm}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium shadow-sm"
-                  style={{ backgroundColor: COLORS[idx] + '20', color: COLORS[idx] }}
-                >
-                  <span>{firm}</span>
-                  <button
-                    onClick={() => handleRemoveFirm(firm)}
-                    className="hover:opacity-70 transition"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Year Selector */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Năm so sánh (t)
-            </label>
-            <select
-              value={selectedYear || ''}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            
-            <button
-              onClick={handleCompare}
-              disabled={selectedFirms.length < 2 || loading}
-              className="w-full mt-4 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <GitCompare className="h-5 w-5" />
-              So sánh ngay
-            </button>
-            
-            {selectedFirms.length < 2 && (
-              <p className="text-sm text-gray-500 mt-2">
-                Cần chọn ít nhất 2 công ty để so sánh
-              </p>
             )}
           </div>
+        )}
+        <div className="flex items-end gap-3 flex-wrap">
+          <div>
+            <label className="block label-xs mb-1.5">Năm</label>
+            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={inputClasses}>
+              {years.map((y) => (<option key={y} value={y}>{y}</option>))}
+            </select>
+          </div>
+          <button onClick={handleCompare} disabled={selectedTickers.length < 2 || loading} className="btn-primary disabled:opacity-50">
+            <GitCompare className="h-4 w-4" /> So sánh
+          </button>
         </div>
-      </div>
-      
-      {/* Loading */}
-      {loading && <LoadingSpinner message="Đang tải dữ liệu so sánh..." />}
-      
-      {/* Comparison Results */}
-      {!loading && comparisonData && (
-        <div className="space-y-6">
-          {/* Comparison Table */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
-              <h3 className="text-lg font-bold text-white">
-                Bảng so sánh - Năm {selectedYear}
-              </h3>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Mã</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Risk</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">ProfitScore</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC1</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC2</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC3</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {comparisonData.comparison.map((row, idx) => {
-                    const score = row.scores?.profit_score ?? row.scores?.p_t ?? 0;
-                    const label = row.scores?.label_t;
-                    return (
-                    <tr key={row.ticker} className="hover:bg-blue-50 transition">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold" style={{ color: COLORS[idx] }}>
-                          {row.ticker}
-                        </span>
+      </section>
+
+      {loading && <LoadingSpinner message="Đang so sánh..." />}
+      {error && <p className="text-rose-400 text-center py-4">{error}</p>}
+
+      {/* Comparison Table */}
+      {!loading && comparison.length > 0 && (
+        <section className="card overflow-hidden">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6">
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">So sánh năm {year}</h3>
+            <p className="text-xs sm:text-sm text-muted">Chốt nhanh mã nào dẫn đầu và mã nào ở vùng rủi ro cao.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[580px]">
+              <thead className="bg-white/3 text-muted">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Mã</th>
+                  <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip></th>
+                  <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.percentile}>Percentile</Tooltip></th>
+                  <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
+                  <th className="px-4 py-3 text-right font-medium">PC1</th>
+                  <th className="px-4 py-3 text-right font-medium">PC2</th>
+                  <th className="px-4 py-3 text-right font-medium">PC3</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/6">
+                {comparison.map((c, idx) => {
+                  const firmId = c.FIRM_ID || c.firm_id;
+                  const score = c.profit_score ?? c.score ?? c.p_t;
+                  const badge = riskBadge(c.label_t ?? c.label);
+                  return (
+                    <tr key={idx} className="hover:bg-white/3 transition">
+                      <td className="px-4 py-3 font-semibold text-white">{firmId}</td>
+                      <td className="px-4 py-3 text-right font-mono text-white">{safeNum(score, 2)}</td>
+                      <td className="px-4 py-3 text-right text-slate-300">{c.percentile_year ?? c.percentile ?? 'N/A'}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getRiskBadge(label)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-semibold ${score < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {score?.toFixed(4) || '—'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.scores?.pc1?.toFixed(4) || '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.scores?.pc2?.toFixed(4) || '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.scores?.pc3?.toFixed(4) || '—'}
-                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc1, 2)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc2, 2)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{safeNum(c.pc3, 2)}</td>
                     </tr>
                   );
-                  })}
-                </tbody>
-              </table>
+                })}
+              </tbody>
+            </table>
+          </div>
+          {selectedTickers.some((t) => !(timeseriesMap[t]?.length)) && (
+            <div className="px-6 py-3 bg-amber-500/10 text-amber-400 text-xs flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Một số mã thiếu dữ liệu lịch sử — biểu đồ có thể không đầy đủ.
             </div>
-          </div>
-          
-          {/* ProfitScore Overlay Chart */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
-              ProfitScore theo thời gian
-            </h3>
-            
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={prepareTimeSeriesChart()}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Legend />
-                {selectedFirms.map((firm, idx) => (
-                  <Line
-                    key={firm}
-                    type="monotone"
-                    dataKey={firm}
-                    stroke={COLORS[idx]}
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-            
-            <ChartCaption
-              title="So sánh xu hướng lợi nhuận"
-              subtitle="Biểu đồ overlay của ProfitScore qua các năm"
-              caption="Ý nghĩa: So sánh xu hướng lợi nhuận tổng hợp giữa các công ty. Đường càng ổn định và dương thì công ty càng đáng tin cậy."
-              purpose="Mục đích: Chọn công ty có ProfitScore ổn định hơn hoặc phục hồi tốt hơn so với đối thủ."
-            />
-          </div>
-          
-          {/* Current Score Comparison */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-              <GitCompare className="h-5 w-5 mr-2 text-purple-600" />
-              So sánh ProfitScore năm {selectedYear}
-            </h3>
-            
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={prepareChanceChart()}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="firm" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="score" radius={[8, 8, 0, 0]}>
-                  {prepareChanceChart().map((entry, index) => (
-                    <Bar key={`bar-${index}`} dataKey="score" fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            
-            <ChartCaption
-              title="So sánh rủi ro hiện tại"
-              subtitle="ProfitScore của từng công ty trong năm được chọn"
-              caption="Ý nghĩa: So sánh điểm lợi nhuận tổng hợp giữa các công ty trong cùng năm t. Điểm dương cao hơn thường tốt hơn."
-              purpose="Mục đích: Ưu tiên công ty có ProfitScore cao hơn và ổn định trong nhóm so sánh."
-            />
-          </div>
-        </div>
+          )}
+        </section>
       )}
-      
-      {/* Empty State */}
-      {!loading && !comparisonData && (
-        <div className="text-center py-16">
-          <GitCompare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">
-            Chọn ít nhất 2 công ty và nhấn "So sánh ngay" để xem kết quả
-          </p>
-        </div>
+
+      {/* Multi-line chart */}
+      {!loading && chartData.length > 0 && selectedTickers.length >= 2 && (
+        <section className="card card-hover p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Xu hướng điểm theo thời gian</h3>
+          <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Mã nào ổn định hơn và mã nào biến động mạnh.</p>
+          <div className="chart-container">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="year" tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} />
+              <RTooltip contentStyle={chartTooltipStyle} labelFormatter={(l) => `Năm ${l}`} />
+              <Legend />
+              {selectedTickers.map((t, i) => (
+                <Line key={t} type="monotone" dataKey={t} name={t} stroke={COLORS[i % COLORS.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+          </div>
+          <ChartCaption caption="Biểu đồ cho bạn thấy mã nào ổn định hơn và mã nào biến động mạnh." />
+        </section>
       )}
     </div>
   );

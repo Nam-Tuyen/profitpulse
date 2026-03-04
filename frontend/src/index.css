@@ -2,57 +2,263 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+ * Deep-space dark theme — ProfitPulse Admin Dashboard
+ * Mobile-first responsive design
+ * ============================================================ */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color-scheme: dark;
+  color: #e2e8f0;
+  background-color: #0F1117;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Safe area insets for notch devices */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height for mobile */
+  background: linear-gradient(135deg, #0F1117 0%, #161B2E 100%);
+  overflow-x: hidden;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+#root {
+  width: 100%;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* ============================================================
+ * Safe area for bottom nav (notch devices)
+ * ============================================================ */
+.safe-area-bottom {
+  padding-bottom: var(--safe-bottom);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+/* ============================================================
+ * Scrollbar — dark theme
+ * ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.5); }
+
+/* Hide scrollbar on mobile for horizontal scrollable areas */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ============================================================
+ * Card surface — reusable dark glass cards
+ * ============================================================ */
+@layer components {
+  .card {
+    @apply rounded-xl md:rounded-2xl;
+    background: #1A2035;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 20px rgba(124, 58, 237, 0.05);
+  }
+
+  .card-hover {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  @media (hover: hover) {
+    .card-hover:hover {
+      transform: scale(1.01);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(124, 58, 237, 0.12);
+    }
+  }
+
+  /* Gradient primary button — touch-friendly sizing */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5
+           font-display font-semibold text-sm text-white rounded-xl
+           transition-all duration-200 active:scale-95;
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+  }
+  @media (hover: hover) {
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+    }
+  }
+
+  /* Ghost / secondary button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5
+           font-display font-semibold text-sm text-white rounded-xl
+           border border-white/20 bg-transparent transition-all duration-200 active:scale-95;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+  }
+  @media (hover: hover) {
+    .btn-ghost:hover {
+      @apply bg-white/5 border-white/30;
+    }
+  }
+
+  /* Danger button */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5
+           font-display font-semibold text-sm text-white rounded-xl
+           transition-all duration-200 active:scale-95;
+    background: #F43F5E;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+  }
+  @media (hover: hover) {
+    .btn-danger:hover { background: #E11D48; }
+  }
+
+  /* Pill badges */
+  .pill { @apply inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-semibold; }
+  .pill-up { @apply pill bg-emerald-500/20 text-emerald-400; }
+  .pill-down { @apply pill bg-rose-500/20 text-rose-400; }
+  .pill-neutral { @apply pill bg-slate-500/20 text-slate-300; }
+
+  /* Metric number (responsive) */
+  .metric {
+    @apply font-display font-extrabold text-white leading-none;
+    font-size: clamp(1.5rem, 2.5vw, 3rem);
+    letter-spacing: -0.02em;
+  }
+
+  /* Label text — small uppercase */
+  .label-xs {
+    @apply text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-muted;
+  }
+
+  /* Responsive table wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-3 sm:mx-0;
+  }
+  .table-responsive table {
+    @apply min-w-[600px] sm:min-w-0 w-full;
+  }
+
+  /* Responsive chart container */
+  .chart-container {
+    @apply w-full;
+    height: 220px;
+  }
+  @media (min-width: 640px) {
+    .chart-container { height: 280px; }
+  }
+  @media (min-width: 1024px) {
+    .chart-container { height: 320px; }
+  }
+
+  /* Input field — touch friendly */
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2
+           text-white placeholder:text-muted text-sm
+           focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition;
+    -webkit-appearance: none;
+    min-height: 40px;
+  }
+
+  /* Select field — consistent with inputs */
+  .select-field {
+    @apply input-field cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394A3B8'%3e%3cpath d='M7 7l3-3 3 3m0 6l-3 3-3-3'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em;
+    padding-right: 2rem;
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+/* ============================================================
+ * Risk badge colors (dark-mode)
+ * ============================================================ */
+.risk-low   { @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/20; }
+.risk-medium { @apply bg-amber-500/15 text-amber-400 border border-amber-500/20; }
+.risk-high  { @apply bg-rose-500/15 text-rose-400 border border-rose-500/20; }
+
+/* ============================================================
+ * Staggered animations (reduced motion safe)
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-stagger > * {
+    opacity: 0;
+    animation: slideUp 0.5s ease-out forwards;
+  }
+  .anim-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .anim-stagger > *:nth-child(2) { animation-delay: 50ms; }
+  .anim-stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .anim-stagger > *:nth-child(4) { animation-delay: 150ms; }
+  .anim-stagger > *:nth-child(5) { animation-delay: 200ms; }
+  .anim-stagger > *:nth-child(6) { animation-delay: 250ms; }
+  .anim-stagger > *:nth-child(7) { animation-delay: 300ms; }
+  .anim-stagger > *:nth-child(8) { animation-delay: 350ms; }
 }
 
-/* Risk badge colors */
-.risk-low {
-  @apply bg-green-100 text-green-800 border-green-200;
+@media (prefers-reduced-motion: reduce) {
+  .anim-stagger > * { opacity: 1; animation: none; }
 }
 
-.risk-medium {
-  @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+@keyframes slideUp {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-.risk-high {
-  @apply bg-red-100 text-red-800 border-red-200;
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
+
+@keyframes slideInLeft {
+  0%   { opacity: 0; transform: translateX(-100%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s ease-out;
+}
+
+/* ============================================================
+ * Recharts dark-theme overrides
+ * ============================================================ */
+.recharts-cartesian-grid line { stroke: rgba(255,255,255,0.04) !important; }
+.recharts-text { fill: #94A3B8 !important; font-size: 11px; }
+@media (min-width: 640px) {
+  .recharts-text { font-size: 12px; }
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: rgba(26, 32, 53, 0.95) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  font-size: 12px !important;
+  max-width: 200px !important;
+}
+.recharts-tooltip-item { color: #e2e8f0 !important; }
+
+/* Recharts responsive — tick labels on mobile */
+@media (max-width: 639px) {
+  .recharts-xAxis .recharts-text { font-size: 10px; }
+  .recharts-yAxis .recharts-text { font-size: 10px; }
+}
+
+/* ============================================================
+ * Touch feedback for interactive rows
+ * ============================================================ */
+@media (hover: none) {
+  .touch-row:active {
+    background: rgba(255,255,255,0.05);
+  }
+}
+
