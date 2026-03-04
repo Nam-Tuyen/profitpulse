@@ -28,7 +28,7 @@ const Alerts = () => {
     apiService.getMeta().then((m) => {
       setMeta(m);
       const yrs = m.years || [];
-      if (yrs.length) setYear(Math.max(...yrs));
+      if (yrs.length) setYear(2024);
     }).catch(() => setLoading(false));
   }, []);
 

@@ -34,7 +34,7 @@ const Compare = () => {
     apiService.getMeta().then((m) => {
       setMeta(m);
       const years = m.years || [];
-      if (years.length) setYear(Math.max(...years));
+      if (years.length) setYear(2024);
     }).catch(() => {});
   }, []);
 

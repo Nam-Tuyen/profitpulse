@@ -39,11 +39,12 @@ const Home = () => {
         const metaRes = await apiService.getMeta();
         setMeta(metaRes);
         
-        // Set default year to latest
-        const latestYear = metaRes?.years?.length ? metaRes.years[metaRes.years.length - 1] : 2025;
-        if (!selectedYear) setSelectedYear(latestYear);
+        // Set default year to 2024
+        const defaultYear = 2024;
+        const latestYear = metaRes?.years?.length ? metaRes.years[metaRes.years.length - 1] : defaultYear;
+        if (!selectedYear) setSelectedYear(defaultYear);
         
-        const summaryRes = await apiService.getSummary(selectedYear || latestYear);
+        const summaryRes = await apiService.getSummary(selectedYear || defaultYear);
         setSummary(summaryRes);
       } catch (err) {
         console.error(err);
@@ -69,7 +70,7 @@ const Home = () => {
   const kpi = summary?._normalised || {};
   const chartData = summary?.chart_data;
   const topCompanies = summary?.top_companies || [];
-  const currentYear = selectedYear || summary?.year || 2025;
+  const currentYear = selectedYear || summary?.year || 2024;
   const firms = meta?.companies || meta?.firms || [];
   const availableYears = meta?.years || [];
 
@@ -89,21 +90,6 @@ const Home = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 md:space-y-8">
-      {/* ===== Description Bar ===== */}
-      <div className="card p-4 sm:p-6">
-        <div className="flex items-start gap-3">
-          <Shield className="h-5 w-5 text-primary-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-2">
-              ProfitPulse là công cụ giúp bạn phân tích và theo dõi sức khỏe lợi nhuận của các doanh nghiệp niêm yết tại Việt Nam bằng cách tạo điểm lợi nhuận tổng hợp bằng phương pháp PCA và gắn nhãn rủi ro thông qua các mô hình Machine Learning như XGBoost, SVM RBF và RandomForest.
-            </p>
-            <p className="text-muted text-xs italic">
-              Dữ liệu được thu thập từ năm 1999 đến 2025, mô hình kiểm định trong giai đoạn 2021 đến 2024
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* ===== Hero ===== */}
       <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #131929 0%, #1E284E 60%, #3730A3 100%)' }}>
         <div className="absolute inset-0 opacity-10">
@@ -135,12 +121,15 @@ const Home = () => {
       <div className="flex items-start gap-2 sm:gap-2.5 bg-primary-600/8 border border-primary-500/15 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm">
         <Info className="h-5 w-5 text-primary-400 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-slate-300 leading-relaxed mb-1">
+          <p className="text-slate-300 leading-relaxed mb-2">
             Trang chủ giúp bạn quan sát được tổng quan lợi nhuận của thị trường theo năm đồng thời cho phép bạn tìm hoặc dùng bộ lọc để chọn lọc nhóm cổ phiếu hoặc doanh nghiệp cần phân tích. Dữ liệu được thu thập từ năm 1999 đến 2025, mô hình kiểm định trong giai đoạn 2021 đến 2024
           </p>
-          <p className="text-muted text-xs italic">
-            Lưu ý: Nội dung trên ProfitPulse chỉ phục vụ phân tích, cung cấp thêm góc nhìn và không phải khuyến nghị mua bán.
-          </p>
+          <div className="flex items-start gap-1.5 text-amber-400">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <p className="text-xs italic font-semibold">
+              Lưu ý: Nội dung trên ProfitPulse chỉ phục vụ phân tích, cung cấp thêm góc nhìn và không phải khuyến nghị mua bán.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -256,8 +245,8 @@ const Home = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="range" tick={{ fill: '#94A3B8', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} />
+                  <XAxis dataKey="range" tick={{ fill: '#94A3B8', fontSize: 14 }} />
+                  <YAxis tick={{ fill: '#94A3B8', fontSize: 14 }} />
                   <RTooltip contentStyle={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }} />
                   <Area type="monotone" dataKey="count" stroke={PURPLE} fill="url(#gradPurple)" strokeWidth={2} />
                 </AreaChart>
@@ -293,8 +282,8 @@ const Home = () => {
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 5 doanh nghiệp</h3>
-              <p className="text-xs sm:text-sm text-muted">Top 5 doanh nghiệp nổi bật trong năm {currentYear}.</p>
+              <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp</h3>
+              <p className="text-xs sm:text-sm text-muted">Top 10 doanh nghiệp nổi bật trong năm {currentYear}.</p>
             </div>
             <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
@@ -314,7 +303,7 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/6">
-                {topCompanies.slice(0, 5).map((c, idx) => {
+                {topCompanies.slice(0, 10).map((c, idx) => {
                   const badge = riskBadge(c.label_t);
                   const ticker = tickerFromFirmId(c.firm_id);
                   return (
