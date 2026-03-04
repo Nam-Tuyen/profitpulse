@@ -91,17 +91,30 @@ const Home = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 md:space-y-8">
       {/* ===== Hero ===== */}
-      <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #131929 0%, #1E284E 60%, #3730A3 100%)' }}>
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-48 sm:w-96 h-48 sm:h-96 bg-primary-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
+      <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #0F1629 0%, #1E1B4B 45%, #3B1F6A 80%, #4C1D95 100%)' }}>
+        {/* Decorative blobs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-56 sm:w-[500px] h-56 sm:h-[500px] bg-primary-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl opacity-20" />
+          <div className="absolute bottom-0 left-0 w-40 sm:w-72 h-40 sm:h-72 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl opacity-15" />
+          <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-violet-600 rounded-full -translate-y-1/2 blur-2xl opacity-10" />
         </div>
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,1) 39px,rgba(255,255,255,1) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,1) 39px,rgba(255,255,255,1) 40px)' }} />
         <div className="relative z-10 max-w-3xl">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-white mb-2 sm:mb-3 tracking-tight">
-            ProfitPulse
-          </h1>
+          {/* Title with logo */}
+          <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+            <img
+              src="/logo.svg"
+              alt="Profit Pulse logo"
+              className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 drop-shadow-lg flex-shrink-0"
+            />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
+              Profit{' '}
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">Pulse</span>
+            </h1>
+          </div>
           <p className="text-slate-300 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 font-body leading-relaxed">
-            Phân tích và dự báo lợi nhuận doanh nghiệp Việt Nam dựa trên mô hình PCA &amp; Machine Learning.
+            Phân tích và dự báo lợi nhuận doanh nghiệp trên sàn chứng khoán Việt Nam bằng phương pháp PCA kết hợp với các mô hình Machine Learning.
           </p>
           <div className="mb-4 sm:mb-6">
             <QuickSearch firms={firms} />

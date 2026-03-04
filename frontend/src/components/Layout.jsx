@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Search, AlertTriangle, GitCompare, Menu, X,
-  BarChart2, Info, Activity, ChevronLeft, User,
+  Info, Activity, ChevronLeft, User,
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -66,15 +66,12 @@ const Layout = ({ children }) => {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5">
         <div className="relative flex-shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl blur-sm opacity-60" />
-          <div className="relative bg-gradient-to-br from-primary-500 to-primary-700 p-2 rounded-xl">
-            <BarChart2 className="h-5 w-5 text-white" />
-          </div>
+          <img src="/logo.svg" alt="logo" className="w-9 h-9 drop-shadow" />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="text-lg font-display font-extrabold text-white tracking-tight truncate">
-              ProfitPulse
+              Profit <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">Pulse</span>
             </h1>
             <p className="text-[11px] text-muted truncate">Financial Insights</p>
           </div>
@@ -175,10 +172,8 @@ const Layout = ({ children }) => {
               <Menu className="h-5 w-5" />
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-1.5 rounded-lg">
-                <BarChart2 className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-sm font-display font-bold text-white">ProfitPulse</span>
+              <img src="/logo.svg" alt="logo" className="w-7 h-7 drop-shadow" />
+              <span className="text-sm font-display font-bold text-white">Profit <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">Pulse</span></span>
             </Link>
           </div>
           <Link to="/screener" className="btn-primary text-xs py-1.5 px-3">
