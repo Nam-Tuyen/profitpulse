@@ -67,7 +67,7 @@ Sometimes Render locks certain settings. If you can't edit Root Directory:
 ==> Building...
 Collecting Flask==3.0.0
 ...
-Successfully installed Flask-3.0.0 supabase-2.7.4 ...
+Successfully installed Flask-3.0.0 supabase-2.10.0 httpx-0.27.2 gotrue-2.9.1 ...
 ==> Build successful 🎉
 
 ==> Deploying...
@@ -96,11 +96,13 @@ curl https://profitpulse-ihv0.onrender.com/health
 ## 🐛 Common Issues
 
 ### Issue: "TypeError: Client.__init__() got an unexpected keyword argument 'proxy'"
-**Cause:** Supabase library version conflict with httpx/gotrue dependencies  
-**Fix:** Updated `requirements.txt` to use `supabase==2.7.4` (latest stable version)  
-**Status:** ✅ Fixed in latest commit
+**Cause:** Older supabase library version (2.3.0) has dependency conflicts with Python 3.12 and httpx  
+**Fix:** Updated `requirements.txt` to use compatible versions:
+- `supabase==2.10.0` (latest stable)
+- `httpx==0.27.2` (compatible with Python 3.12)
+- `gotrue==2.9.1` (explicitly pinned)
 
-This error happens when older supabase versions (2.3.0) conflict with Python 3.12 or newer httpx versions on Render. The fix is to upgrade to supabase 2.7.4 which has compatible dependencies.
+**Status:** ✅ Fixed - Redeploy with latest code from GitHub
 
 ### Issue: "No such file or directory: requirements.txt"
 **Cause:** Root Directory not set to `backend`  
