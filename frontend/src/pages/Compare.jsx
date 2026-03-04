@@ -24,7 +24,7 @@ const Compare = () => {
   const loadMeta = async () => {
     try {
       const metaData = await apiService.getMeta();
-      setAllFirms(metaData.firms || []);
+      setAllFirms(metaData.companies || metaData.firms || []);
       setAvailableYears(metaData.years || []);
       if (metaData.years && metaData.years.length > 0) {
         setSelectedYear(metaData.years[metaData.years.length - 1]);
@@ -58,7 +58,7 @@ const Compare = () => {
     
     try {
       setLoading(true);
-      const data = await apiService.compare(selectedFirms, selectedYear);
+      const data = await apiService.compareCompanies(selectedFirms, selectedYear);
       
       // Process data for charts
       const processedData = await processComparisonData(data.comparison);
@@ -77,7 +77,10 @@ const Compare = () => {
     for (const firm of selectedFirms) {
       try {
         const firmData = await apiService.getCompany(firm);
-        timeseriesData[firm] = firmData.timeseries || [];
+        timeseriesData[firm] = (firmData.timeseries || []).map(p => ({
+          year: p.year,
+          profitscore: p.profitscore ?? p.profit_score ?? 0
+        }));
       } catch (error) {
         console.error(`Error loading ${firm}:`, error);
         timeseriesData[firm] = [];
@@ -106,7 +109,7 @@ const Compare = () => {
       selectedFirms.forEach(firm => {
         const series = comparisonData.timeseries[firm] || [];
         const point = series.find(p => p.year === year);
-        dataPoint[firm] = point?.profitscore || null;
+        dataPoint[firm] = point?.profitscore ?? null;
       });
       return dataPoint;
     });
@@ -116,13 +119,13 @@ const Compare = () => {
     if (!comparisonData || !comparisonData.comparison) return [];
     
     return comparisonData.comparison.map(item => ({
-      firm: item.FIRM_ID,
-      score: item.score || 0
+      firm: item.ticker,
+      score: item.scores?.profit_score ?? item.scores?.p_t ?? 0
     }));
   };
   
   const getRiskBadge = (label) => {
-    const risk = label === 1 ? 'High' : 'Low';
+    const risk = (label === 1 || label === '1') ? 'High' : 'Low';
     const colors = risk === 'High' 
       ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
       : 'bg-gradient-to-r from-green-500 to-green-600 text-white';
@@ -262,38 +265,42 @@ const Compare = () => {
                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Mã</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Risk</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">ProfitScore</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">ROA</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">ROE</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">NPM</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC1</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC2</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">PC3</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {comparisonData.comparison.map((row, idx) => (
-                    <tr key={row.FIRM_ID} className="hover:bg-blue-50 transition">
+                  {comparisonData.comparison.map((row, idx) => {
+                    const score = row.scores?.profit_score ?? row.scores?.p_t ?? 0;
+                    const label = row.scores?.label_t;
+                    return (
+                    <tr key={row.ticker} className="hover:bg-blue-50 transition">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-bold" style={{ color: COLORS[idx] }}>
-                          {row.FIRM_ID}
+                          {row.ticker}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getRiskBadge(row.label)}
+                        {getRiskBadge(label)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-semibold ${row.score < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {row.score?.toFixed(4) || '—'}
+                        <span className={`text-sm font-semibold ${score < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {score?.toFixed(4) || '—'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X1_ROA?.toFixed(4) || '—'}
+                        {row.scores?.pc1?.toFixed(4) || '—'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X2_ROE?.toFixed(4) || '—'}
+                        {row.scores?.pc2?.toFixed(4) || '—'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X5_NPM?.toFixed(4) || '—'}
+                        {row.scores?.pc3?.toFixed(4) || '—'}
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>

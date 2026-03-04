@@ -69,59 +69,105 @@ class SupabaseDB:
         return self.query_table('companies', limit=limit, order_by='ticker')
     
     def get_company_by_ticker(self, ticker: str) -> Optional[Dict]:
-        """Get single company by ticker"""
+        """Get single company by ticker (e.g. 'FPT') or symbol (e.g. 'FPT.HM')"""
+        # Try exact ticker first
         results = self.query_table('companies', filters={'ticker': ticker})
+        if results:
+            return results[0]
+        # Try as symbol (firm_id format)
+        results = self.query_table('companies', filters={'symbol': ticker})
         return results[0] if results else None
+    
+    def _resolve_firm_ids(self, ticker: str) -> List[str]:
+        """Resolve a ticker to all matching firm_id (symbol) values.
+        E.g. 'FPT' -> ['FPT.HM'] or 'FPT.HM' -> ['FPT.HM']
+        """
+        # Direct match as symbol
+        company = self.query_table('companies', filters={'symbol': ticker})
+        if company:
+            return [ticker]
+        # Match by ticker -> may have multiple suffixes
+        companies = self.query_table('companies', filters={'ticker': ticker})
+        return [c['symbol'] for c in companies] if companies else []
     
     def get_financial_data(self, ticker: Optional[str] = None, 
                           year: Optional[int] = None) -> Sequence[Dict]:
         """
-        Get financial data with optional filters
-        
-        Args:
-            ticker: Filter by company ticker
-            year: Filter by year
+        Get financial data with optional filters.
+        Note: financial_raw uses 'firm_id' column (symbol format like 'FPT.HM')
         """
-        filters = {}
         if ticker:
-            filters['ticker'] = ticker
-        if year:
-            filters['year'] = year
-        
-        return self.query_table('financial_raw', filters=filters, order_by='-year')
+            firm_ids = self._resolve_firm_ids(ticker)
+            if not firm_ids:
+                return []
+            # Query for each firm_id
+            all_results = []
+            for fid in firm_ids:
+                filters = {'firm_id': fid}
+                if year:
+                    filters['year'] = year
+                all_results.extend(self.query_table('financial_raw', filters=filters, order_by='-year'))
+            return all_results
+        else:
+            filters = {}
+            if year:
+                filters['year'] = year
+            return self.query_table('financial_raw', filters=filters, order_by='-year')
     
     def get_predictions(self, ticker: Optional[str] = None, 
                        year: Optional[int] = None) -> Sequence[Dict]:
-        """Get predictions with optional filters"""
-        filters = {}
-        if ticker:
-            filters['ticker'] = ticker
-        if year:
-            filters['year'] = year
-        
-        return self.query_table('predictions', filters=filters, order_by='-year')
+        """Get predictions with optional filters (table may be empty)"""
+        try:
+            if ticker:
+                firm_ids = self._resolve_firm_ids(ticker)
+                if not firm_ids:
+                    return []
+                all_results = []
+                for fid in firm_ids:
+                    filters = {'firm_id': fid}
+                    if year:
+                        filters['year'] = year
+                    all_results.extend(self.query_table('predictions', filters=filters, order_by='-year'))
+                return all_results
+            else:
+                filters = {}
+                if year:
+                    filters['year'] = year
+                return self.query_table('predictions', filters=filters, order_by='-year')
+        except Exception:
+            return []
     
     def get_index_scores(self, ticker: Optional[str] = None,
                         year: Optional[int] = None) -> Sequence[Dict]:
-        """Get index scores with optional filters (maps p_t → profit_score)"""
-        filters = {}
+        """Get index scores with optional filters (maps p_t → profit_score).
+        Note: index_scores uses 'firm_id' column (symbol format like 'FPT.HM')
+        """
         if ticker:
-            filters['ticker'] = ticker
-        if year:
-            filters['year'] = year
-        
-        results = self.query_table('index_scores', filters=filters, order_by='-year')
+            firm_ids = self._resolve_firm_ids(ticker)
+            if not firm_ids:
+                return []
+            all_results = []
+            for fid in firm_ids:
+                filters = {'firm_id': fid}
+                if year:
+                    filters['year'] = year
+                all_results.extend(self.query_table('index_scores', filters=filters, order_by='-year'))
+        else:
+            filters = {}
+            if year:
+                filters['year'] = year
+            all_results = self.query_table('index_scores', filters=filters, order_by='-year')
         
         # Map p_t → profit_score for API compatibility
-        for row in results:
+        for row in all_results:
             if 'p_t' in row:
                 row['profit_score'] = row['p_t']
         
-        return results
+        return all_results
     
     def get_latest_year(self) -> int:
-        """Get the latest year available in data"""
-        result = self.query_table('financial_raw', 
+        """Get the latest year available in index_scores"""
+        result = self.query_table('index_scores', 
                                  select='year', 
                                  limit=1, 
                                  order_by='-year')

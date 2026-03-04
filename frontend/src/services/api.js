@@ -46,10 +46,8 @@ export const apiService = {
     const params = new URLSearchParams();
     
     if (filters.year) params.append('year', filters.year);
-    if (filters.risk) params.append('risk', filters.risk);
-    if (filters.chance_min !== undefined) params.append('chance_min', filters.chance_min);
-    if (filters.chance_max !== undefined) params.append('chance_max', filters.chance_max);
-    if (filters.borderline) params.append('borderline', 'true');
+    if (filters.min_score) params.append('min_score', filters.min_score);
+    if (filters.max_score) params.append('max_score', filters.max_score);
     if (filters.limit) params.append('limit', filters.limit);
     
     const response = await api.get(`/api/screener?${params.toString()}`);
@@ -58,6 +56,9 @@ export const apiService = {
 
   // ===== COMPANY =====
   getCompany: async (ticker, year = null) => {
+    if (!ticker || ticker === 'undefined') {
+      throw new Error('Ticker is required');
+    }
     const params = year ? `?year=${year}` : '';
     const response = await api.get(`/api/company/${ticker}${params}`);
     return response.data;

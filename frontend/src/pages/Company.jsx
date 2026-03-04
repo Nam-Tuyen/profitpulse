@@ -15,7 +15,12 @@ const Company = () => {
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   
   useEffect(() => {
-    loadCompanyData();
+    if (ticker && ticker !== 'undefined') {
+      loadCompanyData();
+    } else {
+      setError('Mã công ty không hợp lệ');
+      setLoading(false);
+    }
   }, [ticker]);
   
   const loadCompanyData = async () => {
@@ -55,12 +60,21 @@ const Company = () => {
     );
   }
   
-  const { latest_prediction, profit_score_timeseries } = companyData;
+  // Map backend response (app.py with Supabase) to frontend structure
+  // Backend /api/company/<ticker> returns:
+  //   company: {ticker, symbol, company_name, exchange_name, gics_industry_name, founded_year, ...}
+  //   latest_score: {year, profit_score, label_t, risk_level("Cao"/"Thấp"), percentile, pc1, pc2, pc3}
+  //   timeseries: [{year, profitscore, label, percentile}]
+  //   financial_data: [...]
+  //   total_years: N
+  const latestScore = companyData.latest_score || {};
+  const timeseries = companyData.timeseries || [];
+  const companyInfo = companyData.company || {};
   
-  // Prepare chart data
-  const chartData = profit_score_timeseries.map(item => ({
-    year: item.year_t,
-    profitScore: item.ProfitScore
+  // Prepare chart data from timeseries
+  const chartData = timeseries.map(item => ({
+    year: item.year,
+    profitScore: item.profitscore ?? item.profit_score ?? item.p_t ?? 0
   }));
   
   return (
@@ -90,13 +104,13 @@ const Company = () => {
                 </button>
               </div>
               <p className="text-blue-100 text-sm sm:text-base">
-                Phân tích chi tiết và dự báo lợi nhuận
+                {companyInfo.company_name || companyData.ticker || 'Phân tích chi tiết và dự báo lợi nhuận'}
               </p>
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
-              <div className={`px-5 py-2.5 rounded-xl ${getRiskBadgeColor(latest_prediction.risk_level)} text-white font-semibold shadow-lg`}>
-                Risk: {latest_prediction.risk_level}
+              <div className={`px-5 py-2.5 rounded-xl ${getRiskBadgeColor(latestScore.risk_level || 'N/A')} text-white font-semibold shadow-lg`}>
+                Risk: {latestScore.risk_level || 'N/A'}
               </div>
               <button className="px-4 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium rounded-xl flex items-center gap-2 transition">
                 <Download className="h-4 w-4" />
@@ -115,12 +129,12 @@ const Company = () => {
             <div className="flex items-center justify-between mb-4">
               <TrendingUp className="h-8 w-8 text-white/90" />
               <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-xs text-white font-medium">Chance</span>
+                <span className="text-xs text-white font-medium">Score</span>
               </div>
             </div>
-            <p className="text-blue-100 text-sm font-medium mb-1">Xác suất lợi nhuận</p>
-            <p className="text-4xl font-bold text-white">{formatPercent(latest_prediction.chance_percent)}</p>
-            <p className="text-blue-100 text-xs mt-2">Năm tới</p>
+            <p className="text-blue-100 text-sm font-medium mb-1">ProfitScore</p>
+            <p className="text-4xl font-bold text-white">{latestScore.profit_score?.toFixed(4) || 'N/A'}</p>
+            <p className="text-blue-100 text-xs mt-2">Điểm năm {latestScore.year || 'N/A'}</p>
           </div>
         </div>
         
@@ -130,12 +144,12 @@ const Company = () => {
             <div className="flex items-center justify-between mb-4">
               <Info className="h-8 w-8 text-white/90" />
               <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-xs text-white font-medium">Year</span>
+                <span className="text-xs text-white font-medium">Percentile</span>
               </div>
             </div>
-            <p className="text-purple-100 text-sm font-medium mb-1">Năm dự báo</p>
-            <p className="text-4xl font-bold text-white">{latest_prediction.year_t1}</p>
-            <p className="text-purple-100 text-xs mt-2">Kết quả dự kiến</p>
+            <p className="text-purple-100 text-sm font-medium mb-1">Phân vị năm</p>
+            <p className="text-4xl font-bold text-white">{latestScore.percentile || 'N/A'}%</p>
+            <p className="text-purple-100 text-xs mt-2">So với toàn thị trường</p>
           </div>
         </div>
         
@@ -145,133 +159,81 @@ const Company = () => {
             <div className="flex items-center justify-between mb-4">
               <AlertCircle className="h-8 w-8 text-white/90" />
               <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-xs text-white font-medium">Status</span>
+                <span className="text-xs text-white font-medium">Data</span>
               </div>
             </div>
-            <p className="text-orange-100 text-sm font-medium mb-1">Borderline</p>
-            <p className="text-4xl font-bold text-white">{latest_prediction.is_borderline ? 'Có' : 'Không'}</p>
-            <p className="text-orange-100 text-xs mt-2">Gần ngưỡng phân loại</p>
+            <p className="text-orange-100 text-sm font-medium mb-1">Tổng năm dữ liệu</p>
+            <p className="text-4xl font-bold text-white">{companyData.total_years || timeseries.length || 0}</p>
+            <p className="text-orange-100 text-xs mt-2">Năm có dữ liệu PCA</p>
           </div>
         </div>
       </div>
       
-      {/* Status & Reason - Modern Style */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Company Info Card */}
+      {companyInfo.company_name && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
             <h3 className="text-lg font-bold text-white flex items-center">
               <Info className="h-5 w-5 mr-2" />
-              Trạng thái
+              Thông tin công ty
             </h3>
           </div>
-          <div className="p-6">
-            <p className="text-gray-700 leading-relaxed">{latest_prediction.status}</p>
-          </div>
-        </div>
-        
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4">
-            <h3 className="text-lg font-bold text-white flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Lý do đánh giá
-            </h3>
-          </div>
-          <div className="p-6">
-            <p className="text-gray-700 leading-relaxed">{latest_prediction.reason}</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* ProfitScore Timeseries Chart - Modern Style */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
-          <h3 className="text-lg font-bold text-white flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2" />
-            ProfitScore theo thời gian
-          </h3>
-        </div>
-        <div className="p-6">
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }} 
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="profitScore" 
-                stroke="#0ea5e9" 
-                strokeWidth={3}
-                name="ProfitScore"
-                dot={{ r: 4, fill: '#0ea5e9' }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      
-      {/* Drivers - Modern Cards */}
-      {latest_prediction.drivers && latest_prediction.drivers.length > 0 && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-4">
-            <h3 className="text-lg font-bold text-white flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2" />
-              Drivers chính (yếu tố ảnh hưởng)
-            </h3>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {latest_prediction.drivers.map((driver, idx) => (
-                <div key={idx} className="group relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-indigo-50 rounded-xl p-4 border border-gray-200 hover:border-blue-300 transition-all duration-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900 mb-1">{driver.friendly_name}</p>
-                      <p className="text-sm text-gray-600">{driver.direction}</p>
-                    </div>
-                    <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      driver.impact === 'tích cực' 
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
-                        : 'bg-gradient-to-r from-red-500 to-red-600 text-white'
-                    }`}>
-                      {driver.impact}
-                    </span>
-                  </div>
-                </div>
-            ))}
-          </div>
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Tên công ty</p>
+              <p className="font-semibold text-gray-900">{companyInfo.company_name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Sàn giao dịch</p>
+              <p className="font-semibold text-gray-900">{companyInfo.exchange_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Ngành (GICS)</p>
+              <p className="font-semibold text-gray-900">{companyInfo.gics_industry_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Năm thành lập</p>
+              <p className="font-semibold text-gray-900">{companyInfo.founded_year || 'N/A'}</p>
+            </div>
           </div>
         </div>
       )}
       
-      {/* Action Tips - Modern List */}
-      {latest_prediction.action_tips && latest_prediction.action_tips.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
+      {/* ProfitScore Timeseries Chart - Modern Style */}
+      {chartData.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
             <h3 className="text-lg font-bold text-white flex items-center">
               <TrendingUp className="h-5 w-5 mr-2" />
-              Gợi ý hành động
+              ProfitScore theo thời gian
             </h3>
           </div>
           <div className="p-6">
-            <ul className="space-y-3">
-              {latest_prediction.action_tips.map((tip, idx) => (
-                <li key={idx} className="flex items-start group">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold mr-3 mt-0.5 group-hover:bg-indigo-600 transition">
-                    {idx + 1}
-                  </div>
-                  <span className="text-gray-800 leading-relaxed">{tip}</span>
-                </li>
-              ))}
-            </ul>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                    border: 'none', 
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }} 
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="profitScore" 
+                  stroke="#0ea5e9" 
+                  strokeWidth={3}
+                  name="ProfitScore"
+                  dot={{ r: 4, fill: '#0ea5e9' }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

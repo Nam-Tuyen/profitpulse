@@ -18,6 +18,8 @@ const About = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error loading about data:', error);
+      // Set default data so the page still renders
+      setAboutData(null);
       setLoading(false);
     }
   };
@@ -129,56 +131,20 @@ const About = () => {
         
         {aboutData && (
           <div className="space-y-6">
-            {/* Model Performance */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-                Chất lượng mô hình
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">Accuracy</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(aboutData.model_metrics?.accuracy * 100).toFixed(1)}%
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">F1-Score</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(aboutData.model_metrics?.f1_score * 100).toFixed(1)}%
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-600 mb-1">AUC</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(aboutData.model_metrics?.auc * 100).toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-              
-              <p className="text-sm text-gray-700 leading-relaxed">
-                <strong>Train/Test Split theo thời gian:</strong> Mô hình được huấn luyện trên dữ liệu 
-                đến năm {aboutData.methodology?.train_period || '2020'}, sau đó kiểm tra trên dữ liệu từ 
-                năm {aboutData.methodology?.test_start_year || '2021'} trở đi. 
-                Điều này đảm bảo mô hình <strong>không nhìn trước tương lai</strong>.
-              </p>
-            </div>
-            
             {/* Methodology */}
             <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <Book className="h-5 w-5 mr-2 text-blue-600" />
-                Phương pháp
+                <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
+                Phương pháp & Mô hình
               </h3>
               
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Tiền xử lý:
+                    Phương pháp:
                   </p>
                   <p className="text-sm text-gray-700">
-                    {aboutData.methodology?.preprocessing || 'Chuẩn hóa (Z-score), loại bỏ outliers, PCA'}
+                    {aboutData.methodology?.name || 'PCA + Machine Learning'}
                   </p>
                 </div>
                 
@@ -187,13 +153,9 @@ const About = () => {
                     Đặc trưng chính:
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {aboutData.methodology?.features?.map((feature, idx) => (
+                    {(aboutData.methodology?.metrics || ['ROA', 'ROE', 'ROC', 'EPS', 'NPM']).map((feature, idx) => (
                       <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                         {feature}
-                      </span>
-                    )) || ['ROA', 'ROE', 'ROC', 'EPS', 'NPM'].map((f, i) => (
-                      <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                        {f}
                       </span>
                     ))}
                   </div>
@@ -203,8 +165,21 @@ const About = () => {
                   <p className="text-sm font-semibold text-gray-900 mb-1">
                     Mô hình:
                   </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(aboutData.methodology?.models || ['PCA (chấm điểm)', 'XGBoost / Random Forest (phân loại risk)']).map((model, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                        {model}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-1">
+                    Nguồn dữ liệu:
+                  </p>
                   <p className="text-sm text-gray-700">
-                    Ensemble của SVM, Random Forest, XGBoost với vote đa số hoặc trung bình xác suất
+                    {aboutData.methodology?.data_source || 'Dữ liệu tài chính doanh nghiệp niêm yết Việt Nam'}
                   </p>
                 </div>
               </div>
@@ -217,25 +192,28 @@ const About = () => {
                 Phạm vi dữ liệu
               </h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
                   <p className="text-xs text-gray-600 mb-1">Tổng số công ty</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {aboutData.data_coverage?.total_firms || '900+'} mã
+                  <p className="text-2xl font-bold text-gray-900">
+                    {aboutData.stats?.total_companies || aboutData.data_coverage?.total_firms || '600+'} mã
                   </p>
                 </div>
-                <div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <p className="text-xs text-gray-600 mb-1">Tổng bản ghi tài chính</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {aboutData.stats?.total_records || '1000+'}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
                   <p className="text-xs text-gray-600 mb-1">Khoảng thời gian</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {aboutData.data_coverage?.years || '2008-2024'}
+                  <p className="text-2xl font-bold text-gray-900">
+                    {aboutData.stats?.year_range 
+                      ? `${aboutData.stats.year_range.min} - ${aboutData.stats.year_range.max}`
+                      : aboutData.data_coverage?.years || '1999-2025'}
                   </p>
                 </div>
               </div>
-              
-              <p className="text-sm text-gray-700 mt-4">
-                <strong>Chính sách dữ liệu thiếu:</strong> {aboutData.data_coverage?.missing_data_policy || 'Strict mode'} - 
-                Không impute giá trị thiếu, chỉ báo cáo coverage để người dùng tự đánh giá độ tin cậy.
-              </p>
             </div>
             
             {/* Trust Badges */}

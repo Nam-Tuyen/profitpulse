@@ -80,16 +80,43 @@ def company_detail(ticker: str):
         if not company:
             return error_response(f"Company {ticker} not found", 404)
 
-        financial = db.get_financial_data(ticker=ticker)
-        predictions = db.get_predictions(ticker=ticker)
+        # Get index scores for timeseries (this is the main data)
         index_scores = db.get_index_scores(ticker=ticker)
+        
+        # Get financial data
+        financial = db.get_financial_data(ticker=ticker)
 
+        # Build timeseries from index_scores
+        timeseries = []
+        for s in sorted(index_scores, key=lambda x: x.get('year', 0)):
+            timeseries.append({
+                'year': s.get('year'),
+                'profitscore': s.get('profit_score', s.get('p_t', 0)),
+                'label': s.get('label_t'),
+                'percentile': s.get('percentile_year'),
+            })
+
+        # Latest score for header
+        latest = index_scores[0] if index_scores else {}
+        risk_label = 'Cao' if latest.get('label_t') == 1 else 'Thấp' if latest.get('label_t') == 0 else 'N/A'
+        
         return success_response({
             "company": company,
+            "ticker": company.get('ticker', ticker),
+            "firm_id": company.get('symbol', ticker),
+            "latest_score": {
+                "year": latest.get('year'),
+                "profit_score": latest.get('profit_score', latest.get('p_t', 0)),
+                "label_t": latest.get('label_t'),
+                "risk_level": risk_label,
+                "percentile": latest.get('percentile_year'),
+                "pc1": latest.get('pc1'),
+                "pc2": latest.get('pc2'),
+                "pc3": latest.get('pc3'),
+            },
+            "timeseries": timeseries,
             "financial_data": financial[:5],
-            "predictions": predictions[:5],
-            "index_scores": index_scores[:5],
-            "total_years": len(financial),
+            "total_years": len(index_scores),
         })
     except Exception as e:
         print(f"Error /api/company/{ticker}: {e}")
@@ -233,19 +260,155 @@ def summary():
         if not scores:
             return success_response({"year": year, "message": "No data available for this year"})
 
-        profit_scores = [s.get("profit_score") for s in scores if s.get("profit_score") is not None]
+        profit_scores = [s.get("profit_score", 0) for s in scores if s.get("profit_score") is not None]
+        
+        # Count risk levels
+        high_risk = sum(1 for s in scores if s.get("label_t") == 1)
+        low_risk = sum(1 for s in scores if s.get("label_t") == 0)
+        
+        # Build risk distribution for chart
+        risk_distribution = {"High": high_risk, "Low": low_risk}
+        
+        # Build score distribution
+        score_ranges = [
+            {"range": "< -1", "count": 0},
+            {"range": "-1 ~ 0", "count": 0},
+            {"range": "0 ~ 0.5", "count": 0},
+            {"range": "0.5 ~ 1", "count": 0},
+            {"range": "> 1", "count": 0},
+        ]
+        for ps in profit_scores:
+            if ps < -1:
+                score_ranges[0]["count"] += 1
+            elif ps < 0:
+                score_ranges[1]["count"] += 1
+            elif ps < 0.5:
+                score_ranges[2]["count"] += 1
+            elif ps < 1:
+                score_ranges[3]["count"] += 1
+            else:
+                score_ranges[4]["count"] += 1
+        
+        # Top performers
+        top_sorted = sorted(scores, key=lambda x: (x.get("profit_score") or -1e18), reverse=True)[:10]
+        top_performers = [{"firm": s.get("firm_id", ""), "score": s.get("profit_score", 0)} for s in top_sorted]
 
         return success_response({
             "year": year,
-            "total_companies": len(scores),
-            "avg_profit_score": (sum(profit_scores) / len(profit_scores)) if profit_scores else 0,
-            "max_profit_score": max(profit_scores) if profit_scores else 0,
-            "min_profit_score": min(profit_scores) if profit_scores else 0,
-            "top_companies": sorted(scores, key=lambda x: (x.get("profit_score") or -1e18), reverse=True)[:10]
+            "summary": {
+                "total_firms": len(scores),
+                "total_companies": len(scores),
+                "high_risk_count": high_risk,
+                "low_risk_count": low_risk,
+                "avg_profit_score": (sum(profit_scores) / len(profit_scores)) if profit_scores else 0,
+                "max_profit_score": max(profit_scores) if profit_scores else 0,
+                "min_profit_score": min(profit_scores) if profit_scores else 0,
+            },
+            "chart_data": {
+                "risk_distribution": risk_distribution,
+                "score_distribution": score_ranges,
+                "top_performers": top_performers,
+            },
+            "top_companies": top_sorted[:10],
         })
     except Exception as e:
         print(f"Error /api/summary: {e}")
         return error_response(f"Error calculating summary: {str(e)}", 500)
+
+
+# ============================================================
+# ALERTS
+# ============================================================
+
+@app.route("/api/alerts", methods=["GET"])
+def alerts():
+    """Generate alerts based on risk analysis"""
+    try:
+        year = request.args.get("year_to", type=int) or db.get_latest_year()
+        scope = request.args.get("scope", "market")
+
+        scores = db.get_index_scores(year=year)
+        
+        alert_list = []
+        for s in scores:
+            label = s.get("label_t")
+            if label == 1:  # High risk
+                alert_list.append({
+                    "firm_id": s.get("firm_id", ""),
+                    "year": s.get("year"),
+                    "type": "risk_change",
+                    "severity": "high",
+                    "message": f"{s.get('firm_id', '')} được dự báo Risk cao (label=1) cho năm {s.get('year')}",
+                    "profit_score": s.get("profit_score", s.get("p_t", 0)),
+                    "percentile": s.get("percentile_year"),
+                })
+
+        # Sort by profit_score ascending (worst first)
+        alert_list.sort(key=lambda x: x.get("profit_score", 0))
+
+        return success_response({
+            "alerts": alert_list[:50],
+            "count": len(alert_list),
+            "year": year,
+        })
+    except Exception as e:
+        print(f"Error /api/alerts: {e}")
+        return error_response(f"Error generating alerts: {str(e)}", 500)
+
+
+@app.route("/api/alerts/top-risk", methods=["GET"])
+def top_risk():
+    """Get top N highest risk companies"""
+    try:
+        n = request.args.get("n", type=int, default=10)
+        year = request.args.get("year", type=int) or db.get_latest_year()
+
+        scores = db.get_index_scores(year=year)
+        
+        # Filter high-risk (label_t == 1) and sort by profit_score ascending
+        high_risk = [s for s in scores if s.get("label_t") == 1]
+        high_risk.sort(key=lambda x: x.get("profit_score", 0))
+        
+        results = high_risk[:n]
+
+        return success_response({
+            "results": results,
+            "count": len(results),
+            "year": year,
+        })
+    except Exception as e:
+        print(f"Error /api/alerts/top-risk: {e}")
+        return error_response(f"Error fetching top risk: {str(e)}", 500)
+
+
+# ============================================================
+# ABOUT
+# ============================================================
+
+@app.route("/api/about", methods=["GET"])
+def about():
+    """Return project information"""
+    try:
+        metadata = db.get_metadata()
+        return success_response({
+            "project": "ProfitPulse",
+            "version": "1.0.0",
+            "description": "Hệ thống phân tích và dự báo lợi nhuận doanh nghiệp niêm yết tại Việt Nam",
+            "methodology": {
+                "name": "PCA + Machine Learning",
+                "metrics": ["ROA", "ROE", "ROC", "EPS", "NPM"],
+                "models": ["PCA (chấm điểm)", "XGBoost / Random Forest (phân loại risk)"],
+                "data_source": "Dữ liệu tài chính doanh nghiệp niêm yết Việt Nam"
+            },
+            "stats": {
+                "total_companies": metadata.get("total_companies", 0),
+                "total_records": metadata.get("total_financial_records", 0),
+                "year_range": metadata.get("year_range", {}),
+            }
+        })
+    except Exception as e:
+        print(f"Error /api/about: {e}")
+        return error_response(f"Error fetching about info: {str(e)}", 500)
 
 
 if __name__ == "__main__":

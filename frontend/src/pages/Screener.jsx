@@ -80,19 +80,17 @@ const Screener = () => {
   
   const handleExportCSV = () => {
     const csv = [
-      ['Mã', 'Năm', 'Risk', 'ProfitScore', 'ROA', 'ROE', 'ROC', 'EPS', 'NPM'].join(','),
+      ['Mã', 'Năm', 'Risk', 'ProfitScore', 'ROA', 'ROE', 'NPM'].join(','),
       ...results.map(r => [
-        r.FIRM_ID,
-        r.year,
-        r.label === 1 ? 'High' : 'Low',
-        r.score || 0,
-        r.X1_ROA || '',
-        r.X2_ROE || '',
-        r.X3_ROC || '',
-        r.X4_EPS || '',
-        r.X5_NPM || ''
+        r.firm_id || r.FIRM_ID || '',
+        r.year || '',
+        (r.label_t ?? r.label) === 1 ? 'High' : 'Low',
+        r.profit_score || r.score || 0,
+        r.X1_ROA || r.pc1 || '',
+        r.X2_ROE || r.pc2 || '',
+        r.X5_NPM || r.pc3 || ''
       ].join(','))
-    ].join('\\n');
+    ].join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -103,7 +101,7 @@ const Screener = () => {
   };
   
   const getRiskLabel = (label) => {
-    return label === 1 ? 'High' : 'Low';
+    return (label === 1 || label === '1') ? 'High' : 'Low';
   };
   
   const toggleWatchlist = (firmId) => {
@@ -303,13 +301,13 @@ const Screener = () => {
                     ProfitScore
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    ROA
+                    PC1
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    ROE
+                    PC2
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    NPM
+                    PC3
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Actions
@@ -318,8 +316,8 @@ const Screener = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {results.map((row, idx) => {
-                  const firmId = row.FIRM_ID;
-                  const risk = getRiskLabel(row.label);
+                  const firmId = row.firm_id || row.FIRM_ID;
+                  const risk = getRiskLabel(row.label_t ?? row.label);
                   const inWatchlist = isInWatchlist(firmId);
                   
                   return (
@@ -337,18 +335,18 @@ const Screener = () => {
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-semibold ${row.score < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {row.score?.toFixed(4) || '—'}
+                        <span className={`text-sm font-semibold ${(row.profit_score ?? row.score ?? 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {(row.profit_score ?? row.score)?.toFixed(4) || '—'}
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X1_ROA?.toFixed(4) || '—'}
+                        {row.pc1?.toFixed(4) || row.X1_ROA?.toFixed(4) || row.x1_roa?.toFixed(4) || '—'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X2_ROE?.toFixed(4) || '—'}
+                        {row.pc2?.toFixed(4) || row.X2_ROE?.toFixed(4) || row.x2_roe?.toFixed(4) || '—'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {row.X5_NPM?.toFixed(4) || '—'}
+                        {row.pc3?.toFixed(4) || row.X5_NPM?.toFixed(4) || row.x5_npm?.toFixed(4) || '—'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -364,8 +362,11 @@ const Screener = () => {
                             <Star className={`h-4 w-4 ${inWatchlist ? 'fill-current' : ''}`} />
                           </button>
                           <button
-                            onClick={() => navigate(`/company/${firmId}`)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition"
+                            onClick={() => {
+                              if (firmId) navigate(`/company/${firmId}`);
+                            }}
+                            disabled={!firmId}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition disabled:opacity-50"
                           >
                             Xem
                           </button>

@@ -352,7 +352,7 @@ const Alerts = () => {
                         </span>
                         {getSeverityBadge(alert.severity)}
                         <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                          {getAlertTypeLabel(alert.alert_type)}
+                          {getAlertTypeLabel(alert.type || alert.alert_type)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-700">
@@ -360,8 +360,12 @@ const Alerts = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => navigate(`/company/${alert.firm_id}`)}
-                      className="flex-shrink-0 inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition"
+                      onClick={() => {
+                        const id = alert.firm_id || alert.FIRM_ID;
+                        if (id) navigate(`/company/${id}`);
+                      }}
+                      disabled={!alert.firm_id && !alert.FIRM_ID}
+                      className="flex-shrink-0 inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition disabled:opacity-50"
                     >
                       Xem chi tiết
                       <ArrowRight className="h-4 w-4" />

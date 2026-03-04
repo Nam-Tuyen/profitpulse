@@ -27,8 +27,11 @@ export const formatNumber = (value, decimals = 0) => {
 export const getRiskColorClass = (riskLevel) => {
   const colors = {
     'Thấp': 'risk-low',
+    'Low': 'risk-low',
     'Vừa': 'risk-medium',
-    'Cao': 'risk-high'
+    'Medium': 'risk-medium',
+    'Cao': 'risk-high',
+    'High': 'risk-high'
   };
   return colors[riskLevel] || 'bg-gray-100 text-gray-800';
 };
@@ -39,8 +42,11 @@ export const getRiskColorClass = (riskLevel) => {
 export const getRiskBadgeColor = (riskLevel) => {
   const colors = {
     'Thấp': 'bg-green-500',
+    'Low': 'bg-green-500',
     'Vừa': 'bg-yellow-500',
-    'Cao': 'bg-red-500'
+    'Medium': 'bg-yellow-500',
+    'Cao': 'bg-red-500',
+    'High': 'bg-red-500'
   };
   return colors[riskLevel] || 'bg-gray-500';
 };

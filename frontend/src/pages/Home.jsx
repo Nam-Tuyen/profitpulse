@@ -37,13 +37,24 @@ const Home = () => {
       }
       
       // Load summary
+      // Backend /api/summary returns:
+      //   {summary: {total_firms, total_companies, high_risk_count, low_risk_count, avg_profit_score, ...},
+      //    chart_data: {risk_distribution, score_distribution, top_performers},
+      //    top_companies: [...], year}
       const summaryData = await apiService.getSummary(selectedYear);
       setChartData(summaryData.chart_data || null);
-      setSummary(summaryData.summary);
       
-      // Load top risk
-      const riskData = await apiService.getTopRisk(10);
-      setTopRisk(riskData.results);
+      // summary is nested under .summary key, fallback to root level
+      const summaryObj = summaryData.summary || summaryData;
+      // Normalize: backend uses total_companies, frontend uses total_firms
+      if (!summaryObj.total_firms && summaryObj.total_companies) {
+        summaryObj.total_firms = summaryObj.total_companies;
+      }
+      setSummary(summaryObj);
+      
+      // Load top risk from summary.top_companies (always returned by backend)
+      const topCompanies = summaryData.top_companies || [];
+      setTopRisk(topCompanies);
       
       setLoading(false);
     } catch (error) {
@@ -369,29 +380,33 @@ const Home = () => {
                 {topRisk.map((item, idx) => (
                   <tr key={idx} className="hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 transition-colors duration-150">
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-bold text-gray-900">{item.FIRM_ID}</span>
+                      <span className="text-sm font-bold text-gray-900">{item.firm_id || item.FIRM_ID}</span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {item.year || 'N/A'}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-semibold text-red-600">
-                        {item.risk_score ? item.risk_score.toFixed(4) : 'N/A'}
+                        {(item.profit_score ?? item.risk_score) != null ? (item.profit_score ?? item.risk_score).toFixed(4) : 'N/A'}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                        item.label === 1 
+                        item.label_t === 1 || item.label === 1
                           ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm' 
                           : 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm'
                       }`}>
-                        {item.label === 1 ? 'High Risk' : 'Low Risk'}
+                        {item.label_t === 1 || item.label === 1 ? 'High Risk' : 'Low Risk'}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <button
-                        onClick={() => navigate(`/company/${item.FIRM_ID}`)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition-all duration-200"
+                        onClick={() => {
+                          const id = item.firm_id || item.FIRM_ID;
+                          if (id) navigate(`/company/${id}`);
+                        }}
+                        disabled={!item.firm_id && !item.FIRM_ID}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition-all duration-200 disabled:opacity-50"
                       >
                         Chi tiết
                         <ArrowRight className="h-3 w-3" />
