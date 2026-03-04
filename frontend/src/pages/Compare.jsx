@@ -149,14 +149,17 @@ const Compare = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Firm Selector */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label htmlFor="compare-search" className="block text-sm font-semibold text-gray-700 mb-3">
               Chọn công ty (tối đa 5)
             </label>
             <div className="relative">
               <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
                 <Search className="h-5 w-5 text-gray-400" />
                 <input
+                  id="compare-search"
+                  name="company-search"
                   type="text"
+                  autoComplete="off"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);

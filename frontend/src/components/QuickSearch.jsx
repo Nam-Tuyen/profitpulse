@@ -52,9 +52,13 @@ const QuickSearch = ({ firms = [] }) => {
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       <div className="relative">
+        <label htmlFor="quick-search" className="sr-only">Tìm kiếm công ty</label>
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
         <input
-          type="text"
+          id="quick-search"
+          name="company-search"
+          type="search"
+          autoComplete="off"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setShowResults(true)}

@@ -151,10 +151,13 @@ const Screener = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {/* Year */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="screener-year" className="block text-sm font-semibold text-gray-700 mb-2">
                 Năm phân tích (t)
               </label>
               <select
+                id="screener-year"
+                name="year"
+                autoComplete="off"
                 value={filters.year || ''}
                 onChange={(e) => handleFilterChange('year', Number(e.target.value))}
                 className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -167,12 +170,15 @@ const Screener = () => {
             
             {/* Min Score */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="screener-min-score" className="block text-sm font-semibold text-gray-700 mb-2">
                 ProfitScore tối thiểu
               </label>
               <input
+                id="screener-min-score"
+                name="min_score"
                 type="number"
                 step="0.1"
+                autoComplete="off"
                 value={filters.min_score || ''}
                 onChange={(e) => handleFilterChange('min_score', e.target.value ? Number(e.target.value) : null)}
                 className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -182,10 +188,13 @@ const Screener = () => {
             
             {/* Limit */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="screener-limit" className="block text-sm font-semibold text-gray-700 mb-2">
                 Số lượng kết quả
               </label>
               <select
+                id="screener-limit"
+                name="limit"
+                autoComplete="off"
                 value={filters.limit}
                 onChange={(e) => handleFilterChange('limit', Number(e.target.value))}
                 className="block w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -200,13 +209,16 @@ const Screener = () => {
           
           {/* Risk checkboxes */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div className="block text-sm font-semibold text-gray-700 mb-3">
               Mức Risk (checkbox)
-            </label>
+            </div>
             <div className="flex flex-wrap gap-3">
-              <label className="inline-flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="screener-risk-high" className="inline-flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="screener-risk-high"
+                  name="risk_high"
                   type="checkbox"
+                  autoComplete="off"
                   checked={filters.risk_high}
                   onChange={(e) => handleFilterChange('risk_high', e.target.checked)}
                   className="rounded text-red-600 focus:ring-red-500 mr-2"
@@ -214,9 +226,12 @@ const Screener = () => {
                 <span className="text-sm font-medium text-red-700">High Risk</span>
               </label>
               
-              <label className="inline-flex items-center px-4 py-2 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="screener-risk-low" className="inline-flex items-center px-4 py-2 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="screener-risk-low"
+                  name="risk_low"
                   type="checkbox"
+                  autoComplete="off"
                   checked={filters.risk_low}
                   onChange={(e) => handleFilterChange('risk_low', e.target.checked)}
                   className="rounded text-green-600 focus:ring-green-500 mr-2"

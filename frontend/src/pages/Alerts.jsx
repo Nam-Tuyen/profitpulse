@@ -211,13 +211,16 @@ const Alerts = () => {
           
           {/* Rules */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div className="block text-sm font-semibold text-gray-700 mb-3">
               Loại cảnh báo (chọn nhiều)
-            </label>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex items-center p-3 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="alert-risk-change" className="flex items-center p-3 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="alert-risk-change"
+                  name="risk_change"
                   type="checkbox"
+                  autoComplete="off"
                   checked={selectedRules.risk_change}
                   onChange={() => handleRuleToggle('risk_change')}
                   className="rounded text-red-600 focus:ring-red-500 mr-3"
@@ -228,9 +231,12 @@ const Alerts = () => {
                 </div>
               </label>
               
-              <label className="flex items-center p-3 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="alert-chance-drop" className="flex items-center p-3 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="alert-chance-drop"
+                  name="chance_drop"
                   type="checkbox"
+                  autoComplete="off"
                   checked={selectedRules.chance_drop}
                   onChange={() => handleRuleToggle('chance_drop')}
                   className="rounded text-orange-600 focus:ring-orange-500 mr-3"
@@ -241,9 +247,12 @@ const Alerts = () => {
                 </div>
               </label>
               
-              <label className="flex items-center p-3 bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="alert-borderline" className="flex items-center p-3 bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="alert-borderline"
+                  name="borderline"
                   type="checkbox"
+                  autoComplete="off"
                   checked={selectedRules.borderline}
                   onChange={() => handleRuleToggle('borderline')}
                   className="rounded text-yellow-600 focus:ring-yellow-500 mr-3"
@@ -254,9 +263,12 @@ const Alerts = () => {
                 </div>
               </label>
               
-              <label className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="alert-roa-decline" className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="alert-roa-decline"
+                  name="roa_decline"
                   type="checkbox"
+                  autoComplete="off"
                   checked={selectedRules.roa_decline}
                   onChange={() => handleRuleToggle('roa_decline')}
                   className="rounded text-blue-600 focus:ring-blue-500 mr-3"
@@ -267,9 +279,12 @@ const Alerts = () => {
                 </div>
               </label>
               
-              <label className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg cursor-pointer transition">
+              <label htmlFor="alert-npm-decline" className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg cursor-pointer transition">
                 <input
+                  id="alert-npm-decline"
+                  name="npm_decline"
                   type="checkbox"
+                  autoComplete="off"
                   checked={selectedRules.npm_decline}
                   onChange={() => handleRuleToggle('npm_decline')}
                   className="rounded text-purple-600 focus:ring-purple-500 mr-3"
