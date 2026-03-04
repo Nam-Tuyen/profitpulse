@@ -67,7 +67,7 @@ Sometimes Render locks certain settings. If you can't edit Root Directory:
 ==> Building...
 Collecting Flask==3.0.0
 ...
-Successfully installed Flask-3.0.0 supabase-2.10.0 httpx-0.27.2 gotrue-2.9.1 ...
+Successfully installed Flask-3.0.0 supabase-2.10.0 httpx-0.27.2 gotrue-2.10.x ...
 ==> Build successful 🎉
 
 ==> Deploying...
@@ -100,7 +100,7 @@ curl https://profitpulse-ihv0.onrender.com/health
 **Fix:** Updated `requirements.txt` to use compatible versions:
 - `supabase==2.10.0` (latest stable)
 - `httpx==0.27.2` (compatible with Python 3.12)
-- `gotrue==2.9.1` (explicitly pinned)
+- Let supabase manage gotrue dependency automatically (>=2.10.0)
 
 **Status:** ✅ Fixed - Redeploy with latest code from GitHub
 
