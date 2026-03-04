@@ -4,8 +4,8 @@ flask-cors==4.0.0
 Werkzeug==3.0.1
 gunicorn==21.2.0
 
-# Database
-supabase==2.3.0
+# Database - Updated to latest stable version
+supabase==2.7.4
 
 # Data Processing (optimized for production)
 pandas==2.1.4
