@@ -7,7 +7,6 @@ import {
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import ExpandRowDetails from '../components/ExpandRowDetails';
@@ -90,16 +89,15 @@ const Alerts = () => {
   };
 
   const inputClasses = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
+  const selectClasses = 'w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
   const chartTooltipStyle = { background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 };
 
   if (loading) return <LoadingSpinner message="Đang tải cảnh báo..." />;
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModelContextBar selectedYear={year} />
       <PageIntro
-        text="Cảnh báo tự động phát hiện doanh nghiệp có biến động lớn (tăng hoặc giảm đáng kể) về điểm lợi nhuận so với năm trước."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+        text="Trang cảnh báo giúp bạn tự động phát hiện những doanh nghiệp có sự thay đổi đáng chú ý về điểm lợi nhuận so với năm trước để bạn ưu tiên kiểm tra sớm các trường hợp nổi bật."
       />
 
       {/* Filters */}
@@ -111,13 +109,13 @@ const Alerts = () => {
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 sm:gap-4">
           <div>
             <label className="block label-xs mb-1.5">Năm</label>
-            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={inputClasses}>
+            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={selectClasses}>
               {years.map((y) => (<option key={y} value={y}>{y}</option>))}
             </select>
           </div>
           <div>
             <label className="block label-xs mb-1.5">Nhãn rủi ro</label>
-            <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className={inputClasses}>
+            <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className={selectClasses}>
               <option value="ALL">Tất cả</option>
               <option value="Very High Risk">Very High Risk</option>
               <option value="High Risk">High Risk</option>
@@ -127,12 +125,13 @@ const Alerts = () => {
           </div>
           <div>
             <label className="block label-xs mb-1.5">Hướng</label>
-            <select value={filterDir} onChange={(e) => setFilterDir(e.target.value)} className={inputClasses}>
+            <select value={filterDir} onChange={(e) => setFilterDir(e.target.value)} className={selectClasses}>
               <option value="ALL">Tất cả</option>
               <option value="UP">Tăng</option>
               <option value="DOWN">Giảm</option>
             </select>
           </div>
+          <button onClick={() => { setFilterRisk(filterRisk); setFilterDir(filterDir); }} className="btn-primary text-sm col-span-2 sm:col-span-1 flex items-center gap-2 px-4 py-2 rounded-xl"><Filter className="h-4 w-4" /> Lọc</button>
           <button onClick={downloadCSV} className="btn-ghost text-sm col-span-2 sm:col-span-1"><Download className="h-4 w-4" /> Tải CSV</button>
         </div>
       </section>

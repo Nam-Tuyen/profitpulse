@@ -73,7 +73,7 @@ const ModelPerformance = () => {
   }, [summaries]);
 
   const currentYearData = summaries.length > 0
-    ? (summaries.find(s => s.year === 2024) || summaries[summaries.length - 1])
+    ? (summaries.find(s => s.year === 2025) || summaries[summaries.length - 1])
     : null;
 
   const chartTooltipStyle = { 
