@@ -1,230 +1,185 @@
-# ProfitPulse - Financial Analysis Platform
+# 📊 ProfitPulse - Stock Profit Analysis & Prediction System
 
-**Batch precompute system** for company profitability prediction using PCA + ML models.
+> Phân tích và dự báo lợi nhuận công ty niêm yết Việt Nam
 
-## 🎯 System Overview
+## 🎯 What is ProfitPulse?
 
-**ProfitPulse** predicts company profitability using batch-processed financial data through PCA analysis and machine learning.
+ProfitPulse is a comprehensive financial analysis platform that uses machine learning to predict and analyze company profitability. It provides risk scores, profit trends, and predictive models for Vietnamese stock companies.
 
-### Architecture
-- **Frontend**: React/Vite → Vercel
-- **Backend**: Flask API → Render  
-- **Database**: PostgreSQL → Supabase
-- **Data Processing**: Batch pipeline (one-time compute, store results)
+**Key Features:**
+- 📈 **628 Companies** from Vietnamese stock exchange
+- 🤖 **ML-Powered Predictions** (PCA, XGBoost, SVM, Random Forest)
+- 📊 **Risk Scoring** based on financial metrics
+- 🔍 **Advanced Screener** with filters and comparisons
+- ⚠️ **Alert System** for significant changes
+- 📱 **Modern Web Interface** (React + Vite)
 
-### Key Features (per FRS)
-- **Public**: Home, Screener, Company details, How it works, Model performance
-- **Authenticated**: Watchlist, Alerts
-- **Admin**: Data import, Batch pipeline runner
-- **Model**: PCA-based profit score, ML prediction (XGBoost/SVM/RF)
-- **Data**: 628 companies, 37,976+ financial records
+## 🏗️ Architecture Overview
 
-## 📦 Prerequisites
-
-- Python 3.10+, Node.js 18+, Git
-- [Render](https://render.com) - Backend hosting
-- [Vercel](https://vercel.com) - Frontend hosting  
-- [Supabase](https://supabase.com) - Database (✅ configured: 37,976+ rows)
+```
+┌──────────────────────────────────────┐
+│  Frontend (React + Vite)             │
+│  Deployed on Vercel                  │
+└────────────────┬─────────────────────┘
+                 │ HTTPS API Calls
+                 ▼
+┌──────────────────────────────────────┐
+│  Backend (Flask + Python)            │
+│  Deployed on Render                  │
+│  URL: profitpulse-ihv0.onrender.com  │
+└────────────────┬─────────────────────┘
+                 │ SQL Queries
+                 ▼
+┌──────────────────────────────────────┐
+│  Database (Supabase PostgreSQL)      │
+│  15 tables, 38K+ rows                │
+└──────────────────────────────────────┘
+```
 
 ## 🚀 Quick Start
 
+### Local Development
 ```bash
-# 1. Setup environment
-cp .env.example .env  # Edit with Supabase credentials
-
-# 2. Backend
+# Backend
 cd backend
-python3 -m venv venv && source venv/bin/activate
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-python app.py  # http://localhost:5000
+python app.py  # Runs on http://localhost:5000
 
-# 3. Frontend (new terminal)
+# Frontend (new terminal)
 cd frontend
-npm install && npm run dev  # http://localhost:5173
-
-# 4. Test
-cd scripts/supabase && python3 test_connection.py
+npm install
+npm run dev    # Runs on http://localhost:5173
 ```
 
----
+### View API Documentation
+- Health Check: `curl https://profitpulse-ihv0.onrender.com/health`
+- All Companies: `curl https://profitpulse-ihv0.onrender.com/api/meta`
+- Specific Company: `curl https://profitpulse-ihv0.onrender.com/api/company/VNM`
 
-## 🌐 Deployment
+For complete API reference, see [docs/API.md](docs/API.md)
 
-### 1. Push to GitHub
-```bash
-git init && git add . && git commit -m "Initial commit"
-git remote add origin YOUR_GITHUB_REPO
-git push -u origin main
-```
-
-### 2. Deploy Backend (Render)
-1. [Render Dashboard](https://dashboard.render.com) → New Web Service
-2. Config: Root Dir=`backend`, Start=`gunicorn app:app --bind 0.0.0.0:$PORT`
-3. Add env vars: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `FLASK_ENV=production`
-
-### 3. Deploy Frontend (Vercel)
-```bash
-npm install -g vercel
-vercel login && vercel --prod
-# Add env: VITE_API_URL=https://profitpulse-backend.onrender.com/api
-```
-
-**Full deployment guide**: See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
-
----
-
-## 📁 Project Structure
+## 📦 Project Structure
 
 ```
 ProfitPulse/
-├── README.md              # 👈 You are here
-├── .env                   # Environment variables (DO NOT COMMIT)
-├── .env.example           # Template
-│
-├── docs/                  # 📚 Documentation
-│   ├── SYSTEM_ARCHITECTURE.md    # Technical specification (FRS/SRS)
-│   ├── PROJECT_STATUS.md         # Current status & roadmap
-│   └── DEPLOYMENT_CHECKLIST.md   # Quick deployment guide
-│
-├── backend/               # 🐍 Flask API + ML Pipeline
-│   ├── app.py            # Main API (Supabase-integrated)
-│   ├── database.py       # Supabase connection manager
-│   ├── requirements.txt  # Python dependencies (Render)
-│   ├── render.yaml       # Render deployment config
-│   └── core/             # Business logic (PCA, ML, preprocessing)
-│
-├── frontend/              # ⚛️ React/Vite UI
+├── README.md                    # This file
+├── QUICK_START.md              # Development setup guide
+├── DEPLOYMENT.md               # Production deployment guide
+├── frontend/                   # React + Vite app
 │   ├── src/
-│   │   ├── pages/        # Home, Screener, Company, etc.
-│   │   └── services/     # API client
-│   ├── package.json
-│   └── vite.config.js
-│
-├── api/                   # 🔧 Vercel Serverless Functions
-│   ├── index.py          # Vercel API entry point
-│   └── requirements.txt  # Minimal deps for Vercel
-│
-├── data/                  # 📊 Data Storage
-│   ├── exports/          # Source Excel files (uploaded to Supabase)
-│   └── artifacts/        # Model artifacts
-│
-└── scripts/               # 🛠️ Utility Scripts
-    ├── supabase/         # Data upload & connection testing
-    │   ├── upload_data.py
-    │   ├── test_connection.py
-    │   └── README.md
-    └── utils/            # Helper scripts
-        ├── test_backend.sh
-        ├── demo.sh
-        └── start.sh
+│   ├── public/
+│   └── package.json
+├── backend/                    # Flask API server
+│   ├── app.py                 # Main application
+│   ├── database.py            # Supabase connection
+│   ├── requirements.txt        # Python dependencies
+│   └── core/                  # ML models and business logic
+├── docs/
+│   ├── ARCHITECTURE.md         # System design & database schema
+│   ├── API.md                 # API endpoint documentation
+│   ├── ENVIRONMENT_VARIABLES.md # Env vars for deployment
+│   └── TROUBLESHOOTING.md      # Common issues & solutions
+└── scripts/                     # Data processing scripts
 ```
 
----
+## 🌐 Live Deployment
 
-## 📊 Database (Supabase)
+### Frontend
+- **Platform:** Vercel
+- **URL:** https://profitpulse.vercel.app (coming soon)
+- **Status:** Auto-deployed on GitHub push
 
-**Status**: ✅ HEALTHY | **Tables**: 15/16 | **Records**: 37,976+
+### Backend
+- **Platform:** Render
+- **URL:** https://profitpulse-ihv0.onrender.com
+- **Status:** ✅ Running
+- **Health Check:** All endpoints operational
 
-Key tables per FRS/SRS:
-- `financial_raw` (7,600) - Raw financial data from Excel
-- `company_master` (628) - Company metadata
-- `proxies` - 5 proxies (X1_ROA..X5_NPM) + `is_complete` flag
-- `index_scores` - PCA scores, P_t, Label_t per model version
-- `predictions` - ML predictions (XGBoost/SVM/RF)
-- `model_performance` - Accuracy/F1/AUC/ROC curves
+### Database
+- **Platform:** Supabase (PostgreSQL)
+- **Companies:** 628 stocks
+- **Data:** 38,000+ financial records
+- **Status:** ✅ Connected
 
----
+## 📖 Documentation
 
-## 🔐 Environment Variables
+| Document | Purpose |
+|----------|---------|
+| [QUICK_START.md](QUICK_START.md) | Local development setup |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design & database schema |
+| [docs/API.md](docs/API.md) | API endpoint reference |
+| [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) | Environment setup for deployment |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues & solutions |
 
-**Backend** (Render):
-```env
-SUPABASE_URL=https://fmsxvbtmfekgbuwxkntl.supabase.co
-SUPABASE_SECRET_KEY=your_key
-FLASK_ENV=production
-```
+## 🔑 Key Technologies
 
-**Frontend** (Vercel):
-```env
-VITE_API_URL=https://profitpulse-backend.onrender.com/api
-VITE_SUPABASE_URL=https://fmsxvbtmfekgbuwxkntl.supabase.co
-```
+**Frontend:**
+- React 18
+- Vite (build tool)
+- Tailwind CSS (styling)
+- Axios (HTTP client)
+- Lucide Icons
+- React Router
 
----
+**Backend:**
+- Flask 3.0 (Python web framework)
+- Supabase (PostgreSQL database)
+- scikit-learn (ML models)
+- XGBoost (Gradient boosting)
+- pandas (Data processing)
+- gunicorn (WSGI server)
 
-## 🧪 Testing
+**Deployment:**
+- Vercel (Frontend)
+- Render (Backend)
+- Supabase (Database)
 
-```bash
-# Test database connection
-cd scripts/supabase && python3 test_connection.py
+## 🤝 Contributing
 
-# Test backend API
-./scripts/utils/test_backend.sh
-```
+This is a personal project. For improvements, create an issue or submit a pull request.
 
----
+## 📊 Data & Models
 
-## 📚 Full Documentation
+**Financial Metrics:**
+- Revenue, Net Income, Assets, Equity
+- ROA (Return on Assets)
+- NPM (Net Profit Margin)
+- Key financial ratios
 
-- **Technical Spec**: [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md)
-- **Project Status**: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)
-- **Deployment Guide**: [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
-- **Supabase Upload**: [scripts/supabase/README.md](scripts/supabase/README.md)
+**Prediction Models:**
+- PCA (Principal Component Analysis) for dimensionality reduction
+- XGBoost for profit prediction
+- SVM for risk classification
+- Random Forest for ensemble predictions
 
----
+**Risk Categories:**
+- High Risk: Negative trend or declining metrics
+- Low Risk: Stable or improving financial position
+- Borderline: Unclear/neutral signals
 
-## 📚 API Endpoints (per SRS)
+## 🔐 Security
 
-### Public
-- `GET /api/meta` - Database metadata
-- `GET /api/screener` - Filter companies (year/industry/min_score/pagination)
-- `GET /api/company/<ticker>/overview` - Score, probability, drivers
-- `GET /api/company/<ticker>/history` - Time-series data
-- `GET /api/performance` - Model metrics (Table 7-9, ROC)
+- Service role key for backend (Supabase)
+- Environment variables for secrets
+- CORS enabled for frontend-backend communication
+- CSP configured for strict security
 
-### Authenticated
-- `GET/POST /api/watchlist` - User watchlist (RLS protected)
-- `GET/POST /api/alerts` - Custom alerts
+## 📞 Support
 
----
+For issues or questions:
+1. Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+2. Review API status: https://profitpulse-ihv0.onrender.com/health
+3. Check deployment logs on Render/Vercel dashboard
 
-## 🎯 Features (per FRS)
+## 📄 License
 
-**Public**:
-- **Home**: Search ticker, CTA to screener
-- **Screener**: Filter by year/exchange/industry/score/probability
-- **Company**: Overview (score/probability/drivers) + History + Drivers tabs
-- **How it works**: Pipeline explanation (fit/transform/PCA/ML)
-- **Model performance**: Tables 7-9, ROC curves, confusion matrix
-
-**Authenticated**:
-- **Watchlist**: Track favorite companies
-- **Alerts**: Notifications (score < X, probability < Y)
-
-**Admin** (batch precompute):
-- Import financial/company Excel
-- Run pipeline: proxies → PCA → ML → predictions
-- Publish model version
-
----
-
-## 🐛 Troubleshooting
-
-**"Supabase connection failed"**: Check `.env` credentials  
-**"Module not found"**: `pip install -r requirements.txt`  
-**"API not responding"**: Check backend is running on port 5000
-
----
-
-## 📞 Resources
-
-- **Technical Specification**: [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md)
-- **Project Status & Roadmap**: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)
-- **Deployment Guide**: [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
-- **Supabase Dashboard**: https://app.supabase.com
-- **Render Dashboard**: https://dashboard.render.com
-- **Vercel Dashboard**: https://vercel.com/dashboard
+Personal project - All rights reserved
 
 ---
 
-**Version**: 1.0.0 | **Status**: ✅ Production Ready
+**Last Updated:** March 2026  
+**Version:** 1.0.1  
+**Status:** ✅ Production Ready

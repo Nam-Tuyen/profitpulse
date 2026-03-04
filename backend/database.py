@@ -79,71 +79,38 @@ class SupabaseDB:
         Get financial data with optional filters
         
         Args:
-            ticker: Filter by company ticker (will lookup company_pk first)
+            ticker: Filter by company ticker
             year: Filter by year
         """
-        # If ticker provided, get company_pk first
+        filters = {}
         if ticker:
-            company = self.get_company_by_ticker(ticker)
-            if not company:
-                return []
-            company_pk = company['company_pk']
-            
-            # Query with company_pk
-            query = self.client.table('financial_raw').select('*').eq('company_pk', company_pk)
-            if year:
-                query = query.eq('year', year)
-            query = query.order('year', desc=True)
-            response = query.execute()
-            return response.data
-        else:
-            # No ticker filter, just year
-            filters = {'year': year} if year else {}
-            return self.query_table('financial_raw', filters=filters, order_by='-year')
+            filters['ticker'] = ticker
+        if year:
+            filters['year'] = year
+        
+        return self.query_table('financial_raw', filters=filters, order_by='-year')
     
     def get_predictions(self, ticker: Optional[str] = None, 
                        year: Optional[int] = None) -> Sequence[Dict]:
         """Get predictions with optional filters"""
-        # If ticker provided, get company_pk first
+        filters = {}
         if ticker:
-            company = self.get_company_by_ticker(ticker)
-            if not company:
-                return []
-            company_pk = company['company_pk']
-            
-            # Query with company_pk
-            query = self.client.table('predictions').select('*').eq('company_pk', company_pk)
-            if year:
-                query = query.eq('year', year)
-            query = query.order('year', desc=True)
-            response = query.execute()
-            return response.data
-        else:
-            # No ticker filter, just year
-            filters = {'year': year} if year else {}
-            return self.query_table('predictions', filters=filters, order_by='-year')
+            filters['ticker'] = ticker
+        if year:
+            filters['year'] = year
+        
+        return self.query_table('predictions', filters=filters, order_by='-year')
     
     def get_index_scores(self, ticker: Optional[str] = None,
                         year: Optional[int] = None) -> Sequence[Dict]:
         """Get index scores with optional filters (maps p_t → profit_score)"""
-        # If ticker provided, get company_pk first
+        filters = {}
         if ticker:
-            company = self.get_company_by_ticker(ticker)
-            if not company:
-                return []
-            company_pk = company['company_pk']
-            
-            # Query with company_pk
-            query = self.client.table('index_scores').select('*').eq('company_pk', company_pk)
-            if year:
-                query = query.eq('year', year)
-            query = query.order('year', desc=True)
-            response = query.execute()
-            results = response.data
-        else:
-            # No ticker filter, just year
-            filters = {'year': year} if year else {}
-            results = self.query_table('index_scores', filters=filters, order_by='-year')
+            filters['ticker'] = ticker
+        if year:
+            filters['year'] = year
+        
+        results = self.query_table('index_scores', filters=filters, order_by='-year')
         
         # Map p_t → profit_score for API compatibility
         for row in results:
