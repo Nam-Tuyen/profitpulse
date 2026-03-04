@@ -14,9 +14,7 @@ import Tooltip, { TOOLTIPS } from '../components/Tooltip';
 import { safeNum, riskBadge, severityColor, tickerFromFirmId } from '../utils/helpers';
 
 const Alerts = () => {
-  const [meta, setMeta] = useState(null);
-  const [year, setYear] = useState(null);
-  const [data, setData] = useState(null);
+  const [allAlerts, setAllAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterRisk, setFilterRisk] = useState('ALL');
   const [filterDir, setFilterDir] = useState('ALL');
@@ -24,21 +22,29 @@ const Alerts = () => {
   const [sortDir, setSortDir] = useState('desc');
 
   useEffect(() => {
-    apiService.getMeta().then((m) => {
-      setMeta(m);
-      const yrs = m.years || [];
-      if (yrs.length) setYear(2024);
-    }).catch(() => setLoading(false));
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const meta = await apiService.getMeta();
+        const years = meta.years || [];
+        const results = await Promise.all(
+          years.map(y =>
+            apiService.getAlerts(y)
+              .then(d => (d?.alerts || []).map(a => ({ ...a, year: y })))
+              .catch(() => [])
+          )
+        );
+        setAllAlerts(results.flat());
+      } catch {
+        setAllAlerts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
   }, []);
 
-  useEffect(() => {
-    if (!year) return;
-    setLoading(true);
-    apiService.getAlerts(year).then((d) => setData(d)).catch(() => setData(null)).finally(() => setLoading(false));
-  }, [year]);
-
-  const years = meta?.years || [];
-  const alerts = data?.alerts || [];
+  const alerts = allAlerts;
 
   const filtered = useMemo(() => {
     let arr = [...alerts];
@@ -74,12 +80,12 @@ const Alerts = () => {
   };
 
   const downloadCSV = () => {
-    const header = 'Mã,Score,Delta,Nhãn';
-    const rows = filtered.map((a) => `${a.FIRM_ID || a.firm_id},${safeNum(a.profit_score ?? a.score, 3)},${safeNum(a.yoy_delta ?? a.delta, 3)},${a.label_t ?? a.label}`);
+    const header = 'Mã,Năm,Score,Delta,Nhãn';
+    const rows = filtered.map((a) => `${a.FIRM_ID || a.firm_id},${a.year || ''},${safeNum(a.profit_score ?? a.score, 3)},${safeNum(a.yoy_delta ?? a.delta, 3)},${a.label_t ?? a.label}`);
     const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `alerts_${year}.csv`; a.click();
+    const el = document.createElement('a');
+    el.href = url; el.download = 'alerts_1999_2025.csv'; el.click();
     URL.revokeObjectURL(url);
   };
 
@@ -88,7 +94,6 @@ const Alerts = () => {
     else { setSortBy(col); setSortDir('desc'); }
   };
 
-  const inputClasses = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
   const selectClasses = 'w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
   const chartTooltipStyle = { background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 };
 
@@ -107,12 +112,6 @@ const Alerts = () => {
           <h2 className="text-base sm:text-lg font-display font-bold text-white">Bộ lọc</h2>
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 sm:gap-4">
-          <div>
-            <label className="block label-xs mb-1.5">Năm</label>
-            <select value={year || ''} onChange={(e) => setYear(Number(e.target.value))} className={selectClasses}>
-              {years.map((y) => (<option key={y} value={y}>{y}</option>))}
-            </select>
-          </div>
           <div>
             <label className="block label-xs mb-1.5">Nhãn rủi ro</label>
             <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className={selectClasses}>
@@ -181,6 +180,7 @@ const Alerts = () => {
               <thead className="bg-white/3 text-muted">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Mã</th>
+                  <th className="px-4 py-3 text-left font-medium">Năm</th>
                   <th className="px-4 py-3 text-right font-medium cursor-pointer select-none" onClick={() => toggleSort('score')}>
                     <Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip> {sortBy === 'score' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
                   </th>
@@ -196,12 +196,13 @@ const Alerts = () => {
                   const badge = riskBadge(a.label_t ?? a.label);
                   const firmId = a.FIRM_ID || a.firm_id;
                   const ticker = tickerFromFirmId(firmId);
-                  const alertYear = a.year || year;
+                  const alertYear = a.year;
                   
                   return (
                     <React.Fragment key={idx}>
                       <tr className="hover:bg-white/3 transition">
                         <td className="px-4 py-3 font-semibold text-white">{firmId}</td>
+                        <td className="px-4 py-3 text-left text-slate-400">{a.year || '—'}</td>
                         <td className="px-4 py-3 text-right font-mono text-white">{safeNum(a.profit_score ?? a.score, 3)}</td>
                         <td className="px-4 py-3 text-right">
                           <span className={`inline-flex items-center gap-1 font-mono ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-muted'}`}>
@@ -214,7 +215,7 @@ const Alerts = () => {
                         </td>
                       </tr>
                       <tr>
-                        <td colSpan="4" className="p-0">
+                        <td colSpan="5" className="p-0">
                           <ExpandRowDetails 
                             ticker={ticker}
                             year={alertYear}
