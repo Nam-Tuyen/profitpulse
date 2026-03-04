@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Search, AlertTriangle, GitCompare, Menu, X,
-  BarChart2, Info, Activity, ChevronLeft, Download, User,
+  BarChart2, Info, Activity, ChevronLeft, User,
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -165,42 +165,26 @@ const Layout = ({ children }) => {
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
         sidebarOpen ? 'md:ml-60' : 'md:ml-[72px]'
       }`}>
-        {/* Top header bar - hidden on home page */}
-        {location.pathname !== '/' && (
-          <header className="sticky top-0 z-30 h-14 md:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 border-b border-white/6 bg-surface/80 backdrop-blur-lg">
+        {/* Mobile header bar — hamburger + logo (md and below only) */}
+        <header className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-3 border-b border-white/6 bg-surface/90 backdrop-blur-lg">
           <div className="flex items-center gap-3">
-            {/* Hamburger — only on mobile */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-2 -ml-1 rounded-lg text-muted hover:text-white hover:bg-white/5 transition"
+              className="p-2 -ml-1 rounded-lg text-muted hover:text-white hover:bg-white/5 transition"
             >
               <Menu className="h-5 w-5" />
             </button>
-            {/* Logo in header on mobile */}
-            <Link to="/" className="flex items-center gap-2 md:hidden">
+            <Link to="/" className="flex items-center gap-2">
               <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-1.5 rounded-lg">
                 <BarChart2 className="h-4 w-4 text-white" />
               </div>
               <span className="text-sm font-display font-bold text-white">ProfitPulse</span>
             </Link>
-            {/* Greeting — desktop only */}
-            <div className="hidden md:block">
-              <h2 className="text-base font-display font-bold text-white">Xin chào</h2>
-              <p className="text-xs text-muted hidden lg:block">Chào mừng bạn quay lại ProfitPulse</p>
-            </div>
           </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button className="btn-ghost text-xs py-1.5 px-2.5 sm:py-2 sm:px-3 hidden sm:inline-flex">
-              <Download className="h-4 w-4" /> <span className="hidden lg:inline">Export</span>
-            </button>
-            <Link to="/screener" className="btn-primary text-xs py-1.5 px-3 sm:py-2 sm:px-4">
-              <Search className="h-3.5 w-3.5 sm:hidden" />
-              <span className="hidden sm:inline">Sàng lọc</span>
-            </Link>
-          </div>
+          <Link to="/screener" className="btn-primary text-xs py-1.5 px-3">
+            <Search className="h-3.5 w-3.5" />
+          </Link>
         </header>
-        )}
 
         {/* Page content — bottom padding for mobile nav bar */}
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8 overflow-x-hidden">

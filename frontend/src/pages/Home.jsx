@@ -274,14 +274,14 @@ const Home = () => {
       {topCompanies.length > 0 && (
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear} theo bộ lọc người dùng đã chọn</h3>
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
             <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs sm:text-sm min-w-[640px]">
-              <thead className="bg-white/3 text-muted sticky top-0">
+              <thead className="bg-surface-card text-muted sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">#</th>
                   <th className="px-4 py-3 text-left font-medium">Mã</th>
