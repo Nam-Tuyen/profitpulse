@@ -5,9 +5,13 @@
 
 import axios from 'axios';
 
-// Use relative path for same-origin API calls in production
+// API Base URL Configuration
+// Production: Use Render backend URL (without /api prefix as routes handle it)
+// Development: Use localhost
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  import.meta.env.PROD ? '/api' : 'http://localhost:5001'
+  import.meta.env.PROD 
+    ? 'https://profitpulse-ihv0.onrender.com' 
+    : 'http://localhost:5000'
 );
 
 const api = axios.create({
@@ -33,7 +37,7 @@ export const apiService = {
   
   // ===== META =====
   getMeta: async () => {
-    const response = await api.get('/meta');
+    const response = await api.get('/api/meta');
     return response.data;
   },
 
@@ -48,20 +52,20 @@ export const apiService = {
     if (filters.borderline) params.append('borderline', 'true');
     if (filters.limit) params.append('limit', filters.limit);
     
-    const response = await api.get(`/screener?${params.toString()}`);
+    const response = await api.get(`/api/screener?${params.toString()}`);
     return response.data;
   },
 
   // ===== COMPANY =====
   getCompany: async (ticker, year = null) => {
     const params = year ? `?year=${year}` : '';
-    const response = await api.get(`/company/${ticker}${params}`);
+    const response = await api.get(`/api/company/${ticker}${params}`);
     return response.data;
   },
 
   // ===== COMPARE =====
   compareCompanies: async (tickers, year) => {
-    const response = await api.post('/compare', {
+    const response = await api.post('/api/compare', {
       tickers,
       year
     });
@@ -71,13 +75,14 @@ export const apiService = {
   // ===== SUMMARY =====
   getSummary: async (year = null) => {
     const params = year ? `?year=${year}` : '';
-    const response = await api.get(`/summary${params}`);
+    const response = await api.get(`/api/summary${params}`);
     return response.data;
   },
 
   // ===== ALERTS =====
   getTopRisk: async (n = 10) => {
-    const response = await api.get(`/alerts/top-risk?n=${n}`);
+    // Backend doesn't have this route yet, use screener instead
+    const response = await api.get(`/api/screener?limit=${n}`);
     return response.data;
   },
 
