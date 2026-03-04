@@ -80,9 +80,25 @@ export const apiService = {
   },
 
   // ===== ALERTS =====
+  getAlerts: async (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.scope) query.append('scope', params.scope);
+    if (params.year_from) query.append('year_from', params.year_from);
+    if (params.year_to) query.append('year_to', params.year_to);
+    if (params.rules) query.append('rules', params.rules);
+    if (params.watchlist) query.append('watchlist', params.watchlist);
+    const response = await api.get(`/api/alerts?${query.toString()}`);
+    return response.data;
+  },
+
   getTopRisk: async (n = 10) => {
-    // Backend doesn't have this route yet, use screener instead
-    const response = await api.get(`/api/screener?limit=${n}`);
+    const response = await api.get(`/api/alerts/top-risk?n=${n}`);
+    return response.data;
+  },
+
+  // ===== ABOUT =====
+  getAbout: async () => {
+    const response = await api.get('/api/about');
     return response.data;
   },
 
