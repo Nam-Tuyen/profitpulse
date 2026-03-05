@@ -178,25 +178,49 @@ const Compare = () => {
                   <p className="text-xs text-muted">Không có dữ liệu</p>
                 </div>
               );
-              const badge = riskBadge(d.label);
-              const fm = d.financial_metrics || {};
-              const latestTs = (d.timeseries || []).slice(-1)[0];
+
+              // Normalise: support both real Supabase nested format and profitpulse adapter flat format
+              const score = d.latest_score?.profit_score ?? d.latest_score?.p_t ?? d.profitscore ?? null;
+              const labelVal = d.latest_score?.label_t ?? d.label ?? null;
+              const yearVal = d.latest_score?.year ?? d.year ?? null;
+              const percentile = d.latest_score?.percentile ?? d.latest_score?.percentile_year ?? null;
+              const pc1 = d.latest_score?.pc1 ?? null;
+              const pc2 = d.latest_score?.pc2 ?? null;
+              const pc3 = d.latest_score?.pc3 ?? null;
+              const companyName = d.company?.company_name ?? null;
+              const exchange = d.company?.exchange_name ?? null;
+
+              // Financial metrics: real format has financial_data array, adapter has financial_metrics object
+              const finRow = (d.financial_data && d.financial_data.length > 0)
+                ? d.financial_data[0]
+                : (d.financial_metrics || {});
+
+              const badge = riskBadge(labelVal);
+
               return (
                 <div key={t} className="card p-4 sm:p-5 space-y-4">
-                  {/* Ticker header */}
-                  <div className="flex items-center gap-2 pb-2 border-b border-white/6">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <span className="font-display font-bold text-white text-base">{t}</span>
-                    {d.year && <span className="text-xs text-muted ml-auto">Năm {d.year}</span>}
+                  {/* Header */}
+                  <div className="flex items-start gap-2 pb-2 border-b border-white/6">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-display font-bold text-white text-base">{t}</span>
+                        {yearVal && <span className="text-xs text-muted flex-shrink-0">Năm {yearVal}</span>}
+                      </div>
+                      {companyName && <p className="text-xs text-muted truncate mt-0.5">{companyName}{exchange ? ` · ${exchange}` : ''}</p>}
+                    </div>
                   </div>
 
                   {/* Profit Score */}
                   <div>
                     <p className="label-xs mb-2">Profit Score</p>
                     <p className="text-2xl sm:text-3xl font-display font-extrabold text-white mb-1.5">
-                      {d.profitscore != null ? safeNum(d.profitscore, 2) : 'N/A'}
+                      {score != null ? safeNum(score, 2) : 'N/A'}
                     </p>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                      {percentile != null && <span className="text-xs text-muted">Top {safeNum(100 - percentile, 0)}%</span>}
+                    </div>
                   </div>
 
                   {/* Financial metrics */}
@@ -204,13 +228,13 @@ const Compare = () => {
                     <p className="label-xs mb-2">Chỉ số tài chính</p>
                     <div className="space-y-2">
                       {[
-                        { key: 'X1_ROA', label: 'ROA' },
-                        { key: 'X2_ROE', label: 'ROE' },
-                        { key: 'X3_ROC', label: 'ROC' },
-                        { key: 'X4_EPS', label: 'EPS' },
-                        { key: 'X5_NPM', label: 'NPM' },
+                        { key: 'X1_ROA', label: 'ROA (%)' },
+                        { key: 'X2_ROE', label: 'ROE (%)' },
+                        { key: 'X3_ROC', label: 'ROC (%)' },
+                        { key: 'X4_EPS', label: 'EPS (VND)' },
+                        { key: 'X5_NPM', label: 'NPM (%)' },
                       ].map(({ key, label }) => {
-                        const val = fm[key] ?? (latestTs ? latestTs[key] : null);
+                        const val = finRow[key] ?? null;
                         return (
                           <div key={key} className="flex items-center justify-between">
                             <span className="text-xs text-muted">{label}</span>
@@ -223,10 +247,18 @@ const Compare = () => {
                     </div>
                   </div>
 
-                  {/* Reason */}
-                  {d.reason && (
-                    <div className="bg-white/3 rounded-xl px-3 py-2.5">
-                      <p className="text-xs text-muted leading-relaxed">{d.reason}</p>
+                  {/* PCA Components */}
+                  {(pc1 != null || pc2 != null || pc3 != null) && (
+                    <div>
+                      <p className="label-xs mb-2">PCA Components</p>
+                      <div className="space-y-2">
+                        {[['PC1', pc1], ['PC2', pc2], ['PC3', pc3]].map(([name, val]) => (
+                          <div key={name} className="flex items-center justify-between">
+                            <span className="text-xs text-muted">{name}</span>
+                            <span className="font-mono text-xs text-white font-medium">{val != null ? safeNum(val, 2) : 'N/A'}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
