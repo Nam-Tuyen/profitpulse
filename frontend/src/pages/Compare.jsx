@@ -30,15 +30,24 @@ const Compare = () => {
 
   const firms = meta?.companies || meta?.firms || [];
 
+  // Strip exchange suffix (e.g. 'FPT.HM' -> 'FPT') for display and API calls
+  const baseTicker = (f) => (f || '').split('.')[0].toUpperCase();
+
   useEffect(() => {
     if (inputTicker.length < 1) { setSuggestions([]); return; }
     const q = inputTicker.toUpperCase();
-    setSuggestions(firms.filter((f) => f.toUpperCase().includes(q) && !selectedTickers.includes(f)).slice(0, 8));
+    setSuggestions(
+      firms
+        .filter((f) => baseTicker(f).includes(q) && !selectedTickers.includes(baseTicker(f)))
+        .slice(0, 8)
+        .map(baseTicker)
+    );
   }, [inputTicker, firms, selectedTickers]);
 
   const addTicker = (t) => {
+    const base = baseTicker(t);
     if (selectedTickers.length >= 4) return;
-    if (!selectedTickers.includes(t)) setSelectedTickers([...selectedTickers, t]);
+    if (!selectedTickers.includes(base)) setSelectedTickers([...selectedTickers, base]);
     setInputTicker('');
     setSuggestions([]);
   };
@@ -185,11 +194,13 @@ const Compare = () => {
           const pc3        = d.latest_score?.pc3 ?? null;
           const companyName = d.company?.company_name ?? null;
           const fm = d.financial_metrics || {};
-          const roa = fm.X1_ROA ?? null;
-          const roe = fm.X2_ROE ?? null;
-          const roc = fm.X3_ROC ?? null;
-          const eps = fm.X4_EPS ?? null;
-          const npm = fm.X5_NPM ?? null;
+          // financial_data is an array from proxies_raw (lowercase columns), take the latest year
+          const latestFin = (d.financial_data || []).sort((a, b) => (b.year || 0) - (a.year || 0))[0] || {};
+          const roa = fm.X1_ROA ?? latestFin.x1_roa ?? latestFin.X1_ROA ?? null;
+          const roe = fm.X2_ROE ?? latestFin.x2_roe ?? latestFin.X2_ROE ?? null;
+          const roc = fm.X3_ROC ?? latestFin.x3_roc ?? latestFin.X3_ROC ?? null;
+          const eps = fm.X4_EPS ?? latestFin.x4_eps ?? latestFin.X4_EPS ?? null;
+          const npm = fm.X5_NPM ?? latestFin.x5_npm ?? latestFin.X5_NPM ?? null;
           return { score, labelVal, yearVal, percentile, pc1, pc2, pc3, companyName, roa, roe, roc, eps, npm };
         };
 

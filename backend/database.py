@@ -94,7 +94,7 @@ class SupabaseDB:
                           year: Optional[int] = None) -> Sequence[Dict]:
         """
         Get financial data with optional filters.
-        Note: financial_raw uses 'firm_id' column (symbol format like 'FPT.HM')
+        Note: proxies_raw uses 'firm_id' column (symbol format like 'FPT.HM')
         """
         if ticker:
             firm_ids = self._resolve_firm_ids(ticker)
@@ -106,13 +106,13 @@ class SupabaseDB:
                 filters = {'firm_id': fid}
                 if year:
                     filters['year'] = year
-                all_results.extend(self.query_table('financial_raw', filters=filters, order_by='-year'))
+                all_results.extend(self.query_table('proxies_raw', filters=filters, order_by='-year'))
             return all_results
         else:
             filters = {}
             if year:
                 filters['year'] = year
-            return self.query_table('financial_raw', filters=filters, order_by='-year')
+            return self.query_table('proxies_raw', filters=filters, order_by='-year')
     
     def get_predictions(self, ticker: Optional[str] = None, 
                        year: Optional[int] = None) -> Sequence[Dict]:
@@ -181,7 +181,7 @@ class SupabaseDB:
             Dict with counts and summary stats
         """
         companies = self.query_table('companies')
-        financial = self.query_table('financial_raw', select='year')
+        financial = self.query_table('proxies_raw', select='year')
         
         years = sorted(list(set([r['year'] for r in financial])))
         
