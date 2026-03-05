@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import QuickSearch from '../components/QuickSearch';
 import StatsCard from '../components/StatsCard';
@@ -97,8 +96,6 @@ const Home = () => {
           <div className="absolute bottom-0 left-0 w-40 sm:w-72 h-40 sm:h-72 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl opacity-15" />
           <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-violet-600 rounded-full -translate-y-1/2 blur-2xl opacity-10" />
         </div>
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,1) 39px,rgba(255,255,255,1) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,1) 39px,rgba(255,255,255,1) 40px)' }} />
         <div className="relative z-10 max-w-3xl">
           {/* Title with logo */}
           <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
