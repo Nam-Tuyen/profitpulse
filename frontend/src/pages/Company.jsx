@@ -197,17 +197,12 @@ const OverviewTab = ({
     <div className="space-y-4 sm:space-y-6 anim-stagger">
       {/* Data Coverage Badge */}
       {currentFinancial && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <DataCoverageBadge 
-            availableYears={Math.round(coverageYear / 20)} 
-            totalYears={5} 
-            missingFields={missingProxies}
-            showDetails={true}
-          />
-          <p className="text-xs text-muted">
-            Huy hiệu độ phủ dữ liệu cho bạn biết năm này có đủ 5 chỉ số nền để đọc kết quả tự tin hơn.
-          </p>
-        </div>
+        <DataCoverageBadge 
+          availableYears={Math.round(coverageYear / 20)} 
+          totalYears={5} 
+          missingFields={missingProxies}
+          showDetails={true}
+        />
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -249,24 +244,65 @@ const OverviewTab = ({
         </div>
       </div>
 
-      {/* Financial Snapshot Table - P0.1 */}
-      {currentFinancial && (
-        <div className="card card-hover p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
-            Financial Snapshot
-          </h3>
-          <p className="text-xs sm:text-sm text-muted mb-4">
-            Bảng chỉ số tài chính cho bạn thấy ROA ROE ROC EPS NPM của năm đang chọn và mức thay đổi so với năm trước.
-          </p>
-          <FinancialMetricsTable 
-            currentYear={currentFinancial}
-            previousYear={previousFinancial}
-            showBadges={true}
-            showYoY={!!previousFinancial}
-            compact={false}
-          />
-        </div>
-      )}
+      {/* Financial Snapshot Cards */}
+      {currentFinancial && (() => {
+        const fin = currentFinancial;
+        const prev = previousFinancial;
+        const metrics = [
+          { key: 'roa', label: 'ROA', desc: 'Lợi nhuận trên tài sản', unit: '%', color: 'primary' },
+          { key: 'roe', label: 'ROE', desc: 'Lợi nhuận trên vốn chủ', unit: '%', color: 'violet' },
+          { key: 'roc', label: 'ROC', desc: 'Lợi nhuận trên vốn đầu tư', unit: '%', color: 'cyan' },
+          { key: 'npm', label: 'NPM', desc: 'Tỷ suất lợi nhuận ròng', unit: '%', color: 'amber' },
+          { key: 'eps', label: 'EPS', desc: 'Lợi nhuận mỗi cổ phiếu', unit: 'VND', color: 'emerald' },
+        ];
+        const colorMap = {
+          primary: { dot: 'bg-primary-400', ring: 'border-primary-500/30 bg-primary-600/8', val: 'text-primary-300' },
+          violet:  { dot: 'bg-violet-400',  ring: 'border-violet-500/30 bg-violet-600/8',  val: 'text-violet-300' },
+          cyan:    { dot: 'bg-cyan-400',     ring: 'border-cyan-500/30 bg-cyan-600/8',      val: 'text-cyan-300' },
+          amber:   { dot: 'bg-amber-400',    ring: 'border-amber-500/30 bg-amber-600/8',    val: 'text-amber-300' },
+          emerald: { dot: 'bg-emerald-400',  ring: 'border-emerald-500/30 bg-emerald-600/8', val: 'text-emerald-300' },
+        };
+        return (
+          <div className="card card-hover p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-4 w-4 text-primary-400 flex-shrink-0" />
+              <h3 className="text-base sm:text-lg font-display font-bold text-white">Chỉ số tài chính năm {fin.year}</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {metrics.map(({ key, label, desc, unit, color }) => {
+                const c = colorMap[color];
+                const val = fin[key];
+                const prevVal = prev?.[key];
+                const hasVal = val != null && !isNaN(val);
+                const diff = (hasVal && prevVal != null && !isNaN(prevVal)) ? val - prevVal : null;
+                const isEPS = unit === 'VND';
+                const displayVal = hasVal
+                  ? isEPS
+                    ? Number(val).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
+                    : `${Number(val).toFixed(2)}%`
+                  : 'N/A';
+                return (
+                  <div key={key} className={`rounded-xl border ${c.ring} p-3 flex flex-col gap-1.5`}>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.dot}`} />
+                      <span className="text-xs font-bold text-white">{label}</span>
+                    </div>
+                    <p className="text-[10px] text-muted leading-snug">{desc}</p>
+                    <p className={`text-lg font-display font-extrabold leading-none ${hasVal ? c.val : 'text-muted'}`}>
+                      {displayVal}
+                    </p>
+                    {diff != null && (
+                      <p className={`text-[10px] font-medium ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-muted'}`}>
+                        {diff > 0 ? '+' : ''}{isEPS ? Number(diff).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) : diff.toFixed(2)} so với năm trước
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

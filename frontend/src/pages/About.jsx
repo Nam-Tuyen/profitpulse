@@ -91,7 +91,7 @@ const About = () => {
           <h3 className="text-base sm:text-lg font-display font-bold text-white">Quy ước nhãn rủi ro</h3>
         </div>
         <p className="text-sm text-slate-300 leading-relaxed">
-          Nhãn rủi ro được xác định dựa trên <span className="text-white font-medium">dấu</span> của lợi nhuận tổng hợp <span className="text-primary-400 font-semibold">P_t</span> — đây là thước đo tổng hợp nhiều chỉ số tài chính lại thành một con số duy nhất để phán đoán xu hướng lợi nhuận năm sau.
+          Nhãn rủi ro được xác định dựa trên <span className="text-white font-medium">dấu</span> của lợi nhuận tổng hợp <span className="text-primary-400 font-semibold">P_t</span>. Đây là thước đo tổng hợp nhiều chỉ số tài chính lại thành một con số duy nhất để phán đoán xu hướng lợi nhuận năm sau.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           {/* Label = 1 — Rủi ro thấp */}
@@ -100,7 +100,7 @@ const About = () => {
             <div className="space-y-1">
               <p className="text-sm font-display font-bold text-emerald-400">Rủi ro thấp</p>
               <p className="text-xs text-slate-300 leading-relaxed">
-                <span className="font-semibold text-white">P_t &gt; 0</span> — Lợi nhuận tổng hợp dương. Doanh nghiệp <span className="text-emerald-400 font-medium">có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
+                <span className="font-semibold text-white">P_t &gt; 0</span>. Lợi nhuận tổng hợp dương. Doanh nghiệp <span className="text-emerald-400 font-medium">có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
               </p>
               <p className="text-[10px] text-muted font-mono">label_t = 1</p>
             </div>
@@ -111,14 +111,14 @@ const About = () => {
             <div className="space-y-1">
               <p className="text-sm font-display font-bold text-rose-400">Rủi ro cao</p>
               <p className="text-xs text-slate-300 leading-relaxed">
-                <span className="font-semibold text-white">P_t &lt; 0</span> — Lợi nhuận tổng hợp âm. Doanh nghiệp <span className="text-rose-400 font-medium">không có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
+                <span className="font-semibold text-white">P_t &lt; 0</span>. Lợi nhuận tổng hợp âm. Doanh nghiệp <span className="text-rose-400 font-medium">không có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
               </p>
               <p className="text-[10px] text-muted font-mono">label_t = 0</p>
             </div>
           </div>
         </div>
         <p className="text-xs text-muted leading-relaxed">
-          Quy tắc gán nhãn này được áp dụng nhất quán cho toàn bộ doanh nghiệp và tất cả các năm. Đây là tín hiệu cảnh báo sớm dựa trên dữ liệu — không phải đánh giá chủ quan hay khuyến nghị đầu tư.
+          Quy tắc gán nhãn này được áp dụng nhất quán cho toàn bộ doanh nghiệp và tất cả các năm. Đây là tín hiệu cảnh báo sớm dựa trên dữ liệu, không phải đánh giá chủ quan hay khuyến nghị đầu tư.
         </p>
       </section>
 

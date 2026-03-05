@@ -260,8 +260,6 @@ const ModelPerformance = () => {
                   <th className="px-4 py-3 text-right font-medium">Avg Score</th>
                   <th className="px-4 py-3 text-right font-medium">Min Score</th>
                   <th className="px-4 py-3 text-right font-medium">Max Score</th>
-                  <th className="px-4 py-3 text-right font-medium">Risk Cao</th>
-                  <th className="px-4 py-3 text-right font-medium">Risk Thấp</th>
                   <th className="px-4 py-3 text-right font-medium">Risk %</th>
                 </tr>
               </thead>
@@ -279,8 +277,6 @@ const ModelPerformance = () => {
                     <td className="px-4 py-3 text-right font-mono text-emerald-400">
                       {s.max_profit_score != null ? safeNum(s.max_profit_score, 2) : 'N/A'}
                     </td>
-                    <td className="px-4 py-3 text-right text-rose-400">{s.high_risk_count}</td>
-                    <td className="px-4 py-3 text-right text-emerald-400">{s.low_risk_count}</td>
                     <td className="px-4 py-3 text-right font-semibold text-amber-400">
                       {s.total_firms > 0 ? `${((s.high_risk_count / s.total_firms) * 100).toFixed(1)}%` : 'N/A'}
                     </td>
