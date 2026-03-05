@@ -213,9 +213,9 @@ const Compare = () => {
           return idx;
         };
 
-        const colCls = selectedTickers.length === 2 ? 'grid-cols-2'
-          : selectedTickers.length === 3 ? 'grid-cols-3'
-          : 'grid-cols-2 sm:grid-cols-4';
+        const colCls = selectedTickers.length === 2 ? 'grid-cols-1 sm:grid-cols-2'
+          : selectedTickers.length === 3 ? 'grid-cols-1 sm:grid-cols-3'
+          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
 
         return (
           <div className="space-y-4 sm:space-y-6">

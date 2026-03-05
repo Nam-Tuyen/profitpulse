@@ -50,7 +50,7 @@ const DataCoverageBadge = ({
   const barColor = status === 'complete' ? 'bg-emerald-400' : status === 'partial' ? 'bg-amber-400' : 'bg-rose-400';
 
   return (
-    <div className={`rounded-xl border ${border} ${bg} p-3 flex flex-col gap-2 min-w-[200px] max-w-xs`}>
+    <div className={`rounded-xl border ${border} ${bg} p-3 flex flex-col gap-2 w-full sm:max-w-xs`}>
       {/* Header */}
       <div className="flex items-center gap-2">
         <Icon className={`h-4 w-4 flex-shrink-0 ${accent}`} />

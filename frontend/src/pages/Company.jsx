@@ -153,12 +153,14 @@ const Company = () => {
           </div>
         </div>
         {currentFinancial && (
-          <DataCoverageBadge
-            availableYears={Math.round(coverageYear / 20)}
-            totalYears={5}
-            missingFields={missingProxies}
-            showDetails={true}
-          />
+          <div className="w-full sm:w-auto sm:max-w-xs">
+            <DataCoverageBadge
+              availableYears={Math.round(coverageYear / 20)}
+              totalYears={5}
+              missingFields={missingProxies}
+              showDetails={true}
+            />
+          </div>
         )}
       </section>
 

@@ -341,7 +341,7 @@ const Home = () => {
       </div>
 
       {/* ===== KPI Cards ===== */}
-      <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 anim-stagger">
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 anim-stagger">
         <StatsCard 
           title="Tổng số lượng doanh nghiệp" 
           value={kpi.total_firms ?? '—'} 
@@ -422,7 +422,7 @@ const Home = () => {
           {pieData && (
             <div className="card card-hover p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-display font-bold text-white mb-4">Biểu đồ phân bổ rủi ro trong năm</h3>
-              <div style={{ height: 220 }} className="sm:h-[260px]">
+              <div className="h-[200px] sm:h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
