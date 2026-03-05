@@ -574,6 +574,69 @@ top_scores = db.query_table('index_scores',
 
 ---
 
+## 5. Source Data: ProfitPulse_Tables.xlsx
+
+**Mục đích**: File Excel trung gian sinh ra từ Jupyter notebook (pipeline PCA + Profit Score). Dùng để upload vào Supabase qua `scripts/supabase/upload_tables.py`.
+
+### Cách tạo file
+
+Chạy đoạn code Python (notebook Jupyter) → xuất `ProfitPulse_Tables.xlsx` với 2 sheet:
+
+### Sheet `Table_1_Proxies` → Bảng `financial_raw`
+
+| Cột trong Excel | Cột trong Supabase | Kiểu | Ghi chú |
+|----------------|-------------------|------|---------|
+| `Symbol` | `firm_id` | VARCHAR | Ví dụ: `NCT.HM`, `SLS.HN` |
+| `Date` | `year` | INTEGER | Trích xuất phần năm từ `yyyy-12-31` |
+| `ROA` | `X1_ROA` | FLOAT | Return on Assets |
+| `ROE` | `X2_ROE` | FLOAT | Return on Equity |
+| `ROC` | `X3_ROC` | FLOAT | Return on Capital |
+| `EPS` | `X4_EPS` | FLOAT | Earnings per Share |
+| `NPM` | `X5_NPM` | FLOAT | Net Profit Margin |
+
+### Sheet `Table_2_ProfitScore` → Bảng `index_scores`
+
+| Cột trong Excel | Cột trong Supabase | Kiểu | Ghi chú |
+|----------------|-------------------|------|---------|
+| `Symbol` | `firm_id` | VARCHAR | Ví dụ: `NCT.HM`, `SLS.HN` |
+| `Date` | `year` | INTEGER | Trích xuất phần năm từ `yyyy-12-31` |
+| `Profit Score` | `p_t` | FLOAT | Điểm lợi nhuận PCA |
+| `Percentile` | `percentile_year` | FLOAT | Phân vị trong năm (0-100) |
+| `Nhãn` | `label_t` | INTEGER | `"Tốt"` → `1` (Risk Cao), `"Kém"` → `0` (Risk Thấp) |
+
+> **Lưu ý label_t**: Thesis dùng rule `P_t > 0 → label=1`. Trong hệ thống, `label_t=1` = **Risk Cao** (được hiển thị màu đỏ trên Screener và Home). Các công ty có điểm cao (P_t > 0) được phân loại là "Risk Cao" vì chúng nằm ở ngưỡng đáng chú ý theo mô hình.
+
+> **Lưu ý pc1/pc2/pc3**: Bảng `index_scores` có cột `pc1`, `pc2`, `pc3` (nullable). Table_2 không xuất các cột này, nên chúng sẽ giữ giá trị cũ khi upsert. Nếu muốn cập nhật, cần thêm PC values vào Python pipeline và bổ sung vào Sheet Table_2.
+
+### Script Upload
+
+```bash
+# Đặt ProfitPulse_Tables.xlsx vào thư mục gốc của project, sau đó chạy:
+python scripts/supabase/upload_tables.py
+
+# Hoặc chỉ định đường dẫn tuỳ chỉnh:
+$env:TABLES_EXCEL_PATH = "C:\path\to\ProfitPulse_Tables.xlsx"
+python scripts/supabase/upload_tables.py
+```
+
+Script sẽ:
+1. Tự động thêm công ty mới vào bảng `companies` nếu chưa tồn tại
+2. Upsert toàn bộ dữ liệu theo conflict key `(firm_id, year)` — cập nhật nếu đã có, thêm mới nếu chưa có
+3. Dữ liệu mới ngay lập tức phản án trên biểu đồ **Home** (Top 10 table) và **Screener** (scatter chart) thông qua API `/api/summary` và `/api/screener`
+
+### Data Flow mới (bổ sung)
+
+```
+ProfitPulse_Tables.xlsx
+  ├── Table_1_Proxies  ──→  financial_raw  (firm_id, year, X1_ROA…X5_NPM)
+  └── Table_2_ProfitScore ─→ index_scores  (firm_id, year, p_t, label_t, percentile_year)
+                                  ↓
+               /api/summary  →  Home: Top 10 table + score distribution chart
+               /api/screener →  Screener: scatter chart + results table
+```
+
+---
+
 ## Data Statistics (Current Production)
 
 | Metric | Value |
