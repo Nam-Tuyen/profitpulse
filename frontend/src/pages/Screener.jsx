@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Eye, Download, BarChart3 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip as RTooltip, ResponsiveContainer, Cell,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, ResponsiveContainer,
+  ScatterChart, Scatter, ZAxis,
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -12,8 +13,7 @@ import ChartCaption from '../components/ChartCaption';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
 import { safeNum, riskBadge, tickerFromFirmId, sortBy, exportToCSV } from '../utils/helpers';
 
-const PURPLE = '#6366F1';
-const CYAN = '#06B6D4';
+
 
 const Screener = () => {
   const navigate = useNavigate();
@@ -66,17 +66,6 @@ const Screener = () => {
     if (!results.length) return [];
     return sortBy(results, sortKey, sortOrder);
   }, [results, sortKey, sortOrder]);
-
-  const top10Chart = useMemo(() => {
-    return [...results]
-      .sort((a, b) => (b.profit_score ?? b.score ?? 0) - (a.profit_score ?? a.score ?? 0))
-      .slice(0, 10)
-      .map((r, i) => ({
-        name: tickerFromFirmId(r.firm_id || r.FIRM_ID),
-        score: r.profit_score ?? r.score ?? 0,
-        fill: i % 2 === 0 ? PURPLE : CYAN,
-      }));
-  }, [results]);
 
   const handleSort = (key) => {
     if (key === sortKey) setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
@@ -135,73 +124,114 @@ const Screener = () => {
       {loading && <LoadingSpinner message="Đang lọc doanh nghiệp..." />}
       {error && <p className="text-rose-400 text-center py-4">{error}</p>}
 
-      {/* Mini Stats - P1.2 */}
+      {/* Scatter distribution chart + Stats — combined */}
       {!loading && results.length > 0 && (() => {
         const validScores = results.filter(r => (r.profit_score ?? r.score ?? r.p_t) != null);
         const avgScore = validScores.length > 0
           ? validScores.reduce((sum, r) => sum + (r.profit_score ?? r.score ?? r.p_t ?? 0), 0) / validScores.length
           : null;
-        
         const highRiskCount = results.filter(r => (r.label_t ?? r.label) === 1 || (r.label_t ?? r.label) === '1').length;
         const highRiskShare = results.length > 0 ? (highRiskCount / results.length) * 100 : 0;
-        
         const missingPercentile = results.filter(r => !r.percentile_year && !r.percentile).length;
         const missingPC = results.filter(r => r.pc1 == null || r.pc2 == null || r.pc3 == null).length;
-        const missingDataShare = results.length > 0 
-          ? ((missingPercentile + missingPC) / (results.length * 2)) * 100 
+        const missingDataShare = results.length > 0
+          ? ((missingPercentile + missingPC) / (results.length * 2)) * 100
           : 0;
 
+        const scatterData = [...results]
+          .sort((a, b) => (b.profit_score ?? b.score ?? 0) - (a.profit_score ?? a.score ?? 0))
+          .map((r, i) => ({
+            rank: i + 1,
+            score: +(r.profit_score ?? r.score ?? 0).toFixed(3),
+            name: tickerFromFirmId(r.firm_id || r.FIRM_ID),
+            isHighRisk: (r.label_t ?? r.label) === 1 || (r.label_t ?? r.label) === '1',
+          }));
+        const lowRiskDots = scatterData.filter(d => !d.isHighRisk);
+        const highRiskDots = scatterData.filter(d => d.isHighRisk);
+
+        const CustomTooltip = ({ active, payload }) => {
+          if (!active || !payload?.length) return null;
+          const d = payload[0]?.payload;
+          return (
+            <div style={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 14px' }}>
+              <p className="text-white font-semibold text-sm">{d.name}</p>
+              <p className="text-slate-300 text-xs mt-0.5">Score: <span className="text-white font-mono">{d.score}</span></p>
+              <p className="text-slate-300 text-xs">Hạng: <span className="text-white font-mono">#{d.rank}</span></p>
+              <p className={`text-xs font-medium mt-0.5 ${d.isHighRisk ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {d.isHighRisk ? 'Rủi ro cao' : 'Rủi ro thấp'}
+              </p>
+            </div>
+          );
+        };
+
         return (
-          <section className="card p-4 sm:p-6 bg-surface-100 border border-primary-500/10">
-            <h3 className="text-sm font-semibold text-white mb-3">Kết quả thống kê</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <section className="card card-hover p-4 sm:p-6 space-y-4">
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Biểu đồ thể hiện mức độ phân bổ của Profit Score</h3>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white/5 p-3 rounded-xl">
                 <p className="text-xs text-muted mb-1">Trung bình Profit Score</p>
-                <p className="text-xl font-bold text-white">
-                  {avgScore != null ? safeNum(avgScore, 2) : 'N/A'}
-                </p>
+                <p className="text-xl font-bold text-white">{avgScore != null ? safeNum(avgScore, 2) : 'N/A'}</p>
               </div>
               <div className="bg-white/5 p-3 rounded-xl">
                 <p className="text-xs text-muted mb-1">Tỷ lệ doanh nghiệp thuộc rủi ro cao</p>
-                <p className="text-xl font-bold text-rose-400">
-                  {highRiskShare.toFixed(1)}%
-                </p>
+                <p className="text-xl font-bold text-rose-400">{highRiskShare.toFixed(1)}%</p>
               </div>
               <div className="bg-white/5 p-3 rounded-xl">
                 <p className="text-xs text-muted mb-1">Mức độ thiếu sót dữ liệu</p>
-                <p className="text-xl font-bold text-amber-400">
-                  {missingDataShare.toFixed(1)}%
-                </p>
+                <p className="text-xl font-bold text-amber-400">{missingDataShare.toFixed(1)}%</p>
               </div>
             </div>
+
+            {/* Scatter chart */}
+            <div className="overflow-x-auto">
+              <div style={{ minWidth: '320px' }} className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ left: 8, right: 16, top: 8, bottom: 24 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis
+                      dataKey="rank"
+                      name="Xếp hạng"
+                      type="number"
+                      tick={{ fill: '#94A3B8', fontSize: 11 }}
+                      label={{ value: 'Xếp hạng (từ cao đến thấp)', position: 'insideBottom', offset: -12, fill: '#94A3B8', fontSize: 11 }}
+                    />
+                    <YAxis
+                      dataKey="score"
+                      name="Profit Score"
+                      tick={{ fill: '#94A3B8', fontSize: 11 }}
+                      width={42}
+                      label={{ value: 'Score', angle: -90, position: 'insideLeft', offset: 8, fill: '#94A3B8', fontSize: 11 }}
+                    />
+                    <ZAxis range={[28, 28]} />
+                    <RTooltip
+                      cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.15)' }}
+                      content={<CustomTooltip />}
+                    />
+                    <Scatter name="Rủi ro thấp" data={lowRiskDots} fill="#10B981" fillOpacity={0.75} />
+                    <Scatter name="Rủi ro cao" data={highRiskDots} fill="#F43F5E" fillOpacity={0.75} />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-5 justify-center">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
+                <span className="text-xs text-muted">Rủi ro thấp</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
+                <span className="text-xs text-muted">Rủi ro cao</span>
+              </div>
+            </div>
+
+            <ChartCaption caption="Biểu đồ này sẽ giúp người dùng quan sát được mức độ phân bổ theo từng khoảng điểm của Profit Score theo năm" />
           </section>
         );
       })()}
-
-      {/* Top 10 bar chart — vertical bars, mobile-friendly with horizontal scroll */}
-      {!loading && top10Chart.length > 0 && (
-        <section className="card card-hover p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-display font-bold text-white mb-3">Top 10 doanh nghiệp xếp theo Profit Score</h3>
-          <div className="overflow-x-auto">
-            <div style={{ minWidth: '380px', height: '280px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={top10Chart} margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                  <XAxis dataKey="name" type="category" tick={{ fill: '#94A3B8', fontSize: 12 }} />
-                  <YAxis type="number" tick={{ fill: '#94A3B8', fontSize: 12 }} width={40} />
-                  <RTooltip contentStyle={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }} formatter={(v) => [typeof v === 'number' ? v.toFixed(2) : v, 'Profit Score']} />
-                  <Bar dataKey="score" radius={[6, 6, 0, 0]}>
-                    {top10Chart.map((d, i) => (
-                      <Cell key={i} fill={d.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <ChartCaption caption="Biểu đồ xếp hạng top 10 doanh nghiệp từ cao đến thấp theo Profit Score. Cuộn ngang để xem đầy đủ trên thiết bị nhỏ." />
-        </section>
-      )}
 
       {/* Results table */}
       {!loading && sorted.length > 0 && (
