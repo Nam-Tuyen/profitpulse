@@ -290,8 +290,20 @@ def summary():
                 score_ranges[4]["count"] += 1
         
         # Top performers
-        top_sorted = sorted(scores, key=lambda x: (x.get("profit_score") or -1e18), reverse=True)[:10]
+        all_sorted = sorted(scores, key=lambda x: (x.get("profit_score") or -1e18), reverse=True)
+        top_sorted = all_sorted[:10]
         top_performers = [{"firm": s.get("firm_id", ""), "score": s.get("profit_score", 0)} for s in top_sorted]
+
+        # Build combined top_companies: top 10 high-risk + top 10 low-risk
+        high_risk_top = [s for s in all_sorted if s.get("label_t") == 1][:10]
+        low_risk_top = [s for s in all_sorted if s.get("label_t") == 0][:10]
+        seen = set()
+        top_companies_combined = []
+        for s in high_risk_top + low_risk_top:
+            key = (s.get("firm_id"), s.get("year"))
+            if key not in seen:
+                seen.add(key)
+                top_companies_combined.append(s)
 
         return success_response({
             "year": year,
@@ -309,7 +321,7 @@ def summary():
                 "score_distribution": score_ranges,
                 "top_performers": top_performers,
             },
-            "top_companies": top_sorted[:10],
+            "top_companies": top_companies_combined,
         })
     except Exception as e:
         print(f"Error /api/summary: {e}")
