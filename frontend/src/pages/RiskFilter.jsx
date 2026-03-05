@@ -96,16 +96,16 @@ const RiskFilter = () => {
 
       {/* ── Filter bar ── */}
       <section className="card p-4 sm:p-6">
-        <div className="flex flex-wrap items-end gap-4 sm:gap-6">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-6">
           {/* Year dropdown */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-primary-400" /> Năm
             </label>
             <div className="relative">
               <button
                 onClick={() => setYearOpen((o) => !o)}
-                className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-white hover:bg-white/8 transition-all min-w-[160px]"
+                className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-white hover:bg-white/8 transition-all w-full sm:min-w-[160px]"
               >
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0" />
@@ -188,7 +188,7 @@ const RiskFilter = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
               {/* Donut */}
-              <div style={{ height: 220 }}>
+              <div className="h-[160px] sm:h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -227,7 +227,7 @@ const RiskFilter = () => {
                           <span className="text-sm font-semibold text-white">{d.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-display font-extrabold text-white leading-none">{d.value}</p>
+                          <p className="text-xl sm:text-2xl font-display font-extrabold text-white leading-none">{d.value}</p>
                           <p className="text-xs font-semibold mt-0.5" style={{ color: d.fill }}>{d.pct}%</p>
                         </div>
                       </div>
@@ -254,15 +254,15 @@ const RiskFilter = () => {
               </span>
             </div>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-              <table className="w-full text-xs sm:text-sm min-w-[400px]">
+              <table className="w-full text-xs sm:text-sm">
                 <thead className="bg-surface-card text-muted sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-[11px] uppercase tracking-wide">#</th>
-                    <th className="px-4 py-3 text-left font-medium text-[11px] uppercase tracking-wide">Mã CK</th>
-                    <th className="px-4 py-3 text-right font-medium text-[11px] uppercase tracking-wide">Profit Score</th>
-                    <th className="px-4 py-3 text-right font-medium text-[11px] uppercase tracking-wide">Percentile</th>
-                    <th className="px-4 py-3 text-center font-medium text-[11px] uppercase tracking-wide">Nhãn rủi ro</th>
-                    <th className="px-4 py-3 text-center font-medium text-[11px]"></th>
+                    <th className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-left font-medium text-[11px] uppercase tracking-wide">#</th>
+                    <th className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-left font-medium text-[11px] uppercase tracking-wide">Mã CK</th>
+                    <th className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-right font-medium text-[11px] uppercase tracking-wide">Profit Score</th>
+                    <th className="hidden sm:table-cell px-4 py-3 text-right font-medium text-[11px] uppercase tracking-wide">Percentile</th>
+                    <th className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-center font-medium text-[11px] uppercase tracking-wide">Nhãn rủi ro</th>
+                    <th className="hidden sm:table-cell px-4 py-3 text-center font-medium text-[11px]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/4">
@@ -291,7 +291,7 @@ const RiskFilter = () => {
                           className="hover:bg-white/3 transition cursor-pointer group"
                           onClick={() => ticker && navigate(`/company/${ticker}`)}
                         >
-                          <td className="px-4 py-3">
+                          <td className="px-2.5 py-2.5 sm:px-4 sm:py-3">
                             {isTop3 ? (
                               <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
                                 idx === 0 ? 'bg-amber-500/20 text-amber-400' :
@@ -302,21 +302,21 @@ const RiskFilter = () => {
                               <span className="text-muted">{idx + 1}</span>
                             )}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2.5 py-2.5 sm:px-4 sm:py-3">
                             <span className="font-bold text-white tracking-wide">{ticker || '—'}</span>
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-right">
                             <span className="font-mono font-semibold text-white">{score != null ? safeNum(score, 2) : '—'}</span>
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="hidden sm:table-cell px-4 py-3 text-right">
                             <span className="text-muted">{pct != null ? `${safeNum(pct, 0)}` : '—'}</span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${badge.className}`}>
+                          <td className="px-2.5 py-2.5 sm:px-4 sm:py-3 text-center">
+                            <span className={`px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] font-semibold ${badge.className}`}>
                               {badge.text}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="hidden sm:table-cell px-4 py-3 text-center">
                             {ticker && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); navigate(`/company/${ticker}`); }}
