@@ -9,6 +9,7 @@ import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
+import { safeNum, riskBadge } from '../utils/helpers';
 
 const COLORS = ['#6366F1', '#22D3EE', '#F59E0B', '#F43F5E'];
 
@@ -18,6 +19,7 @@ const Compare = () => {
   const [inputTicker, setInputTicker] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [timeseriesMap, setTimeseriesMap] = useState({});
+  const [companyDataMap, setCompanyDataMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -48,15 +50,18 @@ const Compare = () => {
     setError(null);
     try {
       const tsResults = {};
+      const cdResults = {};
       await Promise.all(
         selectedTickers.map(async (t) => {
           try {
             const d = await apiService.getCompany(t);
             tsResults[t] = (d.timeseries || []).sort((a, b) => a.year - b.year);
-          } catch { tsResults[t] = []; }
+            cdResults[t] = d;
+          } catch { tsResults[t] = []; cdResults[t] = null; }
         })
       );
       setTimeseriesMap(tsResults);
+      setCompanyDataMap(cdResults);
     } catch (err) {
       console.error(err);
       setError('Không thể so sánh. Kiểm tra lại mã.');
@@ -144,6 +149,80 @@ const Compare = () => {
             </ResponsiveContainer>
           </div>
           <ChartCaption caption="Biểu đồ cho bạn thấy mã nào ổn định hơn và mã nào biến động mạnh." />
+        </section>
+      )}
+
+      {/* Comparison detail cards */}
+      {!loading && Object.keys(companyDataMap).length > 0 && selectedTickers.length >= 2 && (
+        <section className="space-y-4">
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">So sánh chi tiết</h3>
+          <div className={`grid gap-4 grid-cols-1 ${ selectedTickers.length === 2 ? 'sm:grid-cols-2' : selectedTickers.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4' }`}>
+            {selectedTickers.map((t, i) => {
+              const d = companyDataMap[t];
+              if (!d) return (
+                <div key={t} className="card p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="font-display font-bold text-white text-base">{t}</span>
+                  </div>
+                  <p className="text-xs text-muted">Không có dữ liệu</p>
+                </div>
+              );
+              const badge = riskBadge(d.label);
+              const fm = d.financial_metrics || {};
+              const latestTs = (d.timeseries || []).slice(-1)[0];
+              return (
+                <div key={t} className="card p-4 sm:p-5 space-y-4">
+                  {/* Ticker header */}
+                  <div className="flex items-center gap-2 pb-2 border-b border-white/6">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="font-display font-bold text-white text-base">{t}</span>
+                    {d.year && <span className="text-xs text-muted ml-auto">Năm {d.year}</span>}
+                  </div>
+
+                  {/* Profit Score */}
+                  <div>
+                    <p className="label-xs mb-2">Profit Score</p>
+                    <p className="text-2xl sm:text-3xl font-display font-extrabold text-white mb-1.5">
+                      {d.profitscore != null ? safeNum(d.profitscore, 2) : 'N/A'}
+                    </p>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                  </div>
+
+                  {/* Financial metrics */}
+                  <div>
+                    <p className="label-xs mb-2">Chỉ số tài chính</p>
+                    <div className="space-y-2">
+                      {[
+                        { key: 'X1_ROA', label: 'ROA' },
+                        { key: 'X2_ROE', label: 'ROE' },
+                        { key: 'X3_ROC', label: 'ROC' },
+                        { key: 'X4_EPS', label: 'EPS' },
+                        { key: 'X5_NPM', label: 'NPM' },
+                      ].map(({ key, label }) => {
+                        const val = fm[key] ?? (latestTs ? latestTs[key] : null);
+                        return (
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-xs text-muted">{label}</span>
+                            <span className="font-mono text-xs text-white font-medium">
+                              {val != null ? safeNum(val, key === 'X4_EPS' ? 0 : 2) : 'N/A'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Reason */}
+                  {d.reason && (
+                    <div className="bg-white/3 rounded-xl px-3 py-2.5">
+                      <p className="text-xs text-muted leading-relaxed">{d.reason}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
     </div>
