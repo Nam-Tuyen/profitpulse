@@ -21,6 +21,126 @@ const PIE_COLORS = ['#10B981', '#F43F5E'];
 const PURPLE = '#6366F1';
 const CYAN = '#06B6D4';
 
+const RISK_TABS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'high', label: 'Rủi ro cao' },
+  { key: 'low', label: 'Rủi ro thấp' },
+];
+
+const TopCompaniesTable = ({ topCompanies, currentYear, navigate }) => {
+  const [riskFilter, setRiskFilter] = useState('all');
+  const [tableSort, setTableSort] = useState({ key: 'profit_score', dir: 'desc' });
+
+  const handleTableSort = (key) => {
+    setTableSort((prev) =>
+      prev.key === key ? { key, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }
+    );
+  };
+
+  const SortArrow = ({ col }) => {
+    if (tableSort.key !== col) return <span className="ml-0.5 opacity-30">↕</span>;
+    return <span className="ml-0.5 text-primary-400">{tableSort.dir === 'asc' ? '▲' : '▼'}</span>;
+  };
+
+  const filtered = topCompanies
+    .filter((c) => {
+      const isHigh = (c.label_t ?? c.label) === 1 || (c.label_t ?? c.label) === '1';
+      if (riskFilter === 'high') return isHigh;
+      if (riskFilter === 'low') return !isHigh;
+      return true;
+    })
+    .sort((a, b) => {
+      const va = tableSort.key === 'profit_score' ? (a.profit_score ?? 0) : (a.percentile_year ?? 0);
+      const vb = tableSort.key === 'profit_score' ? (b.profit_score ?? 0) : (b.percentile_year ?? 0);
+      return tableSort.dir === 'asc' ? va - vb : vb - va;
+    })
+    .slice(0, 10);
+
+  return (
+    <section className="card overflow-hidden">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1 bg-white/5 rounded-xl p-0.5">
+            {RISK_TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setRiskFilter(key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  riskFilter === key
+                    ? key === 'high'
+                      ? 'bg-rose-500/20 text-rose-400'
+                      : key === 'low'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-primary-600/20 text-primary-400'
+                    : 'text-muted hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
+            Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+      <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+        <table className="w-full text-xs sm:text-sm min-w-[520px]">
+          <thead className="bg-surface-card text-muted sticky top-0 z-10">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium">#</th>
+              <th className="px-4 py-3 text-left font-medium">Mã</th>
+              <th
+                className="px-4 py-3 text-right font-medium cursor-pointer select-none hover:text-white transition"
+                onClick={() => handleTableSort('profit_score')}
+              >
+                <Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip>
+                <SortArrow col="profit_score" />
+              </th>
+              <th
+                className="px-4 py-3 text-right font-medium cursor-pointer select-none hover:text-white transition"
+                onClick={() => handleTableSort('percentile_year')}
+              >
+                <Tooltip text={TOOLTIPS.percentile}>Percentile</Tooltip>
+                <SortArrow col="percentile_year" />
+              </th>
+              <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
+              <th className="px-4 py-3 text-center font-medium"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/6">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-muted text-sm">Không có doanh nghiệp phù hợp.</td>
+              </tr>
+            ) : filtered.map((c, idx) => {
+              const badge = riskBadge(c.label_t);
+              const ticker = tickerFromFirmId(c.firm_id);
+              return (
+                <tr key={idx} className="hover:bg-white/3 transition">
+                  <td className="px-4 py-3 text-muted">{idx + 1}</td>
+                  <td className="px-4 py-3 font-semibold text-white">{c.firm_id}</td>
+                  <td className="px-4 py-3 text-right font-mono text-white">{safeNum(c.profit_score, 2)}</td>
+                  <td className="px-4 py-3 text-right text-slate-300">{c.percentile_year ?? 'N/A'}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => navigate(`/company/${ticker}`)} className="text-primary-400 hover:text-primary-300 transition" title="Xem chi tiết">
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -281,52 +401,11 @@ const Home = () => {
 
       {/* ===== Top Companies Table ===== */}
       {topCompanies.length > 0 && (
-        <section className="card overflow-hidden">
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
-            <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
-              Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-            <table className="w-full text-xs sm:text-sm min-w-[640px]">
-              <thead className="bg-surface-card text-muted sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">#</th>
-                  <th className="px-4 py-3 text-left font-medium">Mã</th>
-                  <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.profit_score}>Score</Tooltip></th>
-                  <th className="px-4 py-3 text-right font-medium"><Tooltip text={TOOLTIPS.percentile}>Percentile</Tooltip></th>
-                  <th className="px-4 py-3 text-center font-medium"><Tooltip text={TOOLTIPS.label_risk}>Nhãn</Tooltip></th>
-                  <th className="px-4 py-3 text-center font-medium">Năm</th>
-                  <th className="px-4 py-3 text-center font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/6">
-                {topCompanies.slice(0, 10).map((c, idx) => {
-                  const badge = riskBadge(c.label_t);
-                  const ticker = tickerFromFirmId(c.firm_id);
-                  return (
-                    <tr key={idx} className="hover:bg-white/3 transition">
-                      <td className="px-4 py-3 text-muted">{idx + 1}</td>
-                      <td className="px-4 py-3 font-semibold text-white">{c.firm_id}</td>
-                      <td className="px-4 py-3 text-right font-mono text-white">{safeNum(c.profit_score, 2)}</td>
-                      <td className="px-4 py-3 text-right text-slate-300">{c.percentile_year ?? 'N/A'}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center text-muted">{c.year || currentYear}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button onClick={() => navigate(`/company/${ticker}`)} className="text-primary-400 hover:text-primary-300 transition" title="Xem chi tiết">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <TopCompaniesTable
+          topCompanies={topCompanies}
+          currentYear={currentYear}
+          navigate={navigate}
+        />
       )}
     </div>
   );
