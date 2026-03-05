@@ -22,8 +22,19 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+html {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh;
@@ -35,9 +46,10 @@ body {
 
 #root {
   width: 100%;
-  display: flex;
   min-height: 100vh;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ============================================================

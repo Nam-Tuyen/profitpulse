@@ -87,7 +87,7 @@ const Home = () => {
   const scoreDistData = chartData?.score_distribution || null;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 md:space-y-8">
+    <div className="w-full space-y-5 sm:space-y-6 md:space-y-8">
       {/* ===== Hero ===== */}
       <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #0F1629 0%, #1E1B4B 45%, #3B1F6A 80%, #4C1D95 100%)' }}>
         {/* Decorative blobs */}

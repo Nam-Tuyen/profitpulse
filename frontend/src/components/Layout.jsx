@@ -40,11 +40,11 @@ const Layout = ({ children }) => {
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }} className="bg-surface">
 
       {/* TOP NAVIGATION BAR */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/6 bg-surface/90 backdrop-blur-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 border-b border-white/6 backdrop-blur-lg" style={{ width: '100%', backgroundColor: 'rgba(13,17,23,0.92)' }}>
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-16" style={{ maxWidth: '1400px' }}>
           <div className="flex items-center justify-between h-14 sm:h-16">
 
             {/* Logo */}
@@ -95,7 +95,7 @@ const Layout = ({ children }) => {
               ref={drawerRef}
               className="absolute top-full left-0 right-0 z-50 md:hidden bg-surface-sidebar border-b border-white/6 shadow-2xl"
             >
-              <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
+              <nav className="mx-auto w-full max-w-none px-4 sm:px-6 lg:px-10 xl:px-16 py-3 flex flex-col gap-1" style={{ maxWidth: '1400px' }}>
                 {NAV_LINKS.map(({ name, href, icon: Icon }) => {
                   const active = isActive(href);
                   return (
@@ -121,8 +121,8 @@ const Layout = ({ children }) => {
       </header>
 
       {/* PAGE CONTENT */}
-      <main className="flex-1 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8">
+      <main style={{ flex: '1', width: '100%' }}>
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-16 py-5 sm:py-6 lg:py-8" style={{ maxWidth: '1400px' }}>
           {children}
         </div>
       </main>
