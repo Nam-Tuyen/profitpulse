@@ -49,8 +49,9 @@ const RiskFilter = () => {
   useEffect(() => {
     apiService.getMeta().then((m) => {
       setMeta(m);
-      const maxYear = m?.years ? Math.max(...m.years) : null;
-      if (maxYear) setSelectedYear(maxYear);
+      const availableYears = m?.years || [];
+      const defaultYear = availableYears.includes(2024) ? 2024 : (availableYears.length ? Math.max(...availableYears) : null);
+      if (defaultYear) setSelectedYear(defaultYear);
     }).catch(() => {});
   }, []);
 
