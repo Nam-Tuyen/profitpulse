@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Eye, Calendar, Filter, ChevronDown } from 'lucide-react';
 import {
-  PieChart, Pie, Cell, Tooltip as RTooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip as RTooltip, ResponsiveContainer,
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -176,27 +176,38 @@ const RiskFilter = () => {
           {/* ── Pie chart – Risk ratio ── */}
           <section className="card card-hover p-3 sm:p-4">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-600/15 border border-primary-500/20 flex-shrink-0">
-                <Shield className="h-3.5 w-3.5 text-primary-400" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-600/15 border border-primary-500/20 flex-shrink-0">
+                  <Shield className="h-3.5 w-3.5 text-primary-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-display font-bold text-white">Phân bổ rủi ro</h3>
+                  <p className="text-[11px] text-muted">Năm {selectedYear}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-display font-bold text-white">Biểu đồ phân bổ rủi ro</h3>
-                <p className="text-[11px] text-muted mt-0.5">Năm {selectedYear}</p>
+              {/* Inline legend */}
+              <div className="flex items-center gap-3">
+                {pieData.map((d) => (
+                  <span key={d.name} className="flex items-center gap-1 text-[10px] text-muted">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.fill }} />
+                    {d.name}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center">
-              {/* Donut */}
-              <div className="h-[140px] sm:h-[160px] w-full sm:w-[180px] flex-shrink-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
+              {/* Donut – no Legend inside, so cy=50% is truly centered */}
+              <div className="h-[130px] sm:h-[140px] w-full sm:w-[160px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={42}
-                      outerRadius={62}
+                      innerRadius={38}
+                      outerRadius={56}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -205,30 +216,24 @@ const RiskFilter = () => {
                       ))}
                     </Pie>
                     <RTooltip content={<CustomPieTooltip />} />
-                    <Legend
-                      iconType="circle"
-                      iconSize={8}
-                      formatter={(value) => <span style={{ color: '#94A3B8', fontSize: 11 }}>{value}</span>}
-                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Stats cards */}
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-2 flex-1 justify-center">
                 {pieData.map((d) => {
                   const isHigh = d.name === 'Rủi ro cao';
                   return (
-                    <div key={d.name} className="relative rounded-xl p-3 border overflow-hidden" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '0d' }}>
+                    <div key={d.name} className="relative rounded-xl p-2.5 border overflow-hidden" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '0d' }}>
                       <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl" style={{ backgroundColor: d.fill }} />
                       <div className="flex items-center justify-between pl-2">
-                        <div className="flex flex-col gap-0">
+                        <div className="flex flex-col">
                           <span className="text-[9px] text-muted font-mono leading-tight">{isHigh ? 'label = 0 · P_t < 0' : 'label = 1 · P_t > 0'}</span>
-                          <span className="text-xs font-semibold text-white">{d.name}</span>
+                          <span className="text-xs font-semibold text-white leading-tight">{d.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-display font-extrabold text-white leading-none">{d.value}</p>
-                          <p className="text-[11px] font-semibold mt-0.5" style={{ color: d.fill }}>{d.pct}%</p>
+                          <p className="text-base font-display font-extrabold text-white leading-none">{d.value} <span className="text-[11px] font-semibold" style={{ color: d.fill }}>{d.pct}%</span></p>
                         </div>
                       </div>
                     </div>
