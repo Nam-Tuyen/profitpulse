@@ -59,7 +59,7 @@ const TopCompaniesTable = ({ topCompanies, currentYear, navigate }) => {
   return (
     <section className="card overflow-hidden">
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h3 className="text-base sm:text-lg font-display font-bold text-white">Top doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
+        <h3 className="text-base sm:text-lg font-display font-bold text-white">Top 10 doanh nghiệp đáng lưu ý trong năm {currentYear}</h3>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1 bg-white/5 rounded-xl p-0.5">
             {RISK_TABS.map(({ key, label }) => (

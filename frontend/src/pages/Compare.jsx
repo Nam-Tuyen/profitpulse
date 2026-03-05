@@ -184,7 +184,13 @@ const Compare = () => {
           const pc2        = d.latest_score?.pc2 ?? null;
           const pc3        = d.latest_score?.pc3 ?? null;
           const companyName = d.company?.company_name ?? null;
-          return { score, labelVal, yearVal, percentile, pc1, pc2, pc3, companyName };
+          const fm = d.financial_metrics || {};
+          const roa = fm.X1_ROA ?? null;
+          const roe = fm.X2_ROE ?? null;
+          const roc = fm.X3_ROC ?? null;
+          const eps = fm.X4_EPS ?? null;
+          const npm = fm.X5_NPM ?? null;
+          return { score, labelVal, yearVal, percentile, pc1, pc2, pc3, companyName, roa, roe, roc, eps, npm };
         };
 
         const infos = selectedTickers.map((t) => ({ ticker: t, ...dataOf(t) }));
@@ -233,6 +239,28 @@ const Compare = () => {
                         )}
                       </div>
                       {info.yearVal && <p className="text-[10px] text-muted/60 mt-0.5">Năm {info.yearVal}</p>}
+                      {/* Financial metrics */}
+                      <div className="mt-2 pt-2 border-t border-white/8 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {[
+                          { label: 'ROA', val: info.roa },
+                          { label: 'ROE', val: info.roe },
+                          { label: 'ROC', val: info.roc },
+                          { label: 'NPM', val: info.npm },
+                        ].map(({ label, val }) => (
+                          <div key={label}>
+                            <p className="text-[9px] font-medium text-muted uppercase tracking-wide">{label}</p>
+                            <p className="text-[10px] font-semibold text-white">
+                              {val != null ? `${safeNum(val, 2)}%` : <span className="text-muted/50">—</span>}
+                            </p>
+                          </div>
+                        ))}
+                        <div className="col-span-2">
+                          <p className="text-[9px] font-medium text-muted uppercase tracking-wide">EPS</p>
+                          <p className="text-[10px] font-semibold text-white">
+                            {info.eps != null ? safeNum(info.eps, 0) : <span className="text-muted/50">—</span>}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

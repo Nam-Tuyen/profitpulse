@@ -1,13 +1,12 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, Search, GitCompare, Menu, X,
+  Home, GitCompare, Menu, X,
   Info, Activity,
 } from 'lucide-react';
 
 const NAV_LINKS = [
   { name: 'Tổng quan', href: '/', icon: Home },
-  { name: 'Sàng lọc', href: '/screener', icon: Search },
   { name: 'So sánh', href: '/compare', icon: GitCompare },
   { name: 'Mô hình', href: '/performance', icon: Activity },
   { name: 'Giới thiệu', href: '/about', icon: Info },
