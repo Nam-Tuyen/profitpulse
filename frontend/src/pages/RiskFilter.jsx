@@ -95,23 +95,23 @@ const RiskFilter = () => {
       <PageIntro text="Lọc doanh nghiệp theo mức độ rủi ro và quan sát tỷ lệ phân bổ giữa hai nhóm trong từng năm." />
 
       {/* ── Filter bar ── */}
-      <section className="card p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-6">
+      <section className="card p-3 sm:p-4">
+        <div className="flex flex-row flex-wrap items-end gap-2 sm:gap-4">
           {/* Year dropdown */}
-          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-primary-400" /> Năm
+          <div className="flex flex-col gap-1 w-auto">
+            <label className="text-[10px] font-medium text-muted uppercase tracking-wide flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-primary-400" /> Năm
             </label>
             <div className="relative">
               <button
                 onClick={() => setYearOpen((o) => !o)}
-                className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-white hover:bg-white/8 transition-all w-full sm:min-w-[160px]"
+                className="flex items-center justify-between gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white hover:bg-white/8 transition-all w-full sm:min-w-[120px]"
               >
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0" />
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
                   {selectedYear || 'Chọn năm'}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${yearOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3.5 w-3.5 text-muted transition-transform duration-200 ${yearOpen ? 'rotate-180' : ''}`} />
               </button>
               {yearOpen && (
                 <>
@@ -122,7 +122,7 @@ const RiskFilter = () => {
                         <button
                           key={y}
                           onClick={() => { setSelectedYear(y); setYearOpen(false); }}
-                          className={`w-full px-4 py-2.5 text-sm font-semibold text-left transition-colors flex items-center gap-2 ${
+                          className={`w-full px-3 py-2 text-xs font-semibold text-left transition-colors flex items-center gap-1.5 ${
                             selectedYear === y
                               ? 'bg-primary-600/20 text-primary-400'
                               : 'text-muted hover:bg-white/5 hover:text-white'
@@ -140,19 +140,19 @@ const RiskFilter = () => {
           </div>
 
           {/* Divider */}
-          <div className="hidden sm:block w-px self-stretch bg-white/8 my-0.5" />
+          <div className="block w-px self-stretch bg-white/8" />
 
           {/* Risk type */}
-          <div className="flex flex-col gap-1.5 flex-1 sm:flex-none">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-primary-400" /> Mức độ rủi ro
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-medium text-muted uppercase tracking-wide flex items-center gap-1">
+              <Shield className="h-3 w-3 text-primary-400" /> Mức độ rủi ro
             </label>
-            <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-0.5">
+            <div className="flex gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5">
               {RISK_OPTIONS.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setRiskType(key)}
-                  className={`flex-1 px-5 py-2 rounded-lg text-xs font-semibold transition ${
+                  className={`flex-1 px-3 py-1.5 rounded-md text-[11px] font-semibold transition ${
                     riskType === key
                       ? key === 'high'
                         ? 'bg-rose-500/25 text-rose-400 ring-1 ring-rose-500/30'
@@ -174,29 +174,29 @@ const RiskFilter = () => {
       {!loading && summary && (
         <>
           {/* ── Pie chart – Risk ratio ── */}
-          <section className="card card-hover p-4 sm:p-6">
+          <section className="card card-hover p-3 sm:p-4">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-600/15 border border-primary-500/20 flex-shrink-0">
-                <Shield className="h-4 w-4 text-primary-400" />
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-600/15 border border-primary-500/20 flex-shrink-0">
+                <Shield className="h-3.5 w-3.5 text-primary-400" />
               </div>
               <div>
-                <h3 className="text-base font-display font-bold text-white">Biểu đồ thể hiện mức độ phân bổ rủi ro</h3>
-                <p className="text-xs text-muted mt-0.5">Năm {selectedYear}</p>
+                <h3 className="text-sm font-display font-bold text-white">Biểu đồ phân bổ rủi ro</h3>
+                <p className="text-[11px] text-muted mt-0.5">Năm {selectedYear}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center">
               {/* Donut */}
-              <div className="h-[160px] sm:h-[220px]">
+              <div className="h-[140px] sm:h-[160px] w-full sm:w-[180px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
+                      innerRadius={42}
+                      outerRadius={62}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -207,28 +207,28 @@ const RiskFilter = () => {
                     <RTooltip content={<CustomPieTooltip />} />
                     <Legend
                       iconType="circle"
-                      iconSize={10}
-                      formatter={(value) => <span style={{ color: '#94A3B8', fontSize: 12 }}>{value}</span>}
+                      iconSize={8}
+                      formatter={(value) => <span style={{ color: '#94A3B8', fontSize: 11 }}>{value}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Stats cards */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 w-full">
                 {pieData.map((d) => {
                   const isHigh = d.name === 'Rủi ro cao';
                   return (
-                    <div key={d.name} className="relative rounded-2xl p-4 border overflow-hidden" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '0d' }}>
-                      <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl" style={{ backgroundColor: d.fill }} />
+                    <div key={d.name} className="relative rounded-xl p-3 border overflow-hidden" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '0d' }}>
+                      <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl" style={{ backgroundColor: d.fill }} />
                       <div className="flex items-center justify-between pl-2">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] text-muted font-mono">{isHigh ? 'label = 0 · P_t < 0' : 'label = 1 · P_t > 0'}</span>
-                          <span className="text-sm font-semibold text-white">{d.name}</span>
+                        <div className="flex flex-col gap-0">
+                          <span className="text-[9px] text-muted font-mono leading-tight">{isHigh ? 'label = 0 · P_t < 0' : 'label = 1 · P_t > 0'}</span>
+                          <span className="text-xs font-semibold text-white">{d.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl sm:text-2xl font-display font-extrabold text-white leading-none">{d.value}</p>
-                          <p className="text-xs font-semibold mt-0.5" style={{ color: d.fill }}>{d.pct}%</p>
+                          <p className="text-lg font-display font-extrabold text-white leading-none">{d.value}</p>
+                          <p className="text-[11px] font-semibold mt-0.5" style={{ color: d.fill }}>{d.pct}%</p>
                         </div>
                       </div>
                     </div>
