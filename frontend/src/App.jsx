@@ -6,6 +6,7 @@ import Company from './pages/Company';
 import Compare from './pages/Compare';
 import About from './pages/About';
 import ModelPerformance from './pages/ModelPerformance';
+import RiskFilter from './pages/RiskFilter';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/risk-filter" element={<RiskFilter />} />
           <Route path="/company/:ticker" element={<Company />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/performance" element={<ModelPerformance />} />

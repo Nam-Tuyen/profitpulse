@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Building2, TrendingUp, AlertTriangle, Layers,
-  Clock, Cpu, Star, StarOff, Info,
+  Clock, Cpu, Info,
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
@@ -17,7 +17,6 @@ import DataCoverageBadge from '../components/DataCoverageBadge';
 import FinancialMetricsTable from '../components/FinancialMetricsTable';
 import MetricTrendChart from '../components/MetricTrendChart';
 import Tooltip, { TOOLTIPS } from '../components/Tooltip';
-import { useWatchlist } from '../hooks/useWatchlist';
 import {
   safeNum, riskBadge, percentileInterpretation, rankBucket,
   computeYoYDeltas, PC_DESCRIPTIONS,
@@ -45,7 +44,6 @@ const Company = () => {
   const [tab, setTab] = useState('overview');
   const [selectedYear, setSelectedYear] = useState(null);
   const [financialData, setFinancialData] = useState(null);
-  const { isInWatchlist, toggleWatchlist } = useWatchlist();
 
   useEffect(() => {
     if (!ticker) return;
@@ -145,10 +143,6 @@ const Company = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <button onClick={() => toggleWatchlist(ticker)} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition ${isInWatchlist(ticker) ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25' : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white'}`}>
-            {isInWatchlist(ticker) ? <Star className="h-4 w-4 fill-amber-400" /> : <StarOff className="h-4 w-4" />}
-            {isInWatchlist(ticker) ? 'Đã theo dõi' : 'Theo dõi'}
-          </button>
         </div>
       </section>
 
@@ -231,28 +225,6 @@ const OverviewTab = ({
           </div>
           {interp && <p className="text-sm text-primary-400 font-medium">{interp}</p>}
           <p className="text-xs text-muted mt-3">Thẻ này cho bạn biết doanh nghiệp thuộc nhóm mạnh hay yếu tại thời điểm được xem.</p>
-        </div>
-
-        {/* Card 2: Next-year Probability */}
-        <div className="card card-hover p-4 sm:p-6">
-          <h3 className="label-xs mb-3">Xác suất năm sau</h3>
-          {hasProbability ? (
-            <>
-              <p className="metric mb-1">{(prob * 100).toFixed(1)}%</p>
-              <p className="text-sm text-slate-300 mb-2">Predicted label: <span className="font-semibold text-white">{predLabel ?? 'N/A'}</span></p>
-              <p className="text-xs text-muted mt-3">Thẻ này cho bạn biết khả năng duy trì trạng thái lợi nhuận tốt ở năm sau.</p>
-              <p className="text-xs text-amber-400 mt-1">Không phải khuyến nghị mua bán.</p>
-            </>
-          ) : (
-            <>
-              <p className="metric mb-1 text-muted">N/A</p>
-              <p className="text-sm text-muted mb-3">Hệ thống chưa có xác suất cho mã này.</p>
-              <div className="flex items-start gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 text-xs text-amber-400">
-                <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                <span>Backend chưa trả probability theo mã — cần bổ sung field từ bảng predictions.</span>
-              </div>
-            </>
-          )}
         </div>
 
         {/* Card 3: Drivers (PC1/PC2/PC3) */}

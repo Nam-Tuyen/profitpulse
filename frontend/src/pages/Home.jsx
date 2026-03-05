@@ -80,7 +80,7 @@ const TopCompaniesTable = ({ topCompanies, currentYear, navigate }) => {
               </button>
             ))}
           </div>
-          <Link to="/screener" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
+          <Link to="/risk-filter" className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
             Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -236,7 +236,7 @@ const Home = () => {
             <QuickSearch firms={firms} />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Link to="/screener" className="btn-primary w-full sm:w-auto">
+            <Link to="/risk-filter" className="btn-primary w-full sm:w-auto">
               <Search className="h-4 w-4" /> Lọc doanh nghiệp
             </Link>
             <Link to="/about" className="btn-ghost w-full sm:w-auto">
