@@ -142,8 +142,14 @@ const Company = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-        </div>
+        {currentFinancial && (
+          <DataCoverageBadge
+            availableYears={Math.round(coverageYear / 20)}
+            totalYears={5}
+            missingFields={missingProxies}
+            showDetails={true}
+          />
+        )}
       </section>
 
       {/* Tab Navigation */}
@@ -158,17 +164,15 @@ const Company = () => {
         })}
       </div>
 
-      {tab === 'overview' && <OverviewTab 
-        yearData={yearData} 
-        badge={badge} 
-        interp={interp} 
-        bucket={bucket} 
-        latest={latest} 
-        predictions={predictions} 
+      {tab === 'overview' && <OverviewTab
+        yearData={yearData}
+        badge={badge}
+        interp={interp}
+        bucket={bucket}
+        latest={latest}
+        predictions={predictions}
         currentFinancial={currentFinancial}
         previousFinancial={previousFinancial}
-        coverageYear={coverageYear}
-        missingProxies={missingProxies}
       />}
       {tab === 'history' && <HistoryTab timeseries={timeseries} tsWithDeltas={tsWithDeltas} />}
       {tab === 'drivers' && <DriversTab 
@@ -185,9 +189,9 @@ const Company = () => {
 };
 
 /* OverviewTab */
-const OverviewTab = ({ 
+const OverviewTab = ({
   yearData, badge, interp, bucket, latest, predictions,
-  currentFinancial, previousFinancial, coverageYear, missingProxies
+  currentFinancial, previousFinancial,
 }) => {
   const prob = predictions?.[0]?.probability;
   const predLabel = predictions?.[0]?.pred_label;
@@ -195,17 +199,7 @@ const OverviewTab = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 anim-stagger">
-      {/* Data Coverage Badge */}
-      {currentFinancial && (
-        <DataCoverageBadge 
-          availableYears={Math.round(coverageYear / 20)} 
-          totalYears={5} 
-          missingFields={missingProxies}
-          showDetails={true}
-        />
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* Card 1: Profit Score & Percentile */}
         <div className="card card-hover p-4 sm:p-6">
           <h3 className="label-xs mb-3"><Tooltip text={TOOLTIPS.profit_score}>Profit Score &amp; Percentile</Tooltip></h3>
@@ -222,8 +216,8 @@ const OverviewTab = ({
           <p className="text-xs text-muted mt-3">Thẻ này cho bạn biết doanh nghiệp thuộc nhóm mạnh hay yếu tại thời điểm được xem.</p>
         </div>
 
-        {/* Card 3: Drivers (PC1/PC2/PC3) */}
-        <div className="card card-hover p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+        {/* Card 2: Drivers (PC1/PC2/PC3) */}
+        <div className="card card-hover p-4 sm:p-6">
           <h3 className="label-xs mb-3">Drivers (PCA Components)</h3>
           <div className="space-y-3">
             {['pc1', 'pc2', 'pc3'].map((key) => {
@@ -244,33 +238,25 @@ const OverviewTab = ({
         </div>
       </div>
 
-      {/* Financial Snapshot Cards */}
+      {/* Financial Snapshot — list style matching Drivers card */}
       {currentFinancial && (() => {
         const fin = currentFinancial;
         const prev = previousFinancial;
         const metrics = [
-          { key: 'roa', label: 'ROA', desc: 'Lợi nhuận trên tài sản', unit: '%', color: 'primary' },
-          { key: 'roe', label: 'ROE', desc: 'Lợi nhuận trên vốn chủ', unit: '%', color: 'violet' },
-          { key: 'roc', label: 'ROC', desc: 'Lợi nhuận trên vốn đầu tư', unit: '%', color: 'cyan' },
-          { key: 'npm', label: 'NPM', desc: 'Tỷ suất lợi nhuận ròng', unit: '%', color: 'amber' },
-          { key: 'eps', label: 'EPS', desc: 'Lợi nhuận mỗi cổ phiếu', unit: 'VND', color: 'emerald' },
+          { key: 'roa', label: 'ROA', desc: 'Lợi nhuận trên tài sản', unit: '%', color: '#6366F1' },
+          { key: 'roe', label: 'ROE', desc: 'Lợi nhuận trên vốn chủ sở hữu', unit: '%', color: '#8B5CF6' },
+          { key: 'roc', label: 'ROC', desc: 'Lợi nhuận trên vốn đầu tư', unit: '%', color: '#06B6D4' },
+          { key: 'npm', label: 'NPM', desc: 'Tỷ suất lợi nhuận ròng', unit: '%', color: '#F59E0B' },
+          { key: 'eps', label: 'EPS', desc: 'Lợi nhuận mỗi cổ phiếu', unit: 'VND', color: '#10B981' },
         ];
-        const colorMap = {
-          primary: { dot: 'bg-primary-400', ring: 'border-primary-500/30 bg-primary-600/8', val: 'text-primary-300' },
-          violet:  { dot: 'bg-violet-400',  ring: 'border-violet-500/30 bg-violet-600/8',  val: 'text-violet-300' },
-          cyan:    { dot: 'bg-cyan-400',     ring: 'border-cyan-500/30 bg-cyan-600/8',      val: 'text-cyan-300' },
-          amber:   { dot: 'bg-amber-400',    ring: 'border-amber-500/30 bg-amber-600/8',    val: 'text-amber-300' },
-          emerald: { dot: 'bg-emerald-400',  ring: 'border-emerald-500/30 bg-emerald-600/8', val: 'text-emerald-300' },
-        };
         return (
           <div className="card card-hover p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="h-4 w-4 text-primary-400 flex-shrink-0" />
-              <h3 className="text-base sm:text-lg font-display font-bold text-white">Chỉ số tài chính năm {fin.year}</h3>
+              <h3 className="label-xs">Chỉ số tài chính năm {fin.year}</h3>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="space-y-3">
               {metrics.map(({ key, label, desc, unit, color }) => {
-                const c = colorMap[color];
                 const val = fin[key];
                 const prevVal = prev?.[key];
                 const hasVal = val != null && !isNaN(val);
@@ -282,24 +268,29 @@ const OverviewTab = ({
                     : `${Number(val).toFixed(2)}%`
                   : 'N/A';
                 return (
-                  <div key={key} className={`rounded-xl border ${c.ring} p-3 flex flex-col gap-1.5`}>
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.dot}`} />
-                      <span className="text-xs font-bold text-white">{label}</span>
+                  <div key={key} className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-sm font-semibold text-white">{label}</span>
+                      <p className="text-xs text-muted leading-snug">{desc}</p>
+                      {diff != null && (
+                        <p className={`text-[10px] font-medium mt-0.5 ${
+                          diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-muted'
+                        }`}>
+                          {diff > 0 ? '+' : ''}{isEPS
+                            ? Number(diff).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
+                            : diff.toFixed(2)} vs năm trước
+                        </p>
+                      )}
                     </div>
-                    <p className="text-[10px] text-muted leading-snug">{desc}</p>
-                    <p className={`text-lg font-display font-extrabold leading-none ${hasVal ? c.val : 'text-muted'}`}>
-                      {displayVal}
-                    </p>
-                    {diff != null && (
-                      <p className={`text-[10px] font-medium ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-muted'}`}>
-                        {diff > 0 ? '+' : ''}{isEPS ? Number(diff).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) : diff.toFixed(2)} so với năm trước
-                      </p>
-                    )}
+                    <span
+                      className="font-mono text-sm font-semibold whitespace-nowrap flex-shrink-0"
+                      style={{ color: hasVal ? color : '#94A3B8' }}
+                    >{displayVal}</span>
                   </div>
                 );
               })}
             </div>
+            <p className="text-xs text-muted mt-4">Dữ liệu tài chính tổng hợp theo năm {fin.year}.</p>
           </div>
         );
       })()}
