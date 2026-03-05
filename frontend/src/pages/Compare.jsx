@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { GitCompare, X, RotateCcw } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { GitCompare, X, RotateCcw, TrendingUp } from 'lucide-react';
 import {
   LineChart, Line,
   XAxis, YAxis, CartesianGrid,
@@ -12,10 +12,11 @@ import ChartCaption from '../components/ChartCaption';
 import { safeNum, riskBadge } from '../utils/helpers';
 
 const COLORS = ['#6366F1', '#22D3EE', '#F59E0B', '#F43F5E'];
+const DEFAULT_TICKERS = ['FPT', 'HPG', 'GAS', 'VNM'];
 
 const Compare = () => {
   const [meta, setMeta] = useState(null);
-  const [selectedTickers, setSelectedTickers] = useState(['FPT', 'HPG', 'GAS', 'VNM']);
+  const [selectedTickers, setSelectedTickers] = useState(DEFAULT_TICKERS);
   const [inputTicker, setInputTicker] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [timeseriesMap, setTimeseriesMap] = useState({});
@@ -45,21 +46,21 @@ const Compare = () => {
   const removeTicker = (t) => setSelectedTickers(selectedTickers.filter((x) => x !== t));
 
   const handleReset = () => {
-    setSelectedTickers(['FPT', 'HPG', 'GAS', 'VNM']);
+    setSelectedTickers(DEFAULT_TICKERS);
     setTimeseriesMap({});
     setCompanyDataMap({});
     setError(null);
   };
 
-  const handleCompare = async () => {
-    if (selectedTickers.length < 2) return;
+  const runCompare = useCallback(async (tickers) => {
+    if (tickers.length < 2) return;
     setLoading(true);
     setError(null);
     try {
       const tsResults = {};
       const cdResults = {};
       await Promise.all(
-        selectedTickers.map(async (t) => {
+        tickers.map(async (t) => {
           try {
             const d = await apiService.getCompany(t, 2025);
             tsResults[t] = (d.timeseries || []).sort((a, b) => a.year - b.year);
@@ -75,7 +76,14 @@ const Compare = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleCompare = () => runCompare(selectedTickers);
+
+  // Auto-run on mount with default tickers
+  useEffect(() => {
+    runCompare(DEFAULT_TICKERS);
+  }, [runCompare]);
 
   const chartData = useMemo(() => {
     const yearsSet = new Set();
@@ -162,111 +170,79 @@ const Compare = () => {
         </section>
       )}
 
-      {/* Comparison detail cards */}
-      {!loading && Object.keys(companyDataMap).length > 0 && selectedTickers.length >= 2 && (
-        <section className="space-y-4">
-          <h3 className="text-base sm:text-lg font-display font-bold text-white">So sánh chi tiết</h3>
-          <div className={`grid gap-4 grid-cols-1 ${ selectedTickers.length === 2 ? 'sm:grid-cols-2' : selectedTickers.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4' }`}>
-            {selectedTickers.map((t, i) => {
-              const d = companyDataMap[t];
-              if (!d) return (
-                <div key={t} className="card p-4 sm:p-5 space-y-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <span className="font-display font-bold text-white text-base">{t}</span>
-                  </div>
-                  <p className="text-xs text-muted">Không có dữ liệu</p>
-                </div>
-              );
+      {/* ── Side-by-side comparison sections ── */}
+      {!loading && Object.keys(companyDataMap).length > 0 && selectedTickers.length >= 2 && (() => {
+        // Pre-compute normalised data for each ticker
+        const dataOf = (t) => {
+          const d = companyDataMap[t];
+          if (!d) return null;
+          const score      = d.latest_score?.profit_score ?? d.latest_score?.p_t ?? d.profitscore ?? null;
+          const labelVal   = d.latest_score?.label_t ?? d.label ?? null;
+          const yearVal    = d.latest_score?.year ?? d.year ?? null;
+          const percentile = d.latest_score?.percentile ?? d.latest_score?.percentile_year ?? null;
+          const pc1        = d.latest_score?.pc1 ?? null;
+          const pc2        = d.latest_score?.pc2 ?? null;
+          const pc3        = d.latest_score?.pc3 ?? null;
+          const companyName = d.company?.company_name ?? null;
+          return { score, labelVal, yearVal, percentile, pc1, pc2, pc3, companyName };
+        };
 
-              // Normalise: support both real Supabase nested format and profitpulse adapter flat format
-              const score = d.latest_score?.profit_score ?? d.latest_score?.p_t ?? d.profitscore ?? null;
-              const labelVal = d.latest_score?.label_t ?? d.label ?? null;
-              const yearVal = d.latest_score?.year ?? d.year ?? null;
-              const percentile = d.latest_score?.percentile ?? d.latest_score?.percentile_year ?? null;
-              const pc1 = d.latest_score?.pc1 ?? null;
-              const pc2 = d.latest_score?.pc2 ?? null;
-              const pc3 = d.latest_score?.pc3 ?? null;
-              const companyName = d.company?.company_name ?? null;
-              const exchange = d.company?.exchange_name ?? null;
+        const infos = selectedTickers.map((t) => ({ ticker: t, ...dataOf(t) }));
 
-              // Financial metrics: real format has financial_data array, adapter has financial_metrics object
-              const finRow = (d.financial_data && d.financial_data.length > 0)
-                ? d.financial_data[0]
-                : (d.financial_metrics || {});
+        // Helper: find best value index for a metric (higher = better)
+        const bestIdx = (vals) => {
+          let idx = -1; let best = -Infinity;
+          vals.forEach((v, i) => { if (v != null && v > best) { best = v; idx = i; } });
+          return idx;
+        };
 
-              const badge = riskBadge(labelVal);
+        const colCls = selectedTickers.length === 2 ? 'grid-cols-2'
+          : selectedTickers.length === 3 ? 'grid-cols-3'
+          : 'grid-cols-2 sm:grid-cols-4';
 
-              return (
-                <div key={t} className="card p-4 sm:p-5 space-y-4">
-                  {/* Header */}
-                  <div className="flex items-start gap-2 pb-2 border-b border-white/6">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-display font-bold text-white text-base">{t}</span>
-                        {yearVal && <span className="text-xs text-muted flex-shrink-0">Năm {yearVal}</span>}
+        return (
+          <div className="space-y-4 sm:space-y-6">
+
+            {/* ── 1. Profit Score & Percentile ── */}
+            <section className="card p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-4 w-4 text-primary-400 flex-shrink-0" />
+                <h3 className="text-base font-display font-bold text-white">Profit Score &amp; Percentile</h3>
+              </div>
+              <div className={`grid gap-3 ${colCls}`}>
+                {infos.map((info, i) => {
+                  if (!info) return <div key={info?.ticker ?? i} className="rounded-xl border border-white/8 p-3 text-center"><p className="text-xs text-muted">{selectedTickers[i]} — N/A</p></div>;
+                  const badge = riskBadge(info.labelVal);
+                  const scoreNums = infos.map((x) => x?.score ?? null);
+                  const isBest = bestIdx(scoreNums) === i;
+                  return (
+                    <div key={info.ticker} className={`rounded-xl border p-3 sm:p-4 flex flex-col gap-1.5 ${isBest ? 'border-primary-500/40 bg-primary-600/10' : 'border-white/8 bg-white/2'}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="font-bold text-white text-sm">{info.ticker}</span>
+                        {isBest && <span className="ml-auto text-[10px] font-semibold text-primary-400 bg-primary-600/20 px-1.5 py-0.5 rounded-full">Tốt nhất</span>}
                       </div>
-                      {companyName && <p className="text-xs text-muted truncate mt-0.5">{companyName}{exchange ? ` · ${exchange}` : ''}</p>}
-                    </div>
-                  </div>
-
-                  {/* Profit Score */}
-                  <div>
-                    <p className="label-xs mb-2">Profit Score</p>
-                    <p className="text-2xl sm:text-3xl font-display font-extrabold text-white mb-1.5">
-                      {score != null ? safeNum(score, 2) : 'N/A'}
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>{badge.text}</span>
-                      {percentile != null && <span className="text-xs text-muted">Top {safeNum(100 - percentile, 0)}%</span>}
-                    </div>
-                  </div>
-
-                  {/* Financial metrics */}
-                  <div>
-                    <p className="label-xs mb-2">Chỉ số tài chính</p>
-                    <div className="space-y-2">
-                      {[
-                        { key: 'X1_ROA', label: 'ROA (%)' },
-                        { key: 'X2_ROE', label: 'ROE (%)' },
-                        { key: 'X3_ROC', label: 'ROC (%)' },
-                        { key: 'X4_EPS', label: 'EPS (VND)' },
-                        { key: 'X5_NPM', label: 'NPM (%)' },
-                      ].map(({ key, label }) => {
-                        const val = finRow[key] ?? null;
-                        return (
-                          <div key={key} className="flex items-center justify-between">
-                            <span className="text-xs text-muted">{label}</span>
-                            <span className="font-mono text-xs text-white font-medium">
-                              {val != null ? safeNum(val, key === 'X4_EPS' ? 0 : 2) : 'N/A'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* PCA Components */}
-                  {(pc1 != null || pc2 != null || pc3 != null) && (
-                    <div>
-                      <p className="label-xs mb-2">PCA Components</p>
-                      <div className="space-y-2">
-                        {[['PC1', pc1], ['PC2', pc2], ['PC3', pc3]].map(([name, val]) => (
-                          <div key={name} className="flex items-center justify-between">
-                            <span className="text-xs text-muted">{name}</span>
-                            <span className="font-mono text-xs text-white font-medium">{val != null ? safeNum(val, 2) : 'N/A'}</span>
-                          </div>
-                        ))}
+                      {info.companyName && <p className="text-[10px] text-muted truncate -mt-1">{info.companyName}</p>}
+                      <p className="text-2xl sm:text-3xl font-display font-extrabold text-white leading-none mt-1">
+                        {info.score != null ? safeNum(info.score, 2) : 'N/A'}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.className}`}>{badge.text}</span>
+                        {info.percentile != null && (
+                          <span className="text-[10px] text-muted">Top {safeNum(100 - info.percentile, 0)}%</span>
+                        )}
                       </div>
+                      {info.yearVal && <p className="text-[10px] text-muted/60 mt-0.5">Năm {info.yearVal}</p>}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </section>
+
+
           </div>
-        </section>
-      )}
+        );
+      })()}
     </div>
   );
 };

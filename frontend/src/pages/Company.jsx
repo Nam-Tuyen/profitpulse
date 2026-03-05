@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import DataCoverageBadge from '../components/DataCoverageBadge';
@@ -37,7 +36,6 @@ const TABS = [
   { id: 'drivers', label: 'Drivers', icon: Cpu },
 ];
 
-const inputClasses = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 sm:py-2 text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition min-h-[40px]';
 
 const Company = () => {
   const { ticker } = useParams();
@@ -127,10 +125,8 @@ const Company = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModelContextBar selectedYear={selectedYear} />
       <PageIntro
-        text="Trang doanh nghiệp giúp bạn xem điểm lợi nhuận hiện tại, vị trí so với thị trường và xu hướng nhiều năm của một doanh nghiệp."
-        note="Nội dung trên ProfitPulse chỉ phục vụ phân tích và không phải khuyến nghị mua bán."
+        text="Trang doanh nghiệp giúp bạn xem chi tiết tình hình của doanh nghiệp."
       />
 
       {/* Header */}
@@ -149,11 +145,6 @@ const Company = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {availableYears.length > 0 && (
-            <select value={selectedYear || ''} onChange={(e) => setSelectedYear(Number(e.target.value))} className={inputClasses}>
-              {availableYears.map((y) => (<option key={y} value={y}>{y}</option>))}
-            </select>
-          )}
           <button onClick={() => toggleWatchlist(ticker)} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition ${isInWatchlist(ticker) ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25' : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white'}`}>
             {isInWatchlist(ticker) ? <Star className="h-4 w-4 fill-amber-400" /> : <StarOff className="h-4 w-4" />}
             {isInWatchlist(ticker) ? 'Đã theo dõi' : 'Theo dõi'}
@@ -210,8 +201,6 @@ const OverviewTab = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 anim-stagger">
-      <p className="text-xs sm:text-sm text-muted italic">Tab này giúp bạn biết doanh nghiệp mạnh hay yếu, đang đứng ở đâu và yếu tố nào đang kéo điểm.</p>
-      
       {/* Data Coverage Badge */}
       {currentFinancial && (
         <div className="flex items-center gap-3 flex-wrap">
@@ -241,7 +230,7 @@ const OverviewTab = ({
             <span className="font-semibold text-white">{yearData.percentile ?? 'N/A'}</span>
           </div>
           {interp && <p className="text-sm text-primary-400 font-medium">{interp}</p>}
-          <p className="text-xs text-muted mt-3">Thẻ này cho bạn biết doanh nghiệp thuộc nhóm mạnh hay yếu trong năm đang xem.</p>
+          <p className="text-xs text-muted mt-3">Thẻ này cho bạn biết doanh nghiệp thuộc nhóm mạnh hay yếu tại thời điểm được xem.</p>
         </div>
 
         {/* Card 2: Next-year Probability */}
@@ -332,7 +321,6 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
       {/* Profit Score — area chart with gradient fill */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Điểm lợi nhuận theo thời gian</h3>
-        <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Điểm đang tăng hay giảm qua các năm.</p>
         <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sorted}>
@@ -356,7 +344,6 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
       {/* Percentile — area chart with cyan gradient */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Phân vị theo thời gian</h3>
-        <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Vị trí thị trường đang lên hay xuống.</p>
         <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sorted}>
@@ -380,7 +367,6 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
       {/* Risk label bar chart */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Nhãn rủi ro theo năm</h3>
-        <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Năm nào doanh nghiệp đổi trạng thái rủi ro.</p>
         <div className="h-[160px] sm:h-[180px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={labelChartData}>
@@ -401,7 +387,7 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
       {tsWithDeltas.length > 1 && (
         <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6">
-            <h3 className="text-base sm:text-lg font-display font-bold text-white">Thay đổi YoY</h3>
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Thay đổi qua từng năm</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[560px]">
@@ -465,12 +451,9 @@ const DriversTab = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 anim-stagger">
-      <p className="text-xs sm:text-sm text-muted italic">Tab này giải thích vì sao điểm cao hoặc thấp.</p>
-
       {/* Component drivers bar chart */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Component Drivers — Năm {selectedYear}</h3>
-        <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Thành phần nào tác động mạnh nhất trong năm đang xem.</p>
         <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={pcData}>
@@ -566,7 +549,6 @@ const DriversTab = ({
         <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6">
             <h3 className="text-base sm:text-lg font-display font-bold text-white">Thay đổi điểm & phân vị theo năm</h3>
-            <p className="text-xs sm:text-sm text-muted">Điểm và phân vị thay đổi bao nhiêu so với năm trước.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[500px]">
