@@ -55,7 +55,17 @@ const Company = () => {
     ])
       .then(([companyData, finData]) => {
         setData(companyData);
-        setFinancialData(finData.financial_data || []);
+        // Normalize proxies_raw column names: x1_roa→roa, x2_roe→roe, x3_roc→roc, x4_eps→eps, x5_npm→npm
+        const rawFin = finData.financial_data || [];
+        const normalized = rawFin.map((row) => ({
+          ...row,
+          roa: row.roa ?? row.x1_roa ?? row.X1_ROA ?? null,
+          roe: row.roe ?? row.x2_roe ?? row.X2_ROE ?? null,
+          roc: row.roc ?? row.x3_roc ?? row.X3_ROC ?? null,
+          eps: row.eps ?? row.x4_eps ?? row.X4_EPS ?? null,
+          npm: row.npm ?? row.x5_npm ?? row.X5_NPM ?? null,
+        }));
+        setFinancialData(normalized);
         setSelectedYear(companyData.latest_score?.year || null);
       })
       .catch((e) => {
@@ -199,7 +209,7 @@ const OverviewTab = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 anim-stagger">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Card 1: Profit Score & Percentile */}
         <div className="card card-hover p-4 sm:p-6">
           <h3 className="label-xs mb-3"><Tooltip text={TOOLTIPS.profit_score}>Profit Score &amp; Percentile</Tooltip></h3>
@@ -236,64 +246,64 @@ const OverviewTab = ({
           </div>
           <p className="text-xs text-muted mt-4">Thẻ này cho bạn biết thành phần nào đóng góp nhiều nhất vào điểm lợi nhuận.</p>
         </div>
-      </div>
 
-      {/* Financial Snapshot — list style matching Drivers card */}
-      {currentFinancial && (() => {
-        const fin = currentFinancial;
-        const prev = previousFinancial;
-        const metrics = [
-          { key: 'roa', label: 'ROA', desc: 'Lợi nhuận trên tài sản', unit: '%', color: '#6366F1' },
-          { key: 'roe', label: 'ROE', desc: 'Lợi nhuận trên vốn chủ sở hữu', unit: '%', color: '#8B5CF6' },
-          { key: 'roc', label: 'ROC', desc: 'Lợi nhuận trên vốn đầu tư', unit: '%', color: '#06B6D4' },
-          { key: 'npm', label: 'NPM', desc: 'Tỷ suất lợi nhuận ròng', unit: '%', color: '#F59E0B' },
-          { key: 'eps', label: 'EPS', desc: 'Lợi nhuận mỗi cổ phiếu', unit: 'VND', color: '#10B981' },
-        ];
-        return (
-          <div className="card card-hover p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-4 w-4 text-primary-400 flex-shrink-0" />
-              <h3 className="label-xs">Chỉ số tài chính năm {fin.year}</h3>
-            </div>
-            <div className="space-y-3">
-              {metrics.map(({ key, label, desc, unit, color }) => {
-                const val = fin[key];
-                const prevVal = prev?.[key];
-                const hasVal = val != null && !isNaN(val);
-                const diff = (hasVal && prevVal != null && !isNaN(prevVal)) ? val - prevVal : null;
-                const isEPS = unit === 'VND';
-                const displayVal = hasVal
-                  ? isEPS
-                    ? Number(val).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
-                    : `${Number(val).toFixed(2)}%`
-                  : 'N/A';
-                return (
-                  <div key={key} className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <span className="text-sm font-semibold text-white">{label}</span>
-                      <p className="text-xs text-muted leading-snug">{desc}</p>
-                      {diff != null && (
-                        <p className={`text-[10px] font-medium mt-0.5 ${
-                          diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-muted'
-                        }`}>
-                          {diff > 0 ? '+' : ''}{isEPS
-                            ? Number(diff).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
-                            : diff.toFixed(2)} vs năm trước
-                        </p>
-                      )}
+        {/* Card 3: Financial Snapshot — aligned in grid */}
+        {currentFinancial && (() => {
+          const fin = currentFinancial;
+          const prev = previousFinancial;
+          const metrics = [
+            { key: 'roa', label: 'ROA', desc: 'Lợi nhuận trên tài sản', unit: '%', color: '#6366F1' },
+            { key: 'roe', label: 'ROE', desc: 'Lợi nhuận trên vốn chủ sở hữu', unit: '%', color: '#8B5CF6' },
+            { key: 'roc', label: 'ROC', desc: 'Lợi nhuận trên vốn đầu tư', unit: '%', color: '#06B6D4' },
+            { key: 'npm', label: 'NPM', desc: 'Tỷ suất lợi nhuận ròng', unit: '%', color: '#F59E0B' },
+            { key: 'eps', label: 'EPS', desc: 'Lợi nhuận mỗi cổ phiếu', unit: 'VND', color: '#10B981' },
+          ];
+          return (
+            <div className="card card-hover p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="h-4 w-4 text-primary-400 flex-shrink-0" />
+                <h3 className="label-xs">Chỉ số tài chính năm {fin.year}</h3>
+              </div>
+              <div className="space-y-3">
+                {metrics.map(({ key, label, desc, unit, color }) => {
+                  const val = fin[key];
+                  const prevVal = prev?.[key];
+                  const hasVal = val != null && !isNaN(val);
+                  const diff = (hasVal && prevVal != null && !isNaN(prevVal)) ? val - prevVal : null;
+                  const isEPS = unit === 'VND';
+                  const displayVal = hasVal
+                    ? isEPS
+                      ? Number(val).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
+                      : `${Number(val).toFixed(2)}%`
+                    : 'N/A';
+                  return (
+                    <div key={key} className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-sm font-semibold text-white">{label}</span>
+                        <p className="text-xs text-muted leading-snug">{desc}</p>
+                        {diff != null && (
+                          <p className={`text-[10px] font-medium mt-0.5 ${
+                            diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-muted'
+                          }`}>
+                            {diff > 0 ? '+' : ''}{isEPS
+                              ? Number(diff).toLocaleString('vi-VN', { maximumFractionDigits: 0 })
+                              : diff.toFixed(2)} vs năm trước
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className="font-mono text-sm font-semibold whitespace-nowrap flex-shrink-0"
+                        style={{ color: hasVal ? color : '#94A3B8' }}
+                      >{displayVal}</span>
                     </div>
-                    <span
-                      className="font-mono text-sm font-semibold whitespace-nowrap flex-shrink-0"
-                      style={{ color: hasVal ? color : '#94A3B8' }}
-                    >{displayVal}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted mt-4">Dữ liệu tài chính tổng hợp theo năm {fin.year}.</p>
             </div>
-            <p className="text-xs text-muted mt-4">Dữ liệu tài chính tổng hợp theo năm {fin.year}.</p>
-          </div>
-        );
-      })()}
+          );
+        })()}
+      </div>
     </div>
   );
 };
