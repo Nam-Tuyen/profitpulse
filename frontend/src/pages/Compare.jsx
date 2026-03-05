@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { GitCompare, X } from 'lucide-react';
+import { GitCompare, X, RotateCcw } from 'lucide-react';
 import {
   LineChart, Line,
   XAxis, YAxis, CartesianGrid,
@@ -15,7 +15,7 @@ const COLORS = ['#6366F1', '#22D3EE', '#F59E0B', '#F43F5E'];
 
 const Compare = () => {
   const [meta, setMeta] = useState(null);
-  const [selectedTickers, setSelectedTickers] = useState([]);
+  const [selectedTickers, setSelectedTickers] = useState(['FPT', 'HPG', 'GAS', 'VNM']);
   const [inputTicker, setInputTicker] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [timeseriesMap, setTimeseriesMap] = useState({});
@@ -44,6 +44,13 @@ const Compare = () => {
 
   const removeTicker = (t) => setSelectedTickers(selectedTickers.filter((x) => x !== t));
 
+  const handleReset = () => {
+    setSelectedTickers(['FPT', 'HPG', 'GAS', 'VNM']);
+    setTimeseriesMap({});
+    setCompanyDataMap({});
+    setError(null);
+  };
+
   const handleCompare = async () => {
     if (selectedTickers.length < 2) return;
     setLoading(true);
@@ -54,7 +61,7 @@ const Compare = () => {
       await Promise.all(
         selectedTickers.map(async (t) => {
           try {
-            const d = await apiService.getCompany(t);
+            const d = await apiService.getCompany(t, 2025);
             tsResults[t] = (d.timeseries || []).sort((a, b) => a.year - b.year);
             cdResults[t] = d;
           } catch { tsResults[t] = []; cdResults[t] = null; }
@@ -122,6 +129,9 @@ const Compare = () => {
         <div className="flex items-center gap-3">
           <button onClick={handleCompare} disabled={selectedTickers.length < 2 || loading} className="btn-primary disabled:opacity-50">
             <GitCompare className="h-4 w-4" /> So sánh
+          </button>
+          <button onClick={handleReset} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition">
+            <RotateCcw className="h-4 w-4" /> Reset
           </button>
         </div>
       </section>
