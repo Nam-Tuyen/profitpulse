@@ -6,14 +6,36 @@
 
 ## Tổng Quan Database
 
-ProfitPulse sử dụng **Supabase PostgreSQL** với 4 bảng chính:
+ProfitPulse sử dụng **Supabase PostgreSQL** với các nhóm bảng sau:
 
-| Bảng | Mục đích | Số trường | Primary Key |
-|------|----------|-----------|-------------|
-| `companies` | Thông tin công ty | 4 | `symbol` |
-| `financial_raw` | Dữ liệu tài chính thô | 7+ | `(firm_id, year)` |
-| `index_scores` | Điểm số & phân tích PCA | 9+ | `(firm_id, year)` |
-| `predictions` | Dự báo tương lai (optional) | 9+ | `(firm_id, year)` |
+### Bảng Dimension (lookup)
+| Bảng | Mục đích | Primary Key |
+|------|----------|-------------|
+| `companies` | Thông tin công ty | `symbol` |
+| `dim_exchange` | Danh sách sàn giao dịch | `exchange_id` |
+| `dim_gics_industry` | Phân ngành GICS cấp ngành | `industry_id` |
+| `dim_gics_sub_industry` | Phân ngành GICS cấp phụ ngành | `sub_industry_id` |
+| `dim_trbc_industry` | Phân ngành TRBC | `trbc_id` |
+| `dim_auditor` | Danh sách công ty kiểm toán | `auditor_id` |
+
+### Bảng Dữ Liệu Chính
+| Bảng | Mục đích | Primary Key | Trạng thái |
+|------|----------|-------------|-----------|
+| `financial_raw` | 5 proxy tài chính thô (ROA/ROE/ROC/EPS/NPM) | `(firm_id, year)` | ✅ Có dữ liệu |
+| `proxies_raw` | Proxy thô (tên cột thân thiện) | `(firm_id, year)` | ✅ Có dữ liệu |
+| `proxies_winsor` | Proxy sau winsorization | `(firm_id, year)` | ✅ Có dữ liệu |
+| `winsor_bounds` | Giới hạn winsor per-column | `column_name` | ✅ Có dữ liệu |
+| `index_scores` | Profit Score PCA + nhãn rủi ro | `(firm_id, year)` | ✅ Có dữ liệu |
+| `forecast_dataset` | Dataset kết hợp proxy + PCA (training) | `(firm_id, year)` | ✅ Có dữ liệu |
+| `predictions` | Dự báo năm gần nhất (baseline) | `(firm_id, year)` | ✅ Có dữ liệu |
+| `qa_missing_company_symbols` | Firm-year thiếu ≥1 proxy | `(firm_id, year)` | ✅ Nếu có thiếu |
+
+### Bảng Phân Tích Mô Hình
+| Bảng | Mục đích | Trạng thái |
+|------|----------|-----------|
+| `pca_summary` | Thống kê mô hình PCA (eigenvalues, variance) | 📋 Manual upload |
+| `model_performance` | Hiệu suất mô hình ML | 📋 Manual upload |
+| `robustness_summary` | Kiểm tra độ bền vững mô hình | 📋 Manual upload |
 
 ---
 
@@ -264,40 +286,153 @@ GET /api/alerts  # filter by label_t=1
 
 ---
 
-## 4. Bảng `predictions` - Dự Báo Tương Lai
+## 4. Bảng `predictions` - Dự Báo / Baseline Năm Gần Nhất
 
-**Mục đích**: Lưu trữ dự báo cho các năm tương lai (optional)
+**Mục đích**: Lưu trữ điểm Profit Score của năm gần nhất dùng làm baseline dự báo.  
+Script `upload_profitpulse_tables.py` tự động điền bảng này bằng dữ liệu của `latest_year` từ `index_scores`.
 
 ### Schema
-Giống với `index_scores`:
 
 | Trường | Kiểu | Nullable | Mô tả |
 |--------|------|----------|-------|
 | `firm_id` | `VARCHAR` | No | FK → companies.symbol |
-| `year` | `INTEGER` | No | Năm dự báo (future year) |
-| `p_t` | `FLOAT` | No | Predicted profit score |
-| `label_t` | `INTEGER` | No | Predicted risk label |
-| `pc1`, `pc2`, `pc3` | `FLOAT` | Yes | Projected PCA components |
-| `percentile_year` | `FLOAT` | Yes | Expected percentile |
+| `year` | `INTEGER` | No | Năm tham chiếu (năm mới nhất có dữ liệu) |
+| `p_t` | `FLOAT` | No | Profit Score baseline |
+| `label_t` | `INTEGER` | No | Risk label (0=thấp, 1=cao) |
+| `pc1` | `FLOAT` | Yes | PC1 |
+| `pc2` | `FLOAT` | Yes | PC2 |
+| `pc3` | `FLOAT` | Yes | PC3 |
+| `percentile_year` | `FLOAT` | Yes | Phân vị trong năm (0-100) |
 
 ### Khác Biệt Với `index_scores`
-- `index_scores`: Dữ liệu lịch sử + hiện tại (1999-2025)
-- `predictions`: Dự báo tương lai (2026+)
-- **Trạng thái hiện tại**: Bảng có thể trống (chưa train model dự báo)
+- `index_scores`: Tất cả các năm lịch sử (1999 → năm mới nhất)
+- `predictions`: Chỉ năm gần nhất — dùng như "điểm tham chiếu dự báo"
+- Khi có model ML dự báo tương lai, bảng này sẽ chứa predictions cho năm tiếp theo
 
-### API Mapping
-```python
-# Backend: database.py
-db.get_predictions(ticker="FPT", year=2026)
-# → List[Dict] or [] if empty
-
-GET /api/predictions?ticker=FPT&year=2026
-{
-  "predictions": [...],  # may be []
-  "count": 0,
-  "success": true
-}
+### Upload
+```bash
+python scripts/supabase/upload_profitpulse_tables.py
+# Tự động: predictions = index_scores WHERE year = max(year)
 ```
+
+---
+
+## 5. Bảng `forecast_dataset` - Dataset Huấn Luyện Mô Hình
+
+**Mục đích**: Lưu trữ dataset đầy đủ (proxy + PCA) dùng để huấn luyện và kiểm tra mô hình dự báo.  
+Đây là bảng kết hợp của `financial_raw` + `index_scores` trên cùng `(firm_id, year)`.
+
+### Schema
+
+| Trường | Kiểu | Nullable | Mô tả |
+|--------|------|----------|-------|
+| `firm_id` | `VARCHAR` | No | FK → companies.symbol |
+| `year` | `INTEGER` | No | Năm tài chính |
+| `x1_roa` | `FLOAT` | Yes | ROA (winsorized) |
+| `x2_roe` | `FLOAT` | Yes | ROE (winsorized) |
+| `x3_roc` | `FLOAT` | Yes | ROC (winsorized) |
+| `x4_eps` | `FLOAT` | Yes | EPS (winsorized) |
+| `x5_npm` | `FLOAT` | Yes | NPM (winsorized) |
+| `pc1` | `FLOAT` | Yes | Principal Component 1 |
+| `pc2` | `FLOAT` | Yes | Principal Component 2 |
+| `pc3` | `FLOAT` | Yes | Principal Component 3 |
+| `p_t` | `FLOAT` | No | Profit Score tổng hợp |
+| `percentile_year` | `FLOAT` | Yes | Phân vị trong năm |
+| `label_t` | `INTEGER` | No | Target label (0=thấp, 1=cao) |
+
+### Constraints
+- **Primary Key**: `(firm_id, year)`
+- **Foreign Key**: `firm_id REFERENCES companies(symbol)`
+- Chỉ chứa các firm-year **đủ cả 5 proxy** (đã dropna theo X_COLS)
+- Sắp xếp theo `year` rồi `firm_id` (gom lại theo năm)
+
+### Sử Dụng
+```python
+# Dùng để train model phân loại
+X = forecast_dataset[['x1_roa','x2_roe','x3_roc','x4_eps','x5_npm','pc1','pc2','pc3']]
+y = forecast_dataset['label_t']
+# Train XGBoost / Random Forest / SVM trên tập train (year <= 2019)
+```
+
+### Upload
+```bash
+python scripts/supabase/upload_profitpulse_tables.py
+# Tự động populate từ Data.xlsx
+```
+
+---
+
+## 6. Bảng `qa_missing_company_symbols` - Kiểm Tra Thiếu Dữ Liệu
+
+**Mục đích**: Ghi lại các firm-year có ít nhất 1 trong 5 proxy bị thiếu (NaN). Dùng để kiểm tra chất lượng dữ liệu và báo cáo mức độ coverage.
+
+### Schema
+
+| Trường | Kiểu | Nullable | Mô tả |
+|--------|------|----------|-------|
+| `firm_id` | `VARCHAR` | No | Mã công ty (có thể không tồn tại trong `companies`) |
+| `year` | `INTEGER` | No | Năm tài chính |
+| `x1_roa_missing` | `INTEGER` | Yes | 1 nếu ROA bị thiếu |
+| `x2_roe_missing` | `INTEGER` | Yes | 1 nếu ROE bị thiếu |
+| `x3_roc_missing` | `INTEGER` | Yes | 1 nếu ROC bị thiếu |
+| `x4_eps_missing` | `INTEGER` | Yes | 1 nếu EPS bị thiếu |
+| `x5_npm_missing` | `INTEGER` | Yes | 1 nếu NPM bị thiếu |
+
+### Constraints
+- **Primary Key**: `(firm_id, year)`
+- **Không có FK** (firm may not be in `companies` table)
+- Bảng trống nếu Data.xlsx không có row nào thiếu proxy
+
+### Nguyên Nhân Thiếu Dữ Liệu Phổ Biến
+- Công ty mới niêm yết chưa đủ báo cáo tài chính
+- Dữ liệu năm đang cập nhật (year = current_year)
+- EPS bị thiếu do chưa có cổ phiếu phát hành
+- ROC bị thiếu khi `SH_ISS = 0` (chưa phát hành cổ phiếu)
+
+### Upload
+```bash
+python scripts/supabase/upload_profitpulse_tables.py
+# Tự động detect và upload nếu có row thiếu
+```
+
+---
+
+## 7. Bảng `proxies_raw` & `proxies_winsor` - Proxy Thô Và Đã Winsor
+
+### `proxies_raw` - Proxy Thô
+
+| Trường | Kiểu | Nullable | Mô tả |
+|--------|------|----------|-------|
+| `firm_id` | `VARCHAR` | No | FK → companies.symbol |
+| `year` | `INTEGER` | No | Năm tài chính |
+| `roa` | `FLOAT` | Yes | Return on Assets (raw) |
+| `roe` | `FLOAT` | Yes | Return on Equity (raw) |
+| `roc` | `FLOAT` | Yes | Return on Capital (raw) |
+| `eps` | `FLOAT` | Yes | Earnings per Share (raw) |
+| `npm` | `FLOAT` | Yes | Net Profit Margin (raw) |
+
+### `proxies_winsor` - Proxy Sau Winsor
+
+| Trường | Kiểu | Nullable | Mô tả |
+|--------|------|----------|-------|
+| `firm_id` | `VARCHAR` | No | FK → companies.symbol |
+| `year` | `INTEGER` | No | Năm tài chính |
+| `roa_w` | `FLOAT` | Yes | ROA sau winsorization |
+| `roe_w` | `FLOAT` | Yes | ROE sau winsorization |
+| `roc_w` | `FLOAT` | Yes | ROC sau winsorization |
+| `eps_w` | `FLOAT` | Yes | EPS sau winsorization |
+| `npm_w` | `FLOAT` | Yes | NPM sau winsorization |
+
+### `winsor_bounds` - Giới Hạn Winsor
+
+| Trường | Kiểu | Nullable | Mô tả |
+|--------|------|----------|-------|
+| `column_name` | `VARCHAR` | No | Tên proxy (X1_ROA, ...) |
+| `lower_bound` | `FLOAT` | No | Quantile dưới (q=0.01) |
+| `upper_bound` | `FLOAT` | No | Quantile trên (q=0.99) |
+| `quantile` | `FLOAT` | No | Giá trị q dùng (0.01) |
+
+**Lưu ý**: Bounds được fit **chỉ trên tập train** (YEAR ≤ 2019), sau đó apply cho toàn bộ dữ liệu (leakage-safe).
 
 ---
 
@@ -306,39 +441,57 @@ GET /api/predictions?ticker=FPT&year=2026
 ```
 companies (628 rows)
     ↓ symbol
-    ├─→ financial_raw.firm_id (10,000+ rows)
-    │   ├─ Chứa X1_ROA, X2_ROE, X3_ROC, X4_EPS, X5_NPM
-    │   └─ Mỗi công ty x mỗi năm = 1 row
-    │
-    ├─→ index_scores.firm_id (10,000+ rows)
-    │   ├─ Chứa profit_score, label_t, pc1-pc3
-    │   ├─ Derived từ financial_raw qua PCA + ML
-    │   └─ Backend API chủ yếu dùng bảng này
-    │
-    └─→ predictions.firm_id (0 rows - optional)
-        └─ Future forecasts (not implemented yet)
+    ├─→ financial_raw.firm_id (firm-year proxy thô X1-X5)
+    ├─→ proxies_raw.firm_id   (firm-year proxy với tên đẹp)
+    ├─→ proxies_winsor.firm_id (firm-year proxy đã winsor)
+    ├─→ index_scores.firm_id  (firm-year Profit Score PCA)
+    ├─→ forecast_dataset.firm_id (combined training set)
+    └─→ predictions.firm_id   (latest year baseline)
+
+qa_missing_company_symbols (không có FK constraint)
+    → Firm-year thiếu ≥1 proxy, không nhất thiết có trong companies
+
+winsor_bounds (standalone, 5 rows - 1 per proxy)
+    → Bounds fit trên YEAR ≤ 2019
 ```
 
 ### Data Flow
 ```
+Data.xlsx
+   ↓ compute proxies
+financial_raw / proxies_raw : {firm_id, year, X1_ROA...X5_NPM}
+   ↓ winsorize (bounds from YEAR ≤ 2019)
+proxies_winsor              : {firm_id, year, roa_w...npm_w}
+   ↓ standardize (scaler from YEAR ≤ 2019)
+   ↓ PCA (fit from YEAR ≤ 2019, transform all years)
+PC1, PC2, PC3, P_t
+   ↓ percentile rank within each year
+   ↓ label_t = 1 if P_t > 0
+index_scores                : {firm_id, year, p_t, label_t, pc1-3, percentile_year}
+   ↓ join
+forecast_dataset            : {firm_id, year, proxies + PCA scores + label}
+   ↓ filter latest year
+predictions                 : {firm_id, year=latest, p_t, label_t, ...}
+
 1. Raw Financial Data
    financial_raw: {firm_id, year, X1_ROA, X2_ROE, X3_ROC, X4_EPS, X5_NPM}
    ↓
 2. PCA Transformation (offline processing)
-   → PC1 (45% variance)
-   → PC2 (25% variance)
-   → PC3 (15% variance)
+   → PC1 (~45% variance)
+   → PC2 (~25% variance)
+   → PC3 (~15% variance)
    ↓
-3. Profit Score Calculation
-   p_t = weighted_sum(PC1, PC2, PC3)
+3. Profit Score Calculation (leakage-safe: scaler+PCA fit on YEAR ≤ 2019)
+   p_t = omega1*PC1 + omega2*PC2 + omega3*PC3  (omega = eigenvalue share)
    ↓
-4. Risk Classification (ML Model)
-   label_t = XGBoost_predict(p_t, pc1, pc2, pc3, financial_metrics)
+4. Risk Classification (rule-based)
+   label_t = 1 if p_t > 0   (Risk Cao – profit score dương)
+   label_t = 0 if p_t ≤ 0   (Risk Thấp – profit score âm/bằng 0)
    ↓
-5. Percentile Ranking
-   percentile_year = rank(p_t) within each year
+5. Percentile Ranking (within each YEAR)
+   percentile_year = rank(p_t) / count(p_t) * 100
    ↓
-6. Store in index_scores
+6. Store in index_scores & forecast_dataset
    {firm_id, year, p_t, label_t, pc1, pc2, pc3, percentile_year}
 ```
 
@@ -605,95 +758,55 @@ top_scores = db.query_table('index_scores',
 
 ### Index Scores (100% coverage when financial data exists)
 - `p_t / profit_score` - computed for all records
-- `label_t` - classified for all records
+- `label_t` - rule-based: 1 if p_t > 0, else 0
 - `pc1, pc2, pc3` - computed for all records
-- `percentile_year` - ranked for all records
+- `percentile_year` - ranked within each year
+
+### forecast_dataset (100% coverage = same as index_scores)
+- Bao gồm tất cả proxy + PCA scores trong một bảng
+- Dùng làm input dataset cho model training
+
+### predictions (100% coverage = latest year only)
+- Baseline prediction = index_scores của năm mới nhất
+
+### qa_missing_company_symbols (coverage phụ thuộc dữ liệu)
+- Chứa firm-year thiếu ≥1 proxy
+- Trống nếu Data.xlsx đầy đủ dữ liệu
+
+---
+
+## Upload Script
+
+```bash
+# Tải dữ liệu từ Data.xlsx lên tất cả các bảng:
+cd "C:\Users\NAM TUYEN LE\Downloads\Project code\profitpulse"
+python scripts/supabase/upload_profitpulse_tables.py
+```
+
+Script sẽ upload theo thứ tự:
+1. `financial_raw` — proxy thô (X1_ROA … X5_NPM)
+2. `proxies_raw` — proxy với tên cột đẹp (roa … npm)
+3. `proxies_winsor` — proxy sau winsorization
+4. `winsor_bounds` — giới hạn winsor per-column
+5. `index_scores` — Profit Score + label + PC1-PC3 + percentile
+6. `forecast_dataset` — dataset kết hợp đầy đủ
+7. `predictions` — năm mới nhất làm baseline
+8. `qa_missing_company_symbols` — firm-year thiếu proxy
 
 ---
 
 ## Update Frequency
 
-| Data Type | Update Schedule | Source |
-|-----------|----------------|--------|
-| Financial Data | Quarterly | Company financial reports |
-| Index Scores | After financial update | Recomputed via pipeline |
-| Predictions | Not yet implemented | - |
-| Companies Metadata | As needed | Stock exchange listings |
-
----
-
----
-
-## ProfitPulse_Tables.xlsx — Định Dạng Dữ Liệu Đầu Vào Mới
-
-File Excel được tạo ra bởi notebook PCA (code Python). Chứa 2 sheet và là nguồn đầu vào cho script upload `upload_profitpulse_tables.py`.
-
-### Sheet 1: `Table_1_Proxies` → Bảng `financial_raw`
-
-| Cột trong Excel | Cột trong DB | Kiểu | Ghi chú |
-|----------------|-------------|------|---------|
-| `Symbol` | `firm_id` | VARCHAR | Mã ticker kèm sàn, vd: `NCT.HM` |
-| `Date` | `year` | INTEGER | Trích `yyyy` từ `yyyy-12-31` |
-| `ROA` | `X1_ROA` | FLOAT | NI / TA |
-| `ROE` | `X2_ROE` | FLOAT | NI / EQ |
-| `ROC` | `X3_ROC` | FLOAT | NI / (SH_ISS × 10,000) |
-| `EPS` | `X4_EPS` | FLOAT | Copy từ EPS_B |
-| `NPM` | `X5_NPM` | FLOAT | NI / REV |
-
-**Upsert key**: `(firm_id, year)`
-
-### Sheet 2: `Table_2_ProfitScore` → Bảng `index_scores`
-
-| Cột trong Excel | Cột trong DB | Kiểu | Ghi chú |
-|----------------|-------------|------|---------|
-| `Symbol` | `firm_id` | VARCHAR | Mã ticker kèm sàn |
-| `Date` | `year` | INTEGER | Trích `yyyy` từ `yyyy-12-31` |
-| `Profit Score` | `p_t` | FLOAT | PCA weighted sum |
-| `Percentile` | `percentile_year` | FLOAT | Phân vị 0-100 theo năm |
-| `Nhãn` | `label_t` | INTEGER | `"Tốt"` → `0`, `"Kém"` → `1` |
-| _(không có)_ | `pc1, pc2, pc3` | FLOAT | NULL — không có trong pipeline này |
-
-**Nhãn → label_t mapping**:
-- `"Tốt"` (P_t > 0) → `0` = Rủi ro thấp
-- `"Kém"` (P_t ≤ 0) → `1` = Rủi ro cao
-
-**Upsert key**: `(firm_id, year)`
-
-### Pipeline Tạo Dữ Liệu
-
-```
-Data.xlsx (raw financial)
-  ↓ tính 5 proxy
-X1_ROA, X2_ROE, X3_ROC, X4_EPS, X5_NPM
-  ↓ PCA (fit trên năm ≤ 2019, predict tất cả năm)
-  ↓ omega = eigenvalue share (3 PC)
-P_t = Σ (PCi × ωi)
-  ↓
-Percentile = rank(P_t) trong năm × 100
-Nhãn = "Tốt" nếu P_t > 0, "Kém" nếu P_t ≤ 0
-  ↓
-ProfitPulse_Tables.xlsx
-  ├─ Table_1_Proxies   → financial_raw
-  └─ Table_2_ProfitScore → index_scores
-```
-
-### Script Upload
-
-```bash
-# Đảm bảo ProfitPulse_Tables.xlsx nằm ở thư mục gốc dự án
-python scripts/supabase/upload_profitpulse_tables.py
-
-# Hoặc chỉ định đường dẫn khác
-python scripts/supabase/upload_profitpulse_tables.py --input path/to/file.xlsx
-```
-
-Biến môi trường cần có trong `.env`:
-```bash
-SUPABASE_URL=https://...
-SUPABASE_SECRET_KEY=...
-```
+| Data Type | Update Schedule | Source | Script |
+|-----------|----------------|--------|--------|
+| Financial Data (proxies) | Quarterly | Company financial reports | `upload_profitpulse_tables.py` |
+| Index Scores (PCA) | After financial update | Recomputed via pipeline | `upload_profitpulse_tables.py` |
+| forecast_dataset | After index_scores update | Combined automatically | `upload_profitpulse_tables.py` |
+| Predictions | After index_scores update | Latest year baseline | `upload_profitpulse_tables.py` |
+| QA Missing | After each upload | Detected automatically | `upload_profitpulse_tables.py` |
+| Companies Metadata | As needed | Stock exchange listings | `upload_data.py` |
 
 ---
 
 **Last Updated**: 5 tháng 3, 2026  
-**Status**: **PRODUCTION** - Full database schema documented
+**Status**: **PRODUCTION** - Full database schema documented (6 core tables + 3 auxiliary + lookup)
