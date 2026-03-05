@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Eye, Calendar, Filter } from 'lucide-react';
+import { Shield, Eye, Calendar, Filter, ChevronDown } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip as RTooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -42,8 +42,8 @@ const RiskFilter = () => {
   const years = meta?.years || [];
   const latestYear = years.length ? Math.max(...years) : null;
   const [selectedYear, setSelectedYear] = useState(null);
+  const [yearOpen, setYearOpen] = useState(false);
   const [riskType, setRiskType] = useState('low');
-  const [topLimit, setTopLimit] = useState('10');
 
   // Load meta on mount
   useEffect(() => {
@@ -69,15 +69,13 @@ const RiskFilter = () => {
 
   // Filter and limit companies
   const filtered = useMemo(() => {
-    const withRisk = allCompanies.filter((c) => {
+    return allCompanies.filter((c) => {
       const label = c.label_t ?? c.label;
       // label = 0 (P_t < 0) → Rủi ro cao; label = 1 (P_t > 0) → Rủi ro thấp
       const isHigh = label === 0 || label === '0';
       return riskType === 'high' ? isHigh : !isHigh;
     });
-    if (topLimit === 'all') return withRisk;
-    return withRisk.slice(0, parseInt(topLimit, 10));
-  }, [allCompanies, riskType, topLimit]);
+  }, [allCompanies, riskType]);
 
   // Pie chart data
   const pieData = useMemo(() => {
@@ -98,70 +96,67 @@ const RiskFilter = () => {
 
       {/* ── Filter bar ── */}
       <section className="card p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-5 w-5 text-primary-400" />
-          <h2 className="text-base sm:text-lg font-display font-bold text-white">Bộ lọc</h2>
-        </div>
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Year selector - calendar grid */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" /> Năm
+        <div className="flex flex-wrap items-end gap-4 sm:gap-6">
+          {/* Year dropdown */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-primary-400" /> Năm
             </label>
-            <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5">
-              <div className="grid grid-cols-5 gap-1.5">
-                {displayYears.map((y) => (
-                  <button
-                    key={y}
-                    onClick={() => setSelectedYear(y)}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all text-center ${
-                      selectedYear === y
-                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-400/40'
-                        : 'text-muted hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
+            <div className="relative">
+              <button
+                onClick={() => setYearOpen((o) => !o)}
+                className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-white hover:bg-white/8 transition-all min-w-[160px]"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0" />
+                  {selectedYear || 'Chọn năm'}
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${yearOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {yearOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setYearOpen(false)} />
+                  <div className="absolute top-full mt-2 left-0 z-20 border border-white/10 rounded-xl shadow-2xl overflow-hidden w-full" style={{ background: 'rgba(15,23,42,0.98)' }}>
+                    <div className="overflow-y-auto" style={{ maxHeight: '178px' }}>
+                      {displayYears.map((y) => (
+                        <button
+                          key={y}
+                          onClick={() => { setSelectedYear(y); setYearOpen(false); }}
+                          className={`w-full px-4 py-2.5 text-sm font-semibold text-left transition-colors flex items-center gap-2 ${
+                            selectedYear === y
+                              ? 'bg-primary-600/20 text-primary-400'
+                              : 'text-muted hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          {selectedYear === y && <span className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />}
+                          {y}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
+          {/* Divider */}
+          <div className="hidden sm:block w-px self-stretch bg-white/8 my-0.5" />
+
           {/* Risk type */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1">
-              <Shield className="h-3.5 w-3.5" /> Mức độ rủi ro
+          <div className="flex flex-col gap-1.5 flex-1 sm:flex-none">
+            <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-primary-400" /> Mức độ rủi ro
             </label>
-            <div className="flex gap-1 bg-white/5 border border-white/8 rounded-xl p-0.5">
+            <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-0.5">
               {RISK_OPTIONS.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setRiskType(key)}
-                  className={`flex-1 px-4 py-2 rounded-lg text-xs font-semibold transition ${
+                  className={`flex-1 px-5 py-2 rounded-lg text-xs font-semibold transition ${
                     riskType === key
                       ? key === 'high'
                         ? 'bg-rose-500/25 text-rose-400 ring-1 ring-rose-500/30'
                         : 'bg-emerald-500/25 text-emerald-400 ring-1 ring-emerald-500/30'
-                      : 'text-muted hover:text-white'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Top limit */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide">Số lượng hiển thị</label>
-            <div className="flex gap-1 bg-white/5 border border-white/8 rounded-xl p-0.5">
-              {TOP_OPTIONS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setTopLimit(key)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition ${
-                    topLimit === key
-                      ? 'bg-primary-600/30 text-primary-400 ring-1 ring-primary-500/30'
                       : 'text-muted hover:text-white'
                   }`}
                 >
@@ -180,12 +175,17 @@ const RiskFilter = () => {
         <>
           {/* ── Pie chart – Risk ratio ── */}
           <section className="card card-hover p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Shield className="h-4 w-4 text-primary-400 flex-shrink-0" />
-              <h3 className="text-base font-display font-bold text-white">
-                Biểu đồ thể hiện mức độ phân bổ rủi ro
-              </h3>
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-600/15 border border-primary-500/20 flex-shrink-0">
+                <Shield className="h-4 w-4 text-primary-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-display font-bold text-white">Biểu đồ thể hiện mức độ phân bổ rủi ro</h3>
+                <p className="text-xs text-muted mt-0.5">Năm {selectedYear}</p>
+              </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
               {/* Donut */}
               <div style={{ height: 220 }}>
@@ -213,51 +213,68 @@ const RiskFilter = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              {/* Stats */}
+
+              {/* Stats cards */}
               <div className="flex flex-col gap-3">
-                {pieData.map((d) => (
-                  <div key={d.name} className="flex items-center justify-between rounded-xl px-4 py-3 border" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '12' }}>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.fill }} />
-                      <span className="text-sm font-medium text-white">{d.name}</span>
+                {pieData.map((d) => {
+                  const isHigh = d.name === 'Rủi ro cao';
+                  return (
+                    <div key={d.name} className="relative rounded-2xl p-4 border overflow-hidden" style={{ borderColor: d.fill + '30', backgroundColor: d.fill + '0d' }}>
+                      <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl" style={{ backgroundColor: d.fill }} />
+                      <div className="flex items-center justify-between pl-2">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-muted font-mono">{isHigh ? 'label = 0 · P_t < 0' : 'label = 1 · P_t > 0'}</span>
+                          <span className="text-sm font-semibold text-white">{d.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-display font-extrabold text-white leading-none">{d.value}</p>
+                          <p className="text-xs font-semibold mt-0.5" style={{ color: d.fill }}>{d.pct}%</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-display font-extrabold text-white">{d.value}</p>
-                      <p className="text-[10px] text-muted">{d.pct}%</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
+
             <ChartCaption caption="Biểu đồ giúp người dùng quan sát được mức độ phân bổ rủi ro của các doanh nghiệp trong năm." />
           </section>
 
           {/* ── Results table ── */}
           <section className="card overflow-hidden">
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="text-base sm:text-lg font-display font-bold text-white">
-                  Danh sách công ty sau khi lọc
-                </h3>
+            <div className="px-4 sm:px-6 py-4 border-b border-white/6 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/5 border border-white/8 flex-shrink-0">
+                  <Eye className="h-3.5 w-3.5 text-primary-400" />
+                </div>
+                <h3 className="text-base sm:text-lg font-display font-bold text-white">Danh sách công ty sau khi lọc</h3>
               </div>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/5 border border-white/8 text-muted">
+                {filtered.length} công ty
+              </span>
             </div>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
               <table className="w-full text-xs sm:text-sm min-w-[400px]">
                 <thead className="bg-surface-card text-muted sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium">#</th>
-                    <th className="px-4 py-3 text-left font-medium">Mã</th>
-                    <th className="px-4 py-3 text-right font-medium">Score</th>
-                    <th className="px-4 py-3 text-right font-medium">Percentile</th>
-                    <th className="px-4 py-3 text-center font-medium">Nhãn</th>
-                    <th className="px-4 py-3 text-center font-medium"></th>
+                    <th className="px-4 py-3 text-left font-medium text-[11px] uppercase tracking-wide">#</th>
+                    <th className="px-4 py-3 text-left font-medium text-[11px] uppercase tracking-wide">Mã CK</th>
+                    <th className="px-4 py-3 text-right font-medium text-[11px] uppercase tracking-wide">Profit Score</th>
+                    <th className="px-4 py-3 text-right font-medium text-[11px] uppercase tracking-wide">Percentile</th>
+                    <th className="px-4 py-3 text-center font-medium text-[11px] uppercase tracking-wide">Nhãn rủi ro</th>
+                    <th className="px-4 py-3 text-center font-medium text-[11px]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/4">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted text-xs">
-                        Không có dữ liệu cho bộ lọc này.
+                      <td colSpan={6} className="px-4 py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                            <Filter className="h-4 w-4 text-muted" />
+                          </div>
+                          <p className="text-muted text-xs">Không có dữ liệu cho bộ lọc này.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -267,22 +284,35 @@ const RiskFilter = () => {
                       const pct = c.percentile_year ?? c.percentile ?? null;
                       const label = c.label_t ?? c.label;
                       const badge = riskBadge(label);
+                      const isTop3 = idx < 3;
                       return (
                         <tr
                           key={ticker || idx}
-                          className="hover:bg-white/3 transition cursor-pointer"
+                          className="hover:bg-white/3 transition cursor-pointer group"
                           onClick={() => ticker && navigate(`/company/${ticker}`)}
                         >
-                          <td className="px-4 py-3 text-muted">{idx + 1}</td>
-                          <td className="px-4 py-3 font-semibold text-white">{ticker || '—'}</td>
-                          <td className="px-4 py-3 text-right font-mono text-white">
-                            {score != null ? safeNum(score, 2) : '—'}
+                          <td className="px-4 py-3">
+                            {isTop3 ? (
+                              <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
+                                idx === 0 ? 'bg-amber-500/20 text-amber-400' :
+                                idx === 1 ? 'bg-slate-400/15 text-slate-300' :
+                                'bg-orange-600/15 text-orange-400'
+                              }`}>{idx + 1}</span>
+                            ) : (
+                              <span className="text-muted">{idx + 1}</span>
+                            )}
                           </td>
-                          <td className="px-4 py-3 text-right text-muted">
-                            {pct != null ? `${safeNum(pct, 0)}` : '—'}
+                          <td className="px-4 py-3">
+                            <span className="font-bold text-white tracking-wide">{ticker || '—'}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-mono font-semibold text-white">{score != null ? safeNum(score, 2) : '—'}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-muted">{pct != null ? `${safeNum(pct, 0)}` : '—'}</span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.className}`}>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${badge.className}`}>
                               {badge.text}
                             </span>
                           </td>
@@ -290,7 +320,7 @@ const RiskFilter = () => {
                             {ticker && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); navigate(`/company/${ticker}`); }}
-                                className="p-1.5 rounded-lg hover:bg-white/10 text-muted hover:text-white transition"
+                                className="p-1.5 rounded-lg hover:bg-white/10 text-muted hover:text-white transition opacity-0 group-hover:opacity-100"
                               >
                                 <Eye className="h-3.5 w-3.5" />
                               </button>
