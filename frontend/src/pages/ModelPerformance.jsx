@@ -82,7 +82,7 @@ const ModelPerformance = () => {
     borderRadius: 12 
   };
 
-  if (loading) return <LoadingSpinner message="Đang tải dữ liệu theo năm..." />;
+  if (loading) return <LoadingSpinner message="Từ từ... khoai sẽ nhừ" />;
   
   if (error) {
     return (

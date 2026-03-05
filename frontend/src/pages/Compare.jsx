@@ -153,7 +153,7 @@ const Compare = () => {
         </div>
       </section>
 
-      {loading && <LoadingSpinner message="Đang so sánh..." />}
+      {loading && <LoadingSpinner message="Từ từ... khoai sẽ nhừ" />}
       {error && <p className="text-rose-400 text-center py-4">{error}</p>}
 
       {/* Multi-line chart */}

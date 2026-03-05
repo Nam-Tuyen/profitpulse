@@ -107,7 +107,7 @@ const Company = () => {
     [timeseries]
   );
 
-  if (loading) return <LoadingSpinner message={`Đang tải ${ticker}...`} />;
+  if (loading) return <LoadingSpinner message="Từ từ... khoai sẽ nhừ" />;
   if (error) {
     return (
       <div className="text-center py-20">

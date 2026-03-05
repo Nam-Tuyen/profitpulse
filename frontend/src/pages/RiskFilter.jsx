@@ -103,25 +103,27 @@ const RiskFilter = () => {
           <h2 className="text-base sm:text-lg font-display font-bold text-white">Bộ lọc</h2>
         </div>
         <div className="flex flex-wrap gap-4 items-end">
-          {/* Year selector */}
-          <div className="flex flex-col gap-1.5">
+          {/* Year selector - calendar grid */}
+          <div className="flex flex-col gap-2">
             <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" /> Năm
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {displayYears.map((y) => (
-                <button
-                  key={y}
-                  onClick={() => setSelectedYear(y)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                    selectedYear === y
-                      ? 'bg-primary-600/30 text-primary-400 ring-1 ring-primary-500/40'
-                      : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {y}
-                </button>
-              ))}
+            <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5">
+              <div className="grid grid-cols-5 gap-1.5">
+                {displayYears.map((y) => (
+                  <button
+                    key={y}
+                    onClick={() => setSelectedYear(y)}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all text-center ${
+                      selectedYear === y
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-400/40'
+                        : 'text-muted hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {y}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -130,16 +132,16 @@ const RiskFilter = () => {
             <label className="text-xs font-medium text-muted uppercase tracking-wide flex items-center gap-1">
               <Shield className="h-3.5 w-3.5" /> Mức độ rủi ro
             </label>
-            <div className="flex gap-1 bg-white/5 rounded-xl p-0.5">
-              {RISK_OPTIONS.map(({ key, label, color }) => (
+            <div className="flex gap-1 bg-white/5 border border-white/8 rounded-xl p-0.5">
+              {RISK_OPTIONS.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setRiskType(key)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                  className={`flex-1 px-4 py-2 rounded-lg text-xs font-semibold transition ${
                     riskType === key
                       ? key === 'high'
-                        ? 'bg-rose-500/20 text-rose-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
+                        ? 'bg-rose-500/25 text-rose-400 ring-1 ring-rose-500/30'
+                        : 'bg-emerald-500/25 text-emerald-400 ring-1 ring-emerald-500/30'
                       : 'text-muted hover:text-white'
                   }`}
                 >
@@ -151,15 +153,15 @@ const RiskFilter = () => {
 
           {/* Top limit */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide">Hiển thị</label>
-            <div className="flex gap-1 bg-white/5 rounded-xl p-0.5">
+            <label className="text-xs font-medium text-muted uppercase tracking-wide">Số lượng hiển thị</label>
+            <div className="flex gap-1 bg-white/5 border border-white/8 rounded-xl p-0.5">
               {TOP_OPTIONS.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setTopLimit(key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition ${
                     topLimit === key
-                      ? 'bg-primary-600/20 text-primary-400'
+                      ? 'bg-primary-600/30 text-primary-400 ring-1 ring-primary-500/30'
                       : 'text-muted hover:text-white'
                   }`}
                 >
@@ -171,7 +173,7 @@ const RiskFilter = () => {
         </div>
       </section>
 
-      {loading && <LoadingSpinner message="Từ từ... khoai sẽ nhừ bạn nhé!" />}
+      {loading && <LoadingSpinner message="Từ từ... khoai sẽ nhừ" />}
       {error && <p className="text-rose-400 text-center py-6">{error}</p>}
 
       {!loading && summary && (
@@ -181,12 +183,9 @@ const RiskFilter = () => {
             <div className="flex items-center gap-2 mb-1">
               <Shield className="h-4 w-4 text-primary-400 flex-shrink-0" />
               <h3 className="text-base font-display font-bold text-white">
-                Tỷ lệ rủi ro cao / rủi ro thấp — Năm {selectedYear}
+                Biểu đồ thể hiện mức độ phân bổ rủi ro
               </h3>
             </div>
-            <p className="text-xs sm:text-sm text-muted mb-4">
-              Biểu đồ thể hiện phân bổ hai nhóm rủi ro trong tổng số doanh nghiệp năm được chọn.
-            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
               {/* Donut */}
               <div style={{ height: 220 }}>
@@ -230,7 +229,7 @@ const RiskFilter = () => {
                 ))}
               </div>
             </div>
-            <ChartCaption caption="Biểu đồ giúp bạn nắm bắt tỷ lệ phân bổ rủi ro của thị trường trong năm được chọn." />
+            <ChartCaption caption="Biểu đồ giúp người dùng quan sát được mức độ phân bổ rủi ro của các doanh nghiệp trong năm." />
           </section>
 
           {/* ── Results table ── */}
@@ -238,9 +237,8 @@ const RiskFilter = () => {
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base sm:text-lg font-display font-bold text-white">
-                  {riskType === 'high' ? 'Rủi ro cao' : 'Rủi ro thấp'} — {selectedYear}
+                  Danh sách công ty sau khi lọc
                 </h3>
-                <p className="text-xs text-muted mt-0.5">{filtered.length} doanh nghiệp</p>
               </div>
             </div>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">

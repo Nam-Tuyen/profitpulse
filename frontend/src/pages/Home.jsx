@@ -175,7 +175,7 @@ const Home = () => {
     fetchData();
   }, [selectedYear]);
 
-  if (loading) return <LoadingSpinner message="Đang tải tổng quan..." />;
+  if (loading) return <LoadingSpinner message="Từ từ... khoai sẽ nhừ" />;
   if (error) {
     return (
       <div className="text-center py-20">
@@ -210,39 +210,77 @@ const Home = () => {
   return (
     <div className="w-full space-y-5 sm:space-y-6 md:space-y-8">
       {/* ===== Hero ===== */}
-      <section className="relative overflow-hidden card p-5 sm:p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #0F1629 0%, #1E1B4B 45%, #3B1F6A 80%, #4C1D95 100%)' }}>
+      <section className="relative overflow-hidden rounded-2xl border border-white/8" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #1E1B4B 40%, #3B1F6A 75%, #4C1D95 100%)' }}>
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
         {/* Decorative blobs */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-56 sm:w-[500px] h-56 sm:h-[500px] bg-primary-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl opacity-20" />
-          <div className="absolute bottom-0 left-0 w-40 sm:w-72 h-40 sm:h-72 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl opacity-15" />
-          <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-violet-600 rounded-full -translate-y-1/2 blur-2xl opacity-10" />
+          <div className="absolute top-0 right-0 w-56 sm:w-[520px] h-56 sm:h-[520px] bg-primary-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl opacity-25" />
+          <div className="absolute bottom-0 left-0 w-40 sm:w-80 h-40 sm:h-80 bg-accent-500 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl opacity-15" />
+          <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-violet-500 rounded-full -translate-y-1/2 blur-3xl opacity-10" />
         </div>
-        <div className="relative z-10 max-w-3xl">
-          {/* Title with logo */}
-          <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+
+        <div className="relative z-10 p-5 sm:p-8 md:p-12">
+          {/* Live badge */}
+          <div className="mb-4 sm:mb-5">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/15 border border-primary-500/30 text-primary-300 text-xs font-semibold tracking-widest uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Phân tích · Lợi nhuận · Dự báo
+            </span>
+          </div>
+
+          {/* Title row */}
+          <div className="flex items-center gap-3 sm:gap-5 mb-3 sm:mb-4">
             <img
               src="/logo.svg"
               alt="Profit Pulse logo"
-              className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 drop-shadow-lg flex-shrink-0"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 drop-shadow-2xl flex-shrink-0"
             />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
-              Profit{' '}
-              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">Pulse</span>
-            </h1>
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight leading-none">
+                Profit
+                <span className="bg-gradient-to-r from-primary-400 via-violet-400 to-accent-400 bg-clip-text text-transparent"> Pulse</span>
+              </h1>
+              <p className="text-[10px] sm:text-xs text-primary-300/60 mt-1.5 font-mono tracking-[0.2em] uppercase">Sàn chứng khoán Việt Nam</p>
+            </div>
           </div>
-          <p className="text-slate-300 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 font-body leading-relaxed">
-            Phân tích và dự báo lợi nhuận doanh nghiệp trên sàn chứng khoán Việt Nam bằng phương pháp PCA kết hợp với các mô hình Machine Learning.
+
+          {/* Description */}
+          <p className="text-slate-300 text-sm sm:text-base md:text-lg mb-5 sm:mb-7 font-body leading-relaxed max-w-2xl">
+            Phân tích và dự báo lợi nhuận doanh nghiệp trên sàn chứng khoán Việt Nam bằng phương pháp{' '}
+            <span className="text-primary-300 font-semibold">PCA</span> kết hợp với các mô hình{' '}
+            <span className="text-accent-300 font-semibold">Machine Learning</span>.
           </p>
-          <div className="mb-4 sm:mb-6">
+
+          {/* Search */}
+          <div className="mb-5 sm:mb-6">
             <QuickSearch firms={firms} />
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+
+          {/* CTAs + mini stats */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
             <Link to="/risk-filter" className="btn-primary w-full sm:w-auto">
               <Search className="h-4 w-4" /> Lọc doanh nghiệp
             </Link>
             <Link to="/about" className="btn-ghost w-full sm:w-auto">
               Cách hoạt động <ArrowRight className="h-4 w-4" />
             </Link>
+            <div className="hidden sm:flex items-center gap-4 ml-2 pl-4 border-l border-white/10">
+              <div className="text-center">
+                <p className="text-lg font-display font-extrabold text-white leading-none">26+</p>
+                <p className="text-[10px] text-muted mt-0.5">Năm dữ liệu</p>
+              </div>
+              <div className="w-px h-7 bg-white/10" />
+              <div className="text-center">
+                <p className="text-lg font-display font-extrabold text-primary-300 leading-none">PCA</p>
+                <p className="text-[10px] text-muted mt-0.5">Phương pháp</p>
+              </div>
+              <div className="w-px h-7 bg-white/10" />
+              <div className="text-center">
+                <p className="text-lg font-display font-extrabold text-accent-300 leading-none">ML</p>
+                <p className="text-[10px] text-muted mt-0.5">Mô hình</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
