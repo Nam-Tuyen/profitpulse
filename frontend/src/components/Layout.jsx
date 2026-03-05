@@ -128,10 +128,8 @@ const Layout = ({ children }) => {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/6 py-4 text-center">
-        <p className="text-xs text-muted">
-          ProfitPulse — Chỉ phục vụ phân tích, không phải khuyến nghị mua bán.
-        </p>
+      <footer className="border-t border-white/6">
+        <div className="text-center text-sm text-muted py-4">Phát triển bởi <span className="text-primary-400 font-medium">ProfitPulse Team</span> và dữ liệu được cập nhật định kỳ.</div>
       </footer>
     </div>
   );

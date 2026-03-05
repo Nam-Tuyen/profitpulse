@@ -152,7 +152,7 @@ const Compare = () => {
         <section className="card card-hover p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Xu hướng điểm theo thời gian</h3>
           <p className="text-xs sm:text-sm text-muted mb-3 sm:mb-4">Mã nào ổn định hơn và mã nào biến động mạnh.</p>
-          <div className="chart-container">
+          <div className="overflow-x-auto"><div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -165,7 +165,7 @@ const Compare = () => {
                 ))}
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </div></div>
           <ChartCaption caption="Biểu đồ cho bạn thấy mã nào ổn định hơn và mã nào biến động mạnh." />
         </section>
       )}

@@ -238,7 +238,7 @@ const Home = () => {
           {scoreDistData && (
             <div className="lg:col-span-2 card card-hover p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-display font-bold text-white mb-4">Biểu đồ phân phối</h3>
-              <div className="chart-container">
+              <div className="overflow-x-auto"><div className="chart-container">
                 <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={scoreDistData}>
                   <defs>
@@ -254,7 +254,7 @@ const Home = () => {
                   <Area type="monotone" dataKey="count" stroke={PURPLE} fill="url(#gradPurple)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
-              </div>
+              </div></div>
               <ChartCaption caption="Biểu đồ cho thấy các doanh nghiệp đang phân bổ ở các vùng điểm như thế nào." />
             </div>
           )}

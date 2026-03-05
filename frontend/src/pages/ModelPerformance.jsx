@@ -135,7 +135,7 @@ const ModelPerformance = () => {
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
             Xu hướng Profit Score qua từng năm
           </h3>
-          <div className="chart-container">
+          <div className="overflow-x-auto"><div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
                 <defs>
@@ -187,7 +187,7 @@ const ModelPerformance = () => {
                 />
               </ComposedChart>
             </ResponsiveContainer>
-          </div>
+          </div></div>
           <ChartCaption caption="Biểu đồ cho bạn thấy Profit Score ở ba mốc trung bình, lớn nhất và nhỏ nhất qua từng năm để bạn có được cái nhìn tổng quan về biến động của thị trường." />
         </section>
       )}
@@ -198,7 +198,7 @@ const ModelPerformance = () => {
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">
             Tỷ lệ doanh nghiệp có mức rủi ro cao qua từng năm
           </h3>
-          <div className="chart-container">
+          <div className="overflow-x-auto"><div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
                 <defs>
@@ -238,7 +238,7 @@ const ModelPerformance = () => {
                 />
               </ComposedChart>
             </ResponsiveContainer>
-          </div>
+          </div></div>
           <ChartCaption caption="Biểu đồ cho bạn thấy tỷ trọng các doanh nghiệp có mức rủi ro cao qua từng năm để giúp bạn đánh giá được mức độ ổn định của thị trường." />
         </section>
       )}

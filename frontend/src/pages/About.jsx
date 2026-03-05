@@ -149,10 +149,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <div className="text-center text-sm text-muted py-4">
-        Phát triển bởi <span className="text-primary-400 font-medium">ProfitPulse Team</span> và dữ liệu được cập nhật định kỳ.
-      </div>
     </div>
   );
 };

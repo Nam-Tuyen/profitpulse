@@ -321,7 +321,7 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
       {/* Profit Score — area chart with gradient fill */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Điểm lợi nhuận theo thời gian</h3>
-        <div className="chart-container">
+        <div className="overflow-x-auto"><div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sorted}>
             <defs>
@@ -337,14 +337,14 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
             <Area type="monotone" dataKey="profitscore" name="Profit Score" stroke={PURPLE} fill="url(#gradScorePurple)" strokeWidth={2} dot={{ r: 4, fill: PURPLE }} />
           </AreaChart>
         </ResponsiveContainer>
-        </div>
+        </div></div>
         <ChartCaption caption="Biểu đồ cho bạn thấy điểm đang tăng hay giảm qua các năm." />
       </div>
 
       {/* Percentile — area chart with cyan gradient */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Phân vị theo thời gian</h3>
-        <div className="chart-container">
+        <div className="overflow-x-auto"><div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sorted}>
             <defs>
@@ -360,7 +360,7 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
             <Area type="monotone" dataKey="percentile" name="Percentile" stroke={CYAN} fill="url(#gradPercCyan)" strokeWidth={2} dot={{ r: 4, fill: CYAN }} />
           </AreaChart>
         </ResponsiveContainer>
-        </div>
+        </div></div>
         <ChartCaption caption="Biểu đồ cho bạn thấy vị trí thị trường đang lên hay xuống." />
       </div>
 
@@ -454,7 +454,7 @@ const DriversTab = ({
       {/* Component drivers bar chart */}
       <div className="card card-hover p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-display font-bold text-white mb-1">Component Drivers — Năm {selectedYear}</h3>
-        <div className="chart-container">
+        <div className="overflow-x-auto"><div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={pcData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -466,7 +466,7 @@ const DriversTab = ({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-        </div>
+        </div></div>
         <ChartCaption caption={CHART_CAPTIONS.company_pc_breakdown} />
         <div className="mt-3 sm:mt-4 space-y-2">
           {['pc1', 'pc2', 'pc3'].map((key) => {

@@ -165,13 +165,14 @@ body {
   /* Responsive chart container */
   .chart-container {
     @apply w-full;
-    height: 220px;
+    min-width: 300px;
+    height: 260px;
   }
   @media (min-width: 640px) {
-    .chart-container { height: 280px; }
+    .chart-container { height: 300px; }
   }
   @media (min-width: 1024px) {
-    .chart-container { height: 320px; }
+    .chart-container { height: 340px; }
   }
 
   /* Input field — touch friendly */

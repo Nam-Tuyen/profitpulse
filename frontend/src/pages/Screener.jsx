@@ -178,26 +178,28 @@ const Screener = () => {
         );
       })()}
 
-      {/* Top 10 bar chart — alternating purple/cyan */}
+      {/* Top 10 bar chart — vertical bars, mobile-friendly with horizontal scroll */}
       {!loading && top10Chart.length > 0 && (
         <section className="card card-hover p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-display font-bold text-white mb-3">Top 10 doanh nghiệp xếp theo Profit Score</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={top10Chart} layout="vertical" margin={{ left: 40, right: 8, top: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" tick={{ fill: '#94A3B8', fontSize: 12 }} />
-              <RTooltip contentStyle={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }} />
-              <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                {top10Chart.map((d, i) => (
-                  <Cell key={i} fill={d.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <div style={{ minWidth: '380px', height: '280px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={top10Chart} margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis dataKey="name" type="category" tick={{ fill: '#94A3B8', fontSize: 12 }} />
+                  <YAxis type="number" tick={{ fill: '#94A3B8', fontSize: 12 }} width={40} />
+                  <RTooltip contentStyle={{ background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }} formatter={(v) => [typeof v === 'number' ? v.toFixed(2) : v, 'Profit Score']} />
+                  <Bar dataKey="score" radius={[6, 6, 0, 0]}>
+                    {top10Chart.map((d, i) => (
+                      <Cell key={i} fill={d.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <ChartCaption caption="Biểu đồ xếp hạng top 10 doanh nghiệp từ trên xuống xếp theo Profit Score trong khoảng điểm và mốc thời gian bạn đã chọn." />
+          <ChartCaption caption="Biểu đồ xếp hạng top 10 doanh nghiệp từ cao đến thấp theo Profit Score. Cuộn ngang để xem đầy đủ trên thiết bị nhỏ." />
         </section>
       )}
 
@@ -205,7 +207,7 @@ const Screener = () => {
       {!loading && sorted.length > 0 && (
         <section className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 className="text-base sm:text-lg font-display font-bold text-white">Kết quả: {totalResults} doanh nghiệp</h3>
+            <h3 className="text-base sm:text-lg font-display font-bold text-white">Kết quả sau khi sàng lọc: {totalResults} doanh nghiệp</h3>
             <button onClick={() => exportToCSV(results, `screener_${year}.csv`)} className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition">
               <Download className="h-4 w-4" /> Xuất CSV
             </button>
