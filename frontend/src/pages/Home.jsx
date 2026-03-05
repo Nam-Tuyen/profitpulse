@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 import apiService from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ModelContextBar from '../components/ModelContextBar';
 import PageIntro from '../components/PageIntro';
 import ChartCaption from '../components/ChartCaption';
 import QuickSearch from '../components/QuickSearch';

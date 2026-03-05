@@ -1,5 +1,3 @@
-import { MoreVertical } from 'lucide-react';
-
 const StatsCard = ({ title, value, subtitle, icon: Icon, color = 'purple', change, changeDir }) => {
   const iconColorMap = {
     purple: 'bg-primary-600/20 text-primary-400',
@@ -21,9 +19,7 @@ const StatsCard = ({ title, value, subtitle, icon: Icon, color = 'purple', chang
           )}
           <span className="label-xs truncate">{title}</span>
         </div>
-        <button className="text-muted hover:text-white transition p-1 flex-shrink-0 hidden sm:block" aria-label="more">
-          <MoreVertical className="h-4 w-4" />
-        </button>
+
       </div>
       <p className="metric mb-1">{value}</p>
       <div className="flex items-center gap-2 flex-wrap">
