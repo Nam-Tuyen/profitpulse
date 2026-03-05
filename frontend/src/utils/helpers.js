@@ -62,20 +62,23 @@ export const tickerFromFirmId = (firmId) => {
   return firmId.split('.')[0];
 };
 
-/** Map label_t to human-readable risk text */
+/** Map label_t to human-readable risk text
+ * label = 1 (P_t > 0) → Rủi ro thấp (xanh) — doanh nghiệp có khả năng duy trì lợi nhuận
+ * label = 0 (P_t < 0) → Rủi ro cao  (đỏ)  — doanh nghiệp không có khả năng duy trì lợi nhuận
+ */
 export const riskText = (labelT) => {
-  if (labelT === 1 || labelT === '1') return 'Risk Cao';
-  if (labelT === 0 || labelT === '0') return 'Risk Thấp';
+  if (labelT === 1 || labelT === '1') return 'Rủi ro thấp';
+  if (labelT === 0 || labelT === '0') return 'Rủi ro cao';
   return 'N/A';
 };
 
 /** Risk badge styling from label_t */
 export const riskBadge = (labelT) => {
   if (labelT === 1 || labelT === '1') {
-    return { text: 'Risk Cao', className: 'bg-rose-500/15 text-rose-400 border border-rose-500/20' };
+    return { text: 'Rủi ro thấp', className: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' };
   }
   if (labelT === 0 || labelT === '0') {
-    return { text: 'Risk Thấp', className: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' };
+    return { text: 'Rủi ro cao', className: 'bg-rose-500/15 text-rose-400 border border-rose-500/20' };
   }
   return { text: 'N/A', className: 'bg-white/5 text-muted border border-white/10' };
 };

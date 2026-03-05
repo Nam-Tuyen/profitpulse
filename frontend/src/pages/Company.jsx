@@ -281,7 +281,8 @@ const HistoryTab = ({ timeseries, tsWithDeltas }) => {
   const labelChartData = sorted.map((d) => ({
     year: d.year,
     label: d.label,
-    labelText: d.label === 1 ? 'Cao' : d.label === 0 ? 'Thấp' : 'N/A',
+    // label = 1 (P_t > 0) → Rủi ro thấp; label = 0 (P_t < 0) → Rủi ro cao
+    labelText: d.label === 1 ? 'Thấp' : d.label === 0 ? 'Cao' : 'N/A',
   }));
 
   const chartTooltipStyle = { background: 'rgba(26,32,53,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 };

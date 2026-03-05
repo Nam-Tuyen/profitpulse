@@ -18,8 +18,8 @@ const TOP_OPTIONS = [
   { key: 'all', label: 'Tất cả' },
 ];
 const RISK_OPTIONS = [
-  { key: 'high', label: 'Rủi ro cao', color: 'rose' },
   { key: 'low', label: 'Rủi ro thấp', color: 'emerald' },
+  { key: 'high', label: 'Rủi ro cao', color: 'rose' },
 ];
 
 const CustomPieTooltip = ({ active, payload }) => {
@@ -42,7 +42,7 @@ const RiskFilter = () => {
   const years = meta?.years || [];
   const latestYear = years.length ? Math.max(...years) : null;
   const [selectedYear, setSelectedYear] = useState(null);
-  const [riskType, setRiskType] = useState('high');
+  const [riskType, setRiskType] = useState('low');
   const [topLimit, setTopLimit] = useState('10');
 
   // Load meta on mount
@@ -71,7 +71,8 @@ const RiskFilter = () => {
   const filtered = useMemo(() => {
     const withRisk = allCompanies.filter((c) => {
       const label = c.label_t ?? c.label;
-      const isHigh = label === 1 || label === '1';
+      // label = 0 (P_t < 0) → Rủi ro cao; label = 1 (P_t > 0) → Rủi ro thấp
+      const isHigh = label === 0 || label === '0';
       return riskType === 'high' ? isHigh : !isHigh;
     });
     if (topLimit === 'all') return withRisk;

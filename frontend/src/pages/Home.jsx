@@ -23,8 +23,8 @@ const CYAN = '#06B6D4';
 
 const RISK_TABS = [
   { key: 'all', label: 'Tất cả' },
-  { key: 'high', label: 'Rủi ro cao' },
   { key: 'low', label: 'Rủi ro thấp' },
+  { key: 'high', label: 'Rủi ro cao' },
 ];
 
 const TopCompaniesTable = ({ topCompanies, currentYear, navigate }) => {
@@ -44,7 +44,8 @@ const TopCompaniesTable = ({ topCompanies, currentYear, navigate }) => {
 
   const filtered = topCompanies
     .filter((c) => {
-      const isHigh = (c.label_t ?? c.label) === 1 || (c.label_t ?? c.label) === '1';
+      // label = 0 (P_t < 0) → Rủi ro cao; label = 1 (P_t > 0) → Rủi ro thấp
+      const isHigh = (c.label_t ?? c.label) === 0 || (c.label_t ?? c.label) === '0';
       if (riskFilter === 'high') return isHigh;
       if (riskFilter === 'low') return !isHigh;
       return true;
@@ -334,7 +335,7 @@ const Home = () => {
         <StatsCard 
           title="Số lượng công ty có rủi ro cao" 
           value={kpi.high_risk_count ?? '—'} 
-          subtitle="Khi tỷ lệ label_t = 1 vì P_t > 0" 
+          subtitle="Khi label_t = 0, tức P_t < 0" 
           icon={AlertTriangle} 
           color="red" 
         />

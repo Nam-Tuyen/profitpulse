@@ -6,7 +6,7 @@ const About = () => {
     { label: 'Tiền xử lý', desc: 'Dữ liệu được tiền xử lý để đảm bảo đúng định dạng và giảm ảnh hưởng của giá trị bất thường.' },
     { label: 'PCA', desc: 'Thực hiện phân tích thành phần chính (Principal Component Analysis) để tạo ra PC1, PC2, PC3.' },
     { label: 'Scoring', desc: 'Tính điểm ProfitScore từ các thành phần PC.' },
-    { label: 'Labeling', desc: 'Gán nhãn rủi ro theo quy tắc đã công bố.' },
+    { label: 'Labeling', desc: 'Gán nhãn rủi ro dựa trên dấu của lợi nhuận tổng hợp P_t: label = 1 khi P_t > 0 → Rủi ro thấp (xanh, doanh nghiệp có khả năng duy trì lợi nhuận); label = 0 khi P_t < 0 → Rủi ro cao (đỏ, doanh nghiệp không có khả năng duy trì lợi nhuận).' },
     { label: 'Dashboard', desc: 'Kết quả được cung cấp qua giao diện lập trình ứng dụng (API) và hiển thị trên bảng điều khiển (Dashboard).' },
   ];
 
@@ -33,7 +33,7 @@ const About = () => {
       bg: 'bg-amber-500/10 border-amber-500/20',
       iconBg: 'bg-amber-500/15',
       title: 'Xếp hạng phân vị & Nhãn rủi ro',
-      desc: 'Mỗi doanh nghiệp được xếp hạng theo phân vị (Percentile) trong năm để bạn biết doanh nghiệp đang đứng ở đâu so với toàn thị trường. Hệ thống cũng gán nhãn rủi ro theo quy tắc thống kê nhất quán — nhãn rủi ro là mức cảnh báo dựa trên dữ liệu, không phải đánh giá chủ quan.',
+      desc: 'Mỗi doanh nghiệp được xếp hạng theo phân vị (Percentile) trong năm để bạn biết doanh nghiệp đang đứng ở đâu so với toàn thị trường. Nhãn rủi ro được gán theo dấu của lợi nhuận tổng hợp P_t — label = 1 (P_t > 0) là Rủi ro thấp (xanh): doanh nghiệp có khả năng duy trì lợi nhuận năm sau; label = 0 (P_t < 0) là Rủi ro cao (đỏ): doanh nghiệp không có khả năng duy trì lợi nhuận. Quy tắc này được áp dụng nhất quán cho toàn bộ thị trường và mọi năm.',
     },
     {
       icon: LineChart,
@@ -82,6 +82,44 @@ const About = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ===== Quy ước nhãn rủi ro ===== */}
+      <section className="card p-4 sm:p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Tag className="h-5 w-5 text-amber-400" />
+          <h3 className="text-base sm:text-lg font-display font-bold text-white">Quy ước nhãn rủi ro</h3>
+        </div>
+        <p className="text-sm text-slate-300 leading-relaxed">
+          Nhãn rủi ro được xác định dựa trên <span className="text-white font-medium">dấu</span> của lợi nhuận tổng hợp <span className="text-primary-400 font-semibold">P_t</span> — đây là thước đo tổng hợp nhiều chỉ số tài chính lại thành một con số duy nhất để phán đoán xu hướng lợi nhuận năm sau.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {/* Label = 1 — Rủi ro thấp */}
+          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/8 p-4 flex items-start gap-3">
+            <span className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-sm font-extrabold text-emerald-400">1</span>
+            <div className="space-y-1">
+              <p className="text-sm font-display font-bold text-emerald-400">Rủi ro thấp</p>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                <span className="font-semibold text-white">P_t &gt; 0</span> — Lợi nhuận tổng hợp dương. Doanh nghiệp <span className="text-emerald-400 font-medium">có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
+              </p>
+              <p className="text-[10px] text-muted font-mono">label_t = 1</p>
+            </div>
+          </div>
+          {/* Label = 0 — Rủi ro cao */}
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/8 p-4 flex items-start gap-3">
+            <span className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-sm font-extrabold text-rose-400">0</span>
+            <div className="space-y-1">
+              <p className="text-sm font-display font-bold text-rose-400">Rủi ro cao</p>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                <span className="font-semibold text-white">P_t &lt; 0</span> — Lợi nhuận tổng hợp âm. Doanh nghiệp <span className="text-rose-400 font-medium">không có khả năng duy trì lợi nhuận</span> trong năm tiếp theo.
+              </p>
+              <p className="text-[10px] text-muted font-mono">label_t = 0</p>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-muted leading-relaxed">
+          Quy tắc gán nhãn này được áp dụng nhất quán cho toàn bộ doanh nghiệp và tất cả các năm. Đây là tín hiệu cảnh báo sớm dựa trên dữ liệu — không phải đánh giá chủ quan hay khuyến nghị đầu tư.
+        </p>
       </section>
 
       {/* ===== Quy trình xử lý dữ liệu ===== */}
